@@ -26,8 +26,11 @@ import cardRoute from '../server/routes/v1/cosmetics/[id]/card.png.get'
 import glowRoute from '../server/routes/v1/cosmetics/[id]/glow.png.get'
 import modelRoute from '../server/routes/v1/cosmetics/[id]/model.json.get'
 import { ADMIN, fixtureCosmetics, login, makeEnv, solidPng, templatePng, type TestEnv } from './helpers'
+import { ITEMS } from '../scripts/generate-cosmetics-v2.mjs'
 
 const ASSETS = join(__dirname, '..', 'assets', 'cosmetics')
+/** Per Code gebaute Teile (Haustiere, Flügel, Begleiter; scripts/generate-cosmetics-v2.mjs), hinten im Katalog. */
+const GENERATED = ITEMS.map((i) => i.id)
 /**
  * Ausgemusterte Hüte (Oktober 2026): nicht mehr im Katalog, ihre Dateien liegen weiter in assets/cosmetics/v2. Für die
  * Tests des Platzes `hat` (private Teile, Uploads) und als Beleg, dass sie zurück in den Katalog könnten.
@@ -42,7 +45,7 @@ const RETIRED_HATS = [
 /** Ausgemusterte Hüte ohne Event (Event aus → nicht in der Website-Liste). */
 const V2_IDS = ['cubiq_cap', 'lamp_helmet', 'top_hat']
 /** Öffentliche Format-2-Teile im Katalog, in Katalogreihenfolge (keine Hüte mehr). */
-const V2_PUBLIC = ['bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings']
+const V2_PUBLIC = ['bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings', ...GENERATED]
 /** Alle Format-2-Teile mit Dateien im Repository (Archiv-Katalog: ausgemusterte Hüte + öffentliche Teile). */
 const V2_ALL = [...V2_IDS, 'witch_hat', 'pumpkin_head', ...V2_PUBLIC]
 const readCatalog = async () => JSON.parse(readFileSync(join(ASSETS, 'catalog.json'), 'utf8'))

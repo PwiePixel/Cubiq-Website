@@ -89,5 +89,15 @@
     "frames": 1,
     "glowFrames": 12,
     "glowFrameTimeMs": 260
+  },
+  {
+    "id": "cubi",
+    "name": "Cubi",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150,
+    "petScale": 1
   }
 ]
