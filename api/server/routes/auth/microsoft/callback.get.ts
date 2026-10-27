@@ -10,6 +10,10 @@ import { upsertOnLogin } from '../../../lib/users'
 import { LEGACY_WEB_SESSION_COOKIE, WEB_SESSION_COOKIE, WEB_SESSION_TTL_MS, createWebSession } from '../../../lib/weblogin'
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+/** Fehler von Microsoft, die an der App-Einrichtung liegen (Azure-Portal), nicht am Nutzer. */
+const CONFIG_ERRORS = new Set(['unauthorized_client', 'invalid_client', 'invalid_request', 'invalid_scope'])
+/** Diese Fehler gehen den Betreiber an – mit Grund ins Server-Log. */
+const LOGGED = new Set<MsLoginErrorCode>(['ms_failed', 'ms_config', 'ms_not_approved'])
 
 /**
  * Rücksprung von Microsoft (§24.1): state prüfen (Cookie + Parameter, einmalig), Code gegen Tokens tauschen, Kette bis
@@ -29,7 +33,13 @@ export default defineEventHandler(async (event) => {
   const q = getQuery(event)
   const pending = ctx.oauth.take(handle, typeof q.state === 'string' ? q.state : undefined)
   if (!pending) return fail('ms_state')
-  if (typeof q.error === 'string') return fail(q.error === 'access_denied' ? 'ms_cancelled' : 'ms_failed')
+  if (typeof q.error === 'string') {
+    if (q.error === 'access_denied') return fail('ms_cancelled')
+    // Fehler von Microsoft selbst (z. B. falsche App-Einstellungen) – fürs Server-Log, ohne Zeilenumbrüche.
+    const detail = typeof q.error_description === 'string' ? q.error_description.replace(/\s+/g, ' ').slice(0, 300) : ''
+    console.warn(`[cubiq-api] Microsoft sign-in: Microsoft answered ${q.error.slice(0, 60)}${detail ? ` – ${detail}` : ''}`)
+    return fail(CONFIG_ERRORS.has(q.error) ? 'ms_config' : 'ms_failed')
+  }
   const code = typeof q.code === 'string' && q.code.length <= 4096 ? q.code : null
   if (!code) return fail('ms_failed')
 
@@ -38,7 +48,7 @@ export default defineEventHandler(async (event) => {
     identity = await exchangeCode(cfg, code, pending.verifier, ctx.msFetch ?? fetch)
   } catch (err) {
     if (err instanceof MsLoginError) {
-      if (err.code === 'ms_failed') console.warn(`[cubiq-api] Microsoft sign-in failed: ${err.message}`)
+      if (LOGGED.has(err.code)) console.warn(`[cubiq-api] Microsoft sign-in failed (${err.code}): ${err.message}`)
       return fail(err.code)
     }
     throw err

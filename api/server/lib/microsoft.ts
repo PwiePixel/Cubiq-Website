@@ -36,6 +36,10 @@ export type MsLoginErrorCode =
   | 'ms_cancelled'
   | 'ms_state'
   | 'ms_failed'
+  /** Microsoft hat die Azure-App noch nicht für die Minecraft-Dienste freigegeben (`login_with_xbox` → 403). */
+  | 'ms_not_approved'
+  /** Azure-App falsch eingerichtet: Client-Secret falsch/abgelaufen, Umleitung oder Kontotyp passt nicht. */
+  | 'ms_config'
   | 'no_xbox'
   | 'child_account'
   | 'xbox_region'
@@ -203,7 +207,8 @@ export async function exchangeCode(cfg: MicrosoftConfig, code: string, verifier:
   const msToken = tokenResponse.safeParse(token.body)
   if (token.status !== 200 || !msToken.success) {
     const err = (token.body as { error?: unknown } | null)?.error
-    throw new MsLoginError('ms_failed', `token ${token.status} ${typeof err === 'string' ? err.slice(0, 40) : ''}`)
+    const config = token.status === 401 || err === 'invalid_client' || err === 'unauthorized_client'
+    throw new MsLoginError(config ? 'ms_config' : 'ms_failed', `token ${token.status} ${typeof err === 'string' ? err.slice(0, 40) : ''}`)
   }
 
   // 2) Xbox Live: Nutzer-Token (RpsTicket „d=“ = Token einer eigenen Azure-App).
@@ -245,6 +250,8 @@ export async function exchangeCode(cfg: MicrosoftConfig, code: string, verifier:
     body: JSON.stringify({ identityToken: `XBL3.0 x=${uhs};${xstsData.data.Token}` }),
   }, 'minecraft')
   const mcData = mcLogin.safeParse(mc.body)
+  // 403 = die App ist (noch) nicht für die Minecraft-Dienste freigegeben („Invalid app registration“).
+  if (mc.status === 403) throw new MsLoginError('ms_not_approved', 'login_with_xbox 403')
   if (mc.status !== 200 || !mcData.success) throw new MsLoginError('ms_failed', `login_with_xbox ${mc.status}`)
 
   // 5) Profil: 404 = kein Minecraft (Java) gekauft bzw. noch kein Profil angelegt.

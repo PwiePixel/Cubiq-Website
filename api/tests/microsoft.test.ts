@@ -40,7 +40,7 @@ afterEach(async () => {
 })
 
 /** Echter HTTP-Server mit den Anmelde-Routen + Microsoft-/Xbox-/Minecraft-Attrappe. */
-async function harness(opts: { secret?: string, disabled?: boolean } = {}): Promise<Harness> {
+async function harness(opts: { secret?: string, disabled?: boolean, approved?: boolean } = {}): Promise<Harness> {
   const app = createApp()
   const router = createRouter()
   router.get('/auth/microsoft/login', loginRoute)
@@ -50,7 +50,7 @@ async function harness(opts: { secret?: string, disabled?: boolean } = {}): Prom
   const server: Server = createServer(toNodeListener(app))
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`
-  const mock = await startMsMock({ clientId: CLIENT_ID, clientSecret: SECRET, accounts: ACCOUNTS })
+  const mock = await startMsMock({ clientId: CLIENT_ID, clientSecret: SECRET, accounts: ACCOUNTS, approved: opts.approved ?? true })
   const env = makeEnv({
     env: opts.disabled ? {} : {
       MS_CLIENT_ID: CLIENT_ID,
@@ -215,8 +215,14 @@ describe('Microsoft sign-in: full flow against test doubles', () => {
     expect(all(h.env.ctx.db, 'SELECT * FROM web_sessions WHERE uuid = ?', STEVE)).toHaveLength(0)
     expect((await signIn(h, 'Steve')).cb.headers.get('location')).toBe('/login?error=banned')
 
+    // Falsches Client-Secret: Einrichtungsfehler, nicht „nicht erreichbar“.
     const wrong = await harness({ secret: 'not-the-secret' })
-    expect((await signIn(wrong, 'Steve')).cb.headers.get('location')).toBe('/login?error=ms_failed')
+    expect((await signIn(wrong, 'Steve')).cb.headers.get('location')).toBe('/login?error=ms_config')
+
+    // Microsoft hat die App noch nicht für Minecraft freigegeben.
+    const pending = await harness({ approved: false })
+    expect((await signIn(pending, 'Steve')).cb.headers.get('location')).toBe('/login?error=ms_not_approved')
+    expect(all(pending.env.ctx.db, 'SELECT * FROM web_sessions')).toHaveLength(0)
   })
 
   it('is off without MS_CLIENT_ID/MS_CLIENT_SECRET', async () => {
