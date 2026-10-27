@@ -143,6 +143,12 @@ git_auth() {
   if git ls-remote --heads "$REPO_URL" >/dev/null 2>&1; then return 0; fi
   local token=''
   [ -f "$TOKEN_FILE" ] && token=$(cat "$TOKEN_FILE")
+  # Gespeicherter Token abgelaufen oder zurückgezogen: neu fragen.
+  if [ -n "$token" ] && ! git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$token" | base64 -w0)" \
+    ls-remote --heads "$REPO_URL" >/dev/null 2>&1; then
+    warn "Der gespeicherte GitHub-Token funktioniert nicht mehr (abgelaufen?)."
+    token=''
+  fi
   if [ -z "$token" ]; then
     echo
     say "Das Repository ist privat – dafür brauche ich einmal einen GitHub-Token mit Lesezugriff:"
