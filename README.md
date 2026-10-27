@@ -8,7 +8,24 @@ Cubiq Client – im grünen Cubiq-Design, als eine App, die du selbst betreibst.
 | [`api/`](api) | Website (Startseite, Download, Blog mit den Launcher-Updates, Kosmetik, Impressum …), API für Launcher und Mod (`/v1/…`), Team-Bereich `/admin`. Nuxt 4 / Nitro, SQLite. |
 | [`docs-site/`](docs-site) | Doku (Docus), wird beim Build der Website mit erzeugt und unter `docs.<deine-domain>` ausgeliefert. |
 
-## Schnellstart
+## Schnellstart: ein Skript richtet alles ein
+
+Auf einem Server mit Ubuntu oder Debian (z. B. ein kleiner VPS mit 2–4 GB Arbeitsspeicher) als root:
+
+```bash
+curl -fsSL -H "Authorization: token <GITHUB_TOKEN>" -o cubiq-server.sh \
+  https://raw.githubusercontent.com/PwiePixel/Cubiq-Website/refs/heads/main/deploy/cubiq-server.sh
+sudo bash cubiq-server.sh
+```
+
+([`deploy/cubiq-server.sh`](deploy/cubiq-server.sh); `<GITHUB_TOKEN>` braucht nur Lesezugriff auf dieses Repository,
+bei einem öffentlichen Repository den Header weglassen.) Das Skript installiert Docker, holt den Code nach
+`/opt/cubiq`, fragt Adresse, Impressum und optional das Microsoft-Client-Secret ab, erzeugt alle Schlüssel, legt mit
+einem Cloudflare-API-Token den Tunnel und die DNS-Einträge selbst an, startet die Website und richtet nächtliche
+Sicherungen und auf Wunsch tägliche Updates ein. Danach: `sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh
+status | update | restart | backup | logs`.
+
+## Von Hand
 
 Online stellen mit Docker und Cloudflare Tunnel (kein offener Port nötig) – ausführlich mit allen Einstellungen in
 **[api/README.md](api/README.md)**:

@@ -49,6 +49,9 @@ DATA_DIR=./.data SECRET_KEY=$(openssl rand -base64 48) SITE_URL=http://localhost
 
 ## Online stellen (Docker + Cloudflare Tunnel)
 
+> **Einfacher:** [`deploy/cubiq-server.sh`](../deploy/cubiq-server.sh) erledigt alle Schritte unten auf einem
+> Ubuntu-/Debian-Server von selbst (siehe [README](../README.md#schnellstart-ein-skript-richtet-alles-ein)).
+
 Du brauchst: eine eigene Domain (im Folgenden `deine-domain.de`), ein kostenloses Cloudflare-Konto, das die Domain
 verwaltet, und einen Rechner oder Server mit Docker, der dauerhaft läuft.
 
