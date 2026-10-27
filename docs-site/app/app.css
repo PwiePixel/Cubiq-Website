@@ -1,0 +1,119 @@
+/*
+ * Cubiq-Look der Doku – wie Launcher und Website: ruhige, dunkle Flächen mit einem Hauch Grün als Grund (moss),
+ * das Grün aus dem Logo (#71a330) als Primärfarbe (cubiq), ein helles Lime als Zweitfarbe (live) und Inter
+ * (lokal gebündelt) als Schrift. Docus bindet diese Datei nach Tailwind und Nuxt UI ein – hier Tailwind nicht erneut
+ * importieren.
+ */
+@theme static {
+  --color-cubiq-50: #f4faea;
+  --color-cubiq-100: #e5f3cf;
+  --color-cubiq-200: #cde8a6;
+  --color-cubiq-300: #a9d46b;
+  --color-cubiq-400: #88bb45;
+  --color-cubiq-500: #71a330;
+  --color-cubiq-600: #5c8726;
+  --color-cubiq-700: #476a1f;
+  --color-cubiq-800: #344e19;
+  --color-cubiq-900: #1a2810;
+  --color-cubiq-950: #101a09;
+
+  --color-live-50: #f7fdee;
+  --color-live-100: #eefbdc;
+  --color-live-200: #e4f8c4;
+  --color-live-300: #d0f29b;
+  --color-live-400: #b4e46a;
+  --color-live-500: #96cc45;
+  --color-live-600: #76a630;
+  --color-live-700: #5a8024;
+  --color-live-800: #3f5a1b;
+  --color-live-900: #22300f;
+  --color-live-950: #151e09;
+
+  --color-moss-50: #eef4ef;
+  --color-moss-100: #dbe3dd;
+  --color-moss-200: #c5d0c8;
+  --color-moss-300: #a6b2a9;
+  --color-moss-400: #869489;
+  --color-moss-500: #5f6d63;
+  --color-moss-600: #3d4a41;
+  --color-moss-700: #29332c;
+  --color-moss-800: #1d2520;
+  --color-moss-900: #111613;
+  --color-moss-950: #0c100e;
+
+  --font-sans: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Dunkel = Standard: Grund #0c100e wie Launcher und Website. */
+.dark {
+  --ui-bg: var(--color-moss-950);
+  --ui-bg-muted: var(--color-moss-900);
+  --ui-bg-elevated: #161c18;
+  --ui-bg-accented: var(--color-moss-800);
+  --ui-border: var(--color-moss-800);
+  --ui-border-muted: #161c18;
+  --ui-border-accented: var(--color-moss-700);
+  --ui-text: var(--color-moss-200);
+  --ui-text-muted: var(--color-moss-400);
+  --ui-text-toned: var(--color-moss-300);
+  --ui-text-highlighted: var(--color-moss-50);
+}
+
+:root {
+  --ui-radius: 0.5rem;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Überschriften kräftig wie `.display` auf der Website. */
+h1,
+h2,
+.cubiq-display {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+/* Kopfzeile wie auf der Website: halbdurchsichtig mit Unschärfe. */
+header.bg-default\/75,
+header[class*="bg-default"] {
+  background: color-mix(in srgb, var(--ui-bg) 82%, transparent);
+}
+
+/* Schmale Akzentlinie über der Fußzeile: Grün, das zu den Rändern ausläuft. */
+.cubiq-accent-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-cubiq-500) 20%, var(--color-cubiq-300) 50%, var(--color-cubiq-500) 80%, transparent);
+  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--color-cubiq-500) 70%, transparent);
+}
+
+/* Fußzeile mit feinem Würfel-Raster wie im Logo (nur dunkel – im Hellen bleibt sie ruhig). */
+.dark .cubiq-footer {
+  background-image:
+    linear-gradient(30deg, color-mix(in srgb, var(--color-cubiq-500) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(150deg, color-mix(in srgb, var(--color-cubiq-500) 7%, transparent) 1px, transparent 1px);
+  background-size: 34px 20px;
+}
+
+/* Startseite: weicher grüner Schein hinter dem Titel. */
+.cubiq-hero {
+  position: relative;
+}
+.dark .cubiq-hero::before {
+  content: "";
+  position: absolute;
+  inset: -4rem 0 auto;
+  height: 22rem;
+  background: radial-gradient(40rem 14rem at 50% 30%, color-mix(in srgb, var(--color-cubiq-500) 20%, transparent), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Minecraft-Texturen (Köpfe, Items) nicht weichzeichnen. */
+.pixelated {
+  image-rendering: pixelated;
+}

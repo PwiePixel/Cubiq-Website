@@ -1,0 +1,169 @@
+import { contentRoutes } from './build/content-routes.mjs'
+import { iconsToBundle } from './build/icons'
+import { siteUrls } from './build/site-urls.mjs'
+
+// Cubiq Launcher – Dokumentation (Docus-Layer, Nuxt 4). Wird statisch erzeugt (`npm run generate`) und von der
+// Website-App (api/) auf eigener Domain docs.<Domain der Website> ausgeliefert (Wurzel, ohne /docs) – es gibt keinen
+// eigenen Server. Die Adressen kommen beim Bauen aus SITE_URL/WIKI_URL (build/site-urls.mjs).
+// Aufbau, Build und Sicherheit: README.md; Regeln für Inhalte: CONTENT.md.
+
+const urls = siteUrls()
+/** Kanonische Adresse der Doku (eigene Domain, gleiche Website-App, siehe api/server/lib/wiki.ts). */
+const SITE_URL = urls.docs
+/** Die Website (Download, Datenschutz, llms.txt der Website). */
+const WEBSITE_URL = urls.website
+
+/** Die fünf Bereiche (Ordner `content/<lang>/<N>.<slug>/`) – Reihenfolge wie in der Navigation. */
+const DOC_SECTIONS = [
+  { slug: 'getting-started', title: 'Getting started' },
+  { slug: 'launcher', title: 'Launcher' },
+  { slug: 'client', title: 'Cubiq Client' },
+  { slug: 'help', title: 'Help' },
+  { slug: 'developers', title: 'Developers' },
+] as const
+
+export default defineNuxtConfig({
+  extends: ['docus'],
+  modules: ['@nuxtjs/i18n'],
+  compatibilityDate: '2026-09-01',
+  telemetry: false,
+  devtools: { enabled: false },
+
+  app: {
+    // Eigene Domain: alles liegt an der Wurzel – Links, Payloads und die Such-Datenbank.
+    baseURL: '/',
+    // Gebaute Skripte/Stile unter /_docs/ statt /_nuxt/: die Website (gleiche App) hat ihr eigenes /_nuxt –
+    // getrennte Pfade schließen jede Verwechslung (auch in Caches) aus.
+    buildAssetsDir: '/_docs/',
+    head: {
+      meta: [{ name: 'theme-color', content: '#0c100e' }],
+    },
+  },
+
+  // Schrift Inter, lokal gebündelt (keine Google Fonts). Farben und Stil: app/app.css.
+  css: ['@fontsource-variable/inter'],
+
+  // Adressen für Links und Vorschaubilder (beim Bauen festgelegt, siehe oben).
+  runtimeConfig: {
+    public: {
+      websiteUrl: WEBSITE_URL,
+      docsHost: new URL(SITE_URL).host,
+    },
+  },
+
+  // Standard dunkel wie die Website.
+  colorMode: {
+    preference: 'dark',
+    fallback: 'dark',
+  },
+
+  // Site-Adresse ohne Pfad (nuxt-site-config verlangt das) = kanonische Adresse für canonical, hreflang, og:url, JSON-LD.
+  site: {
+    url: SITE_URL,
+    name: 'Cubiq Launcher Docs',
+  },
+
+  i18n: {
+    defaultLocale: 'en',
+    baseUrl: SITE_URL,
+    locales: [
+      { code: 'en', name: 'English', language: 'en-US' },
+      { code: 'de', name: 'Deutsch', language: 'de-DE' },
+      { code: 'es', name: 'Español', language: 'es-ES' },
+    ],
+    // Docus erzwingt ohnehin „prefix“: /en/…, /de/…, /es/…
+    strategy: 'prefix',
+    // Die Sprachwahl für / macht der Website-Server (Cookie cubiq_lang, Accept-Language), nicht die Seite.
+    detectBrowserLanguage: false,
+  },
+
+  docus: {
+    // KI-Assistent komplett aus (kein Chat, keine Server-Route).
+    assistant: { enabled: false },
+  },
+
+  // MCP-Server aus – statisch gibt es ohnehin keinen Server.
+  mcp: { enabled: false },
+
+  // Nuxt Studio / Vorschau-Modus bleibt aus (kein `content.preview`).
+
+  ui: {
+    // Keine Web-Fonts von fremden Hosts (@nuxt/fonts). Schriften kommen lokal (@fontsource, app/app.css).
+    fonts: false,
+  },
+
+  // Icons nur aus dem Bundle – kein Abruf von api.iconify.design (CSP!). Die Liste sammelt build/icons.ts
+  // aus Inhalten, App-Dateien, Docus und Nuxt UI.
+  icon: {
+    provider: 'none',
+    fallbackToApi: false,
+    clientBundle: {
+      icons: iconsToBundle(),
+      scan: true,
+      includeCustomCollections: true,
+      sizeLimitKb: 1024,
+    },
+    serverBundle: { collections: ['lucide', 'simple-icons', 'vscode-icons'] },
+  },
+
+  // Bilder unverändert ausliefern (kein IPX, kein Vorrendern von Varianten) – fehlende Bilder brechen den Build nicht.
+  image: { provider: 'none' },
+
+  // Vorschaubilder (Open Graph) werden beim Generieren als PNG gerendert (nuxt-og-image, zeroRuntime).
+  ogImage: {
+    zeroRuntime: true,
+  },
+
+  llms: {
+    domain: SITE_URL,
+    title: 'Cubiq Launcher Documentation',
+    description:
+      'Documentation for Cubiq Launcher (the free Minecraft launcher by PwiePixel) and the Cubiq Client mod: installation, launcher features, client modules, help and developer notes.',
+    full: {
+      title: 'Cubiq Launcher Documentation – full text',
+      description: 'All English documentation pages of Cubiq Launcher and Cubiq Client in one Markdown text.',
+    },
+    // Nur Englisch (Anforderung): je Bereich ein Abschnitt aus der Sammlung docs_en. Die Startseite (nur Karten)
+    // bleibt draußen.
+    sections: [
+      ...DOC_SECTIONS.map((s) => ({
+        title: s.title,
+        contentCollection: 'docs_en',
+        contentFilters: [
+          { field: 'extension', operator: '=' as const, value: 'md' },
+          { field: 'path', operator: 'LIKE' as const, value: `/en/${s.slug}%` },
+        ],
+      })),
+    ],
+    notes: [
+      `Website: ${WEBSITE_URL}/ (overview of the website: ${WEBSITE_URL}/llms.txt)`,
+      `The documentation also exists in German (${SITE_URL}/de) and Spanish (${SITE_URL}/es).`,
+      'Cubiq Launcher is not an official Minecraft product and is not approved by or associated with Mojang or Microsoft.',
+    ],
+  },
+
+  robots: {
+    // robots.txt und sitemap.xml der Doku-Domain erzeugt der Server (api/server/lib/wiki.ts); hier keine eigenen Dateien.
+    robotsTxt: false,
+  },
+
+  nitro: {
+    prerender: {
+      crawlLinks: true,
+      failOnError: false,
+      // …/install/index.html statt …/install.html: so sucht der Datei-Handler der Doku-Domain (api/server/lib/wiki.ts).
+      autoSubfolderIndex: true,
+      // Jede Seite aus content/ vorrendern – auch ohne Link dorthin (Suche, Sitemap).
+      routes: contentRoutes().map((r) => r.path),
+    },
+  },
+
+  experimental: {
+    // Payload je Seite als eigene JSON-Datei statt Inline-Skript (weniger Inline-Code, gleiche CSP-Hashes je Seite).
+    payloadExtraction: true,
+  },
+
+  typescript: {
+    strict: true,
+  },
+})

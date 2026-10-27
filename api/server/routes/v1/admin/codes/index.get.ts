@@ -1,0 +1,10 @@
+import { defineEventHandler } from 'h3'
+import { listCodes } from '../../../../lib/codes'
+import { useCtx } from '../../../../lib/context'
+import { requireStaff } from '../../../../lib/http'
+
+/** Codes ohne Klartext (nur die letzten 4 Zeichen als `hint`). */
+export default defineEventHandler((event) => {
+  requireStaff(event, 'codes')
+  return { codes: listCodes(useCtx()) }
+})

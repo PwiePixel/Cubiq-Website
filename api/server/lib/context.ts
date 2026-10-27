@@ -1,0 +1,140 @@
+import { join } from 'node:path'
+import type { Config } from './config'
+import type { CosmeticV2Assets } from './cosmetics-v2'
+import { ChatCipher } from './crypto'
+import type { Db } from './db'
+import { EventHub } from './events'
+import { OAuthStateStore } from './microsoft'
+import type { MojangClient } from './mojang'
+import { PresenceStore } from './presence'
+import { MailService } from './mail/transport'
+import { PushService } from './push'
+import { RateLimiter } from './ratelimit'
+import { SpamGuard } from './safety'
+import { ServerStatusService, type PingDeps } from './serverping'
+import { SkinService, rememberSkin } from './skins'
+import { TemplateSet } from './templates'
+import { PlayerWatchHub } from './watch'
+
+/** Alles, was die Dienste brauchen – im Server einmal erzeugt, in Tests frisch je Test. */
+export interface AppContext {
+  config: Config
+  db: Db
+  mojang: MojangClient
+  presence: PresenceStore
+  events: EventHub
+  /** Spieler-Stream (`GET /v1/events/players`): Emotes, Skin-, Umhang- und Kosmetik-Änderungen. */
+  watch: PlayerWatchHub
+  limiter: RateLimiter
+  skins: SkinService
+  /** Kosmetik-Vorlagen (öffentlich aus templates.json, privat aus templates.private.json). */
+  templates: TemplateSet
+  /** Mitgelieferte Kosmetik im Format v2 (§11.9): Modell, Textur, Leucht-Streifen, Karten – beim Start eingespielt. */
+  cosmeticsV2: Map<string, CosmeticV2Assets>
+  /** Halloween-Bilder (§36): `stickers/<id>.png`, `badges/<id>.png` aus assets/halloween – beim Start geladen. */
+  halloweenArt: Map<string, { png: Buffer, sha256: string }>
+  now: () => number
+  /** Ordner für Umhang-PNGs (`<DATA_DIR>/capes`). */
+  capeDir: string
+  /** Ordner für Kosmetik-PNGs (`<DATA_DIR>/cosmetics`). */
+  cosmeticDir: string
+  /** Ordner für Chat-Bilder und Beweis-Kopien (`<DATA_DIR>/chat`, verschlüsselt). */
+  chatDir: string
+  /** Ordner für geteilte Screenshots (`<DATA_DIR>/shares`, öffentlich per Link, §23). */
+  shareDir: string
+  /** Geteilte Modpacks (§27): `<DATA_DIR>/packs/<xx>/<id>.<rev>.mrpack`. */
+  packDir: string
+  /** Bilder im Issue-Tracker (§28): `<DATA_DIR>/issues/<xx>/<id>.<jpg|png>` (+ `.t.` Vorschau), öffentlich. */
+  issueDir: string
+  /** Verschlüsselung der Chat-Inhalte (Schlüssel aus `CHAT_KEYS`). */
+  cipher: ChatCipher
+  /** Status für Server-Einladungen (Ping mit Cache + SSRF-Schutz). */
+  servers: ServerStatusService
+  spam: SpamGuard
+  /** Tippt gerade: `<conversationId>:<uuid>` → Ablaufzeit (nur RAM). */
+  typing: Map<string, number>
+  /** Offene Microsoft-Anmeldungen (state + PKCE-Verifier, nur RAM, 10 min). */
+  oauth: OAuthStateStore
+  /** Push-Benachrichtigungen für die Apps (§33): Geräte, Versand (UnifiedPush) und Abruf-Liste (iOS). */
+  push: PushService
+  /** Mail über SMTP (§40): Versand der Ausgangs-Warteschlange. Ohne SMTP_HOST nicht verfügbar (503 mail_unavailable). */
+  mail: MailService
+  /** Für Tests: eigenes fetch für die Microsoft-/Xbox-/Minecraft-Kette. */
+  msFetch?: typeof fetch
+  /** Für Tests: eigenes fetch für Modrinth (Namen/Symbole der Pack-Inhalte, §27.6). */
+  modrinthFetch?: typeof fetch
+  /** Für Tests: eigenes fetch für CurseForge (empfohlene Modpacks, §37). */
+  curseforgeFetch?: typeof fetch
+}
+
+export function createContext(opts: {
+  config: Config
+  db: Db
+  mojang: MojangClient
+  capeDir: string
+  cosmeticDir: string
+  templates?: TemplateSet
+  now?: () => number
+  chatDir?: string
+  pingDeps?: PingDeps
+}): AppContext {
+  const now = opts.now ?? Date.now
+  const limiter = new RateLimiter(now)
+  const lim = opts.config.limits
+  const base: Omit<AppContext, 'push'> = {
+    mail: new MailService(opts.config.mail),
+    config: opts.config,
+    db: opts.db,
+    mojang: opts.mojang,
+    presence: new PresenceStore(lim.presenceTtlMs, now),
+    events: new EventHub(lim.maxSseStreamsPerUser, lim.maxSseStreamsTotal, {
+      maxPerUserMe: lim.maxUserStreamsPerUser,
+      bufferSize: lim.replayBufferSize,
+      windowMs: lim.replayWindowMs,
+      now,
+    }),
+    watch: new PlayerWatchHub(lim.maxPlayerStreamsPerUser, lim.maxPlayerStreamsTotal),
+    limiter,
+    skins: new SkinService(opts.mojang, limiter, now, (p) => rememberSkin(opts.db, p, now())),
+    templates: opts.templates ?? TemplateSet.empty(),
+    cosmeticsV2: new Map(),
+    halloweenArt: new Map(),
+    now,
+    capeDir: opts.capeDir,
+    cosmeticDir: opts.cosmeticDir,
+    chatDir: opts.chatDir ?? join(opts.config.dataDir, 'chat'),
+    shareDir: join(opts.config.dataDir, 'shares'),
+    packDir: join(opts.config.dataDir, 'packs'),
+    issueDir: join(opts.config.dataDir, 'issues'),
+    cipher: new ChatCipher(opts.config.chatKeys.keys),
+    servers: new ServerStatusService(opts.config.serverPing, now, opts.pingDeps),
+    spam: new SpamGuard(opts.config.secretKey, now),
+    typing: new Map(),
+    oauth: new OAuthStateStore(now),
+  }
+  const ctx = base as AppContext
+  ctx.push = new PushService(ctx)
+  ctx.events.setTap(ctx.push)
+  return ctx
+}
+
+let current: AppContext | undefined
+let ready: Promise<void> = Promise.resolve()
+
+export function setContext(ctx: AppContext | undefined): void {
+  current = ctx
+}
+
+/** Start-Aufgaben (z. B. Katalog einspielen), auf die jede Anfrage wartet. */
+export function setReady(p: Promise<void>): void {
+  ready = p
+}
+
+export function whenReady(): Promise<void> {
+  return ready
+}
+
+export function useCtx(): AppContext {
+  if (!current) throw new Error('App context not initialised')
+  return current
+}

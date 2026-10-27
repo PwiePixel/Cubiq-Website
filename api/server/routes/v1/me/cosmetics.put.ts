@@ -1,0 +1,19 @@
+import { defineEventHandler } from 'h3'
+import { touchAchievements } from '../../../lib/achievements'
+import { useCtx } from '../../../lib/context'
+import { equipCosmetics, ownedEmotes } from '../../../lib/cosmetics'
+import { readJson, requireUser } from '../../../lib/http'
+import { equipBody } from '../../../lib/schemas'
+
+/**
+ * Plätze setzen: `{ hat?, wings?, back?, aura?, companion?, pet? }` – ID anlegen, `null` ablegen, fehlend unverändert;
+ * dazu `options: { <slot>: { <optionId>: bool } }` (nur deklarierte Optionen, sonst 400 `unknown_option`).
+ */
+export default defineEventHandler(async (event) => {
+  const auth = requireUser(event, 'write')
+  const body = await readJson(event, equipBody)
+  const ctx = useCtx()
+  const equipped = equipCosmetics(ctx, auth.uuid, body)
+  touchAchievements(ctx, auth.uuid, ['cosmetic_equipped_flag'])
+  return { equipped, emotes: ownedEmotes(ctx, auth.uuid) }
+})

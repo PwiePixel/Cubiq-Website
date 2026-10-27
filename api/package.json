@@ -1,0 +1,54 @@
+{
+  "name": "cubiq-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "description": "Cubiq API – Konten, Umhänge, Abzeichen, Freunde und Präsenz für Cubiq Launcher und Cubiq Client",
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "capes": "node scripts/generate-capes.mjs",
+    "cosmetics": "node scripts/generate-cosmetics.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "packageManager": "pnpm@11.24.0",
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@jsquash/webp": "1.5.0",
+    "gsap": "3.15.0",
+    "h3": "1.15.11",
+    "jpeg-js": "0.4.4",
+    "lenis": "1.3.26",
+    "marked": "^16.4.2",
+    "nodemailer": "10.2.1",
+    "nuxt": "4.5.2",
+    "nuxt-security": "^2.6.0",
+    "pngjs": "^7.0.0",
+    "skinview3d": "3.4.2",
+    "three": "0.156.1",
+    "uqr": "0.1.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.6",
+    "@types/pngjs": "^6.0.5",
+    "@types/three": "0.156.0",
+    "eslint": "^10.11.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.1",
+    "vue-tsc": "^3.3.11"
+  }
+}

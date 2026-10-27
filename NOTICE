@@ -1,0 +1,29 @@
+Cubiq website, API and documentation (for Cubiq Launcher and the Cubiq Client)
+Copyright (C) 2026 PwiePixel
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, version 3 of the License
+(see LICENSE).
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+Cosmetics that can only be obtained by code are not part of this repository; the cosmetics in
+api/assets are covered by the GPL-3.0.
+
+Third-party parts
+-----------------
+- GSAP by GreenSock/Webflow (GSAP Standard License, https://gsap.com/standard-license) and Lenis by
+  darkroom.engineering (MIT): scroll animations and smooth scrolling on the website (api/).
+- Inter by Rasmus Andersson (SIL Open Font License 1.1, via @fontsource-variable/inter): the
+  website's font.
+- Fonts for the Halloween look (SIL Open Font License 1.1, bundled in api/app/assets/fonts with
+  their license texts): IM Fell English SC by Igino Marini; Cormorant Garamond by The Cormorant
+  Project Authors (Christian Thalmann).
+- Docus by NuxtLabs (MIT): the documentation in docs-site/.
+- Further libraries are listed with their licenses in api/package.json and
+  docs-site/package.json.
+
+"Minecraft" is a trademark of Mojang Synergies AB. Cubiq Launcher is not an official Minecraft
+product and is not approved by or associated with Mojang or Microsoft.

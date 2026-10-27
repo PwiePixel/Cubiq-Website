@@ -1,0 +1,11 @@
+node_modules
+.nuxt
+.output
+.data
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+# Vom Server-Skript (deploy/cubiq-server.sh) angelegt
+docker-compose.override.yml

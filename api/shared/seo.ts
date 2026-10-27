@@ -1,0 +1,475 @@
+// Suchmaschinen-Bausteine der Website, von Seiten (Kopf) und Server (Sitemap, robots.txt) gemeinsam genutzt.
+// Alles hier ist reine Datenverarbeitung ohne Nuxt/Nitro – dadurch direkt mit vitest prüfbar.
+//
+
+// Sprachen: Englisch ist die Adresse ohne Zusatz (`/download`), Deutsch und Spanisch hängen `?lang=de|es`
+// an. Die Seite rendert serverseitig genau die Sprache aus `?lang=` (ohne Cookie), deshalb kann jede
+// Sprachfassung gecrawlt werden. `x-default` ist die Adresse ohne Zusatz (erkennt die Sprache selbst).
+
+export type SeoLang = 'en' | 'de' | 'es'
+
+export const SEO_LANGS: readonly SeoLang[] = ['en', 'de', 'es']
+export const DEFAULT_LANG: SeoLang = 'en'
+export const SITE_NAME = 'Cubiq Launcher'
+export const DEFAULT_SITE_URL = 'https://cubiq-launcher.invalid'
+export const REPO_URL = 'https://github.com/PwiePixel/Cubiq-launcher'
+/** Einladungslink zum eigenen Discord-Server (z. B. https://discord.gg/…). Leer = keine Discord-Links auf Website und in Mails. */
+export const DISCORD_URL = ''
+/** Entwickler (GitHub-Name pwiepixel). */
+export const AUTHOR_NAME = 'PwiePixel'
+export const AUTHOR_URL = 'https://github.com/PwiePixel'
+
+/**
+ * Namensvarianten, unter denen Leute den Launcher suchen. Nur für JSON-LD `alternateName`; im sichtbaren Text stehen
+ * sie natürlich formuliert (Start, Fußzeile).
+ */
+export const LAUNCHER_ALT_NAMES: readonly string[] = ['Cubiq', 'Cubiq Minecraft Launcher']
+/**
+ * Namen anderer Launcher und Clients – kommen in SEO-Texten (Titel, Beschreibungen, Themen-Seiten, llms.txt) nicht
+ * vor; die Tests prüfen das, llms-full.txt lässt Changelog-Schlagzeilen mit solchen Namen weg.
+ */
+export const COMPETITOR_PATTERN =
+  /Lunar|Badlion|Feather|Prism|MultiMC|Modrinth App|ATLauncher|GDLauncher|TLauncher|OneClient|LabyMod|Essential\b|official launcher|offizielle[rn]? Launcher|launcher oficial/i
+
+export const WEBSITE_ALT_NAMES: readonly string[] = [...LAUNCHER_ALT_NAMES, 'Cubiq Client']
+
+/** Open-Graph-Gebietsschema je Sprache. */
+export const OG_LOCALE: Record<SeoLang, string> = { en: 'en_US', de: 'de_DE', es: 'es_ES' }
+
+/** Öffentliche, indexierbare Seiten (ohne Blog-Beiträge). Reihenfolge = Reihenfolge in der Sitemap. */
+export const SITE_PAGES: readonly { path: string, priority: number }[] = [
+  { path: '/', priority: 1 },
+  { path: '/features', priority: 0.9 },
+  { path: '/download', priority: 0.9 },
+  { path: '/servers', priority: 0.7 },
+  // Themen-Seiten (shared/landing.ts)
+  { path: '/minecraft-launcher', priority: 0.8 },
+  { path: '/modpacks', priority: 0.8 },
+  { path: '/fps-boost-pvp-client', priority: 0.8 },
+  { path: '/blog', priority: 0.7 },
+  { path: '/cosmetics', priority: 0.7 },
+  { path: '/circuits', priority: 0.7 },
+  { path: '/issues', priority: 0.6 },
+  { path: '/roadmap', priority: 0.6 },
+  { path: '/faq', priority: 0.6 },
+  { path: '/creators', priority: 0.6 },
+  { path: '/team', priority: 0.5 },
+  { path: '/newsletter', priority: 0.4 },
+  { path: '/privacy', priority: 0.3 },
+]
+
+/** Umgezogene Seiten (alte Adresse → neue), 301 mit unveränderter Abfrage. `/capes` heißt seit Kosmetik v2 `/cosmetics`. */
+export const MOVED_PAGES: Readonly<Record<string, string>> = { '/capes': '/cosmetics' }
+
+export function isSeoLang(v: unknown): v is SeoLang {
+  return v === 'en' || v === 'de' || v === 'es'
+}
+
+function trimBase(siteUrl: string): string {
+  return siteUrl.replace(/\/+$/, '')
+}
+
+/** Absolute Adresse einer Seite in einer Sprache (Englisch ohne `?lang=`). */
+export function localizedUrl(siteUrl: string, path: string, lang: SeoLang): string {
+  const p = path.startsWith('/') ? path : `/${path}`
+  const url = `${trimBase(siteUrl)}${p}`
+  return lang === DEFAULT_LANG ? url : `${url}?lang=${lang}`
+}
+
+/** Relativer Link, der eine per Adresse gewählte Sprache mitnimmt (`/download#linux` → `/download?lang=de#linux`). */
+export function withLang(to: string, lang: SeoLang | null): string {
+  if (!lang || lang === DEFAULT_LANG || !to.startsWith('/')) return to
+  const hashAt = to.indexOf('#')
+  const base = hashAt === -1 ? to : to.slice(0, hashAt)
+  const hash = hashAt === -1 ? '' : to.slice(hashAt)
+  if (/[?&]lang=/.test(base)) return to
+  return `${base}${base.includes('?') ? '&' : '?'}lang=${lang}${hash}`
+}
+
+export interface Alternate {
+  hreflang: SeoLang | 'x-default'
+  href: string
+}
+
+/** hreflang-Alternativen einer Seite: jede Sprache plus `x-default`. */
+export function alternates(siteUrl: string, path: string, langs: readonly SeoLang[] = SEO_LANGS): Alternate[] {
+  return [
+    ...langs.map((lang) => ({ hreflang: lang, href: localizedUrl(siteUrl, path, lang) })),
+    { hreflang: 'x-default' as const, href: localizedUrl(siteUrl, path, DEFAULT_LANG) },
+  ]
+}
+
+/** Beschreibung auf höchstens `max` Zeichen kürzen (am Wortende, mit „…“). */
+export function clampText(text: string, max = 160): string {
+  const t = text.replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  const cut = t.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–-]+$/, '')}…`
+}
+
+// --- Kopf einer Seite ----------------------------------------------------------------
+
+export interface SeoImage {
+  url: string
+  alt?: string
+  width?: number
+  height?: number
+}
+
+export interface PageSeo {
+  siteUrl: string
+  /** Pfad ohne Sprache, z. B. `/blog/0.6.4`. */
+  path: string
+  /** Sprache, in der die Seite gerendert wird. */
+  lang: SeoLang
+  /** Vollständiger Titel (ohne Vorlage). */
+  title: string
+  description: string
+  image?: SeoImage | null
+  type?: 'website' | 'article'
+  /** Nur für Beiträge: Erscheinungsdatum (YYYY-MM-DD oder ISO). */
+  publishedTime?: string | null
+  /** Sprachen, in denen es die Seite gibt (Standard: alle). */
+  langs?: readonly SeoLang[]
+  /** JSON-LD-Knoten; werden als ein `@graph` ausgegeben. */
+  jsonLd?: JsonLdNode[]
+  noindex?: boolean
+}
+
+/** `key` bestimmt, welche Einträge sich gegenseitig ersetzen (ohne key: nach name/property/rel). */
+export interface HeadLink {
+  rel: string
+  href: string
+  hreflang?: string
+  key?: string
+}
+
+export interface HeadMeta {
+  name?: string
+  property?: string
+  content: string
+  key?: string
+}
+
+export interface HeadScript {
+  type: string
+  innerHTML: string
+  key: string
+}
+
+export interface PageHead {
+  title: string
+  link: HeadLink[]
+  meta: HeadMeta[]
+  script: HeadScript[]
+}
+
+export const DEFAULT_OG_IMAGE: SeoImage = { url: '/og.png', width: 1260, height: 660, alt: 'Cubiq Launcher' }
+
+/** Relative Bildadressen (`/og.png`) werden absolut – Crawler von Netzwerken brauchen volle URLs. */
+export function absoluteUrl(siteUrl: string, url: string): string {
+  if (/^https?:\/\//i.test(url)) return url
+  return `${trimBase(siteUrl)}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+/** Alle Kopf-Einträge einer Seite: kanonische Adresse, hreflang, Open Graph, Twitter, JSON-LD. */
+export function buildPageHead(p: PageSeo): PageHead {
+  const langs = p.langs ?? SEO_LANGS
+  const lang = langs.includes(p.lang) ? p.lang : DEFAULT_LANG
+  const canonical = localizedUrl(p.siteUrl, p.path, lang)
+  const description = clampText(p.description)
+  const image = p.image ?? DEFAULT_OG_IMAGE
+  const imageUrl = absoluteUrl(p.siteUrl, image.url)
+
+  const link: HeadLink[] = [
+    { rel: 'canonical', href: canonical },
+    ...alternates(p.siteUrl, p.path, langs).map((a) => ({ rel: 'alternate', hreflang: a.hreflang, href: a.href, key: `alt-${a.hreflang}` })),
+  ]
+
+  const meta: HeadMeta[] = [
+    { name: 'description', content: description },
+    { name: 'robots', content: p.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large' },
+    { property: 'og:site_name', content: SITE_NAME },
+    { property: 'og:type', content: p.type ?? 'website' },
+    { property: 'og:title', content: p.title },
+    { property: 'og:description', content: description },
+    { property: 'og:url', content: canonical },
+    { property: 'og:image', content: imageUrl },
+    ...(image.width ? [{ property: 'og:image:width', content: String(image.width) }] : []),
+    ...(image.height ? [{ property: 'og:image:height', content: String(image.height) }] : []),
+    ...(image.alt ? [{ property: 'og:image:alt', content: image.alt }] : []),
+    { property: 'og:locale', content: OG_LOCALE[lang] },
+    ...langs.filter((l) => l !== lang).map((l) => ({ property: 'og:locale:alternate', content: OG_LOCALE[l], key: `og:locale:alternate:${l}` })),
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: p.title },
+    { name: 'twitter:description', content: description },
+    { name: 'twitter:image', content: imageUrl },
+    ...(image.alt ? [{ name: 'twitter:image:alt', content: image.alt }] : []),
+  ]
+  if (p.type === 'article' && p.publishedTime) {
+    meta.push({ property: 'article:published_time', content: isoDate(p.publishedTime) })
+  }
+
+  const script: HeadScript[] = p.jsonLd?.length ? [{ type: 'application/ld+json', innerHTML: serializeJsonLd(p.jsonLd), key: 'ld-json' }] : []
+  return { title: p.title, link, meta, script }
+}
+
+/** `2026-09-26` → `2026-09-26T12:00:00Z` (Mittag UTC, damit das Datum in jeder Zeitzone stimmt). */
+export function isoDate(d: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T12:00:00Z` : d
+}
+
+// --- Strukturierte Daten (schema.org, JSON-LD) ----------------------------------------
+
+export type JsonLdNode = { '@type': string | string[], [key: string]: unknown }
+
+/** Mehrere Knoten als ein `@graph`; `<` wird maskiert, damit kein `</script>` im Text den Block beendet. */
+export function serializeJsonLd(nodes: JsonLdNode[]): string {
+  return JSON.stringify({ '@context': 'https://schema.org', '@graph': nodes }).replace(/</g, '\\u003c')
+}
+
+export function organizationId(siteUrl: string): string {
+  return `${trimBase(siteUrl)}/#organization`
+}
+
+export function websiteId(siteUrl: string): string {
+  return `${trimBase(siteUrl)}/#website`
+}
+
+export function softwareId(siteUrl: string): string {
+  return `${trimBase(siteUrl)}/#software`
+}
+
+export function organizationLd(siteUrl: string): JsonLdNode {
+  return {
+    '@type': 'Organization',
+    '@id': organizationId(siteUrl),
+    name: SITE_NAME,
+    alternateName: ['Cubiq'],
+    url: `${trimBase(siteUrl)}/`,
+    founder: { '@type': 'Person', name: AUTHOR_NAME, url: AUTHOR_URL },
+    logo: { '@type': 'ImageObject', url: absoluteUrl(siteUrl, '/icon.png'), width: 512, height: 512 },
+    sameAs: [REPO_URL, DISCORD_URL].filter(Boolean),
+  }
+}
+
+export function websiteLd(siteUrl: string, description: string): JsonLdNode {
+  return {
+    '@type': 'WebSite',
+    '@id': websiteId(siteUrl),
+    name: SITE_NAME,
+    alternateName: [...WEBSITE_ALT_NAMES],
+    url: `${trimBase(siteUrl)}/`,
+    description,
+    inLanguage: [...SEO_LANGS],
+    publisher: { '@id': organizationId(siteUrl) },
+  }
+}
+
+export interface SoftwareInput {
+  siteUrl: string
+  lang: SeoLang
+  description: string
+  version?: string | null
+  releasedAt?: string | null
+  screenshots?: string[]
+  featureList?: string[]
+  keywords?: string[]
+}
+
+export function softwareLd(s: SoftwareInput): JsonLdNode {
+  const shots = (s.screenshots ?? []).map((u) => absoluteUrl(s.siteUrl, u))
+  return {
+    '@type': 'SoftwareApplication',
+    '@id': softwareId(s.siteUrl),
+    name: SITE_NAME,
+    alternateName: [...LAUNCHER_ALT_NAMES],
+    url: `${trimBase(s.siteUrl)}/`,
+    description: s.description,
+    applicationCategory: 'GameApplication',
+    applicationSubCategory: 'Minecraft launcher',
+    operatingSystem: 'Windows 10, Windows 11, Linux',
+    downloadUrl: localizedUrl(s.siteUrl, '/download', DEFAULT_LANG),
+    installUrl: localizedUrl(s.siteUrl, '/download', DEFAULT_LANG),
+    ...(s.version ? { softwareVersion: s.version } : {}),
+    ...(s.releasedAt ? { dateModified: isoDate(s.releasedAt) } : {}),
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
+    isAccessibleForFree: true,
+    license: 'https://www.gnu.org/licenses/gpl-3.0.html',
+    image: absoluteUrl(s.siteUrl, DEFAULT_OG_IMAGE.url),
+    ...(shots.length ? { screenshot: shots } : {}),
+    ...(s.featureList?.length ? { featureList: s.featureList } : {}),
+    ...(s.keywords?.length ? { keywords: s.keywords.join(', ') } : {}),
+    inLanguage: s.lang,
+    author: { '@id': organizationId(s.siteUrl) },
+    creator: { '@type': 'Person', name: AUTHOR_NAME, url: AUTHOR_URL },
+    publisher: { '@id': organizationId(s.siteUrl) },
+  }
+}
+
+export interface BlogPostingInput {
+  siteUrl: string
+  lang: SeoLang
+  /** Update-Beitrag: Version (Pfad `/blog/<version>`). */
+  version?: string
+  /** News-Beitrag (§30): eigener Pfad `/blog/<slug>` statt der Version. */
+  path?: string
+  headline: string
+  description: string
+  datePublished?: string | null
+  dateModified?: string | null
+  images?: string[]
+  /** Autor (Person); sonst das Projekt als Organisation. */
+  authorName?: string | null
+}
+
+export function blogPostingLd(b: BlogPostingInput): JsonLdNode {
+  const url = localizedUrl(b.siteUrl, b.path ?? `/blog/${b.version ?? ''}`, b.lang)
+  const images = (b.images?.length ? b.images : [DEFAULT_OG_IMAGE.url]).map((u) => absoluteUrl(b.siteUrl, u))
+  const modified = b.dateModified ?? b.datePublished
+  return {
+    '@type': 'BlogPosting',
+    '@id': `${url}#post`,
+    headline: clampText(b.headline, 110),
+    description: b.description,
+    url,
+    mainEntityOfPage: url,
+    image: images,
+    ...(b.datePublished ? { datePublished: isoDate(b.datePublished), dateModified: isoDate(modified!) } : {}),
+    inLanguage: b.lang,
+    author: b.authorName
+      ? { '@type': 'Person', name: b.authorName }
+      : { '@type': 'Organization', '@id': organizationId(b.siteUrl), name: SITE_NAME, url: `${trimBase(b.siteUrl)}/` },
+    publisher: { '@id': organizationId(b.siteUrl) },
+    about: { '@id': softwareId(b.siteUrl) },
+  }
+}
+
+/** FAQPage mit genau den sichtbaren Fragen; `path` = Seite, auf der sie stehen (FAQ oder Themen-Seite). */
+export function faqPageLd(siteUrl: string, lang: SeoLang, items: { q: string, a: string }[], path = '/faq'): JsonLdNode {
+  return {
+    '@type': 'FAQPage',
+    '@id': `${localizedUrl(siteUrl, path, lang)}#faq`,
+    inLanguage: lang,
+    mainEntity: items.map((i) => ({ '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a } })),
+  }
+}
+
+/** Brotkrumen: erster Eintrag ist immer die Startseite. */
+export function breadcrumbLd(siteUrl: string, lang: SeoLang, trail: { name: string, path: string }[]): JsonLdNode {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.name, item: localizedUrl(siteUrl, t.path, lang) })),
+  }
+}
+
+// --- Sitemap und robots.txt ------------------------------------------------------------
+
+export interface SitemapPost {
+  version: string
+  date: string | null
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]!)
+}
+
+function sitemapEntries(siteUrl: string, path: string, lastmod: string | null, priority: number, langs: readonly SeoLang[] = SEO_LANGS): string[] {
+  const alt = alternates(siteUrl, path, langs)
+    .map((a) => `<xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${escapeXml(a.href)}"/>`)
+    .join('')
+  return langs.map(
+    (lang) =>
+      `<url><loc>${escapeXml(localizedUrl(siteUrl, path, lang))}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<priority>${priority.toFixed(1)}</priority>${alt}</url>`,
+  )
+}
+
+/** Neuestes Datum (ISO oder YYYY-MM-DD), `null` wenn keins gültig ist. */
+function latest(dates: (string | null | undefined)[]): string | null {
+  let best: string | null = null
+  let bestMs = -Infinity
+  for (const d of dates) {
+    if (!d) continue
+    const ms = Date.parse(isoDate(d))
+    if (Number.isFinite(ms) && ms > bestMs) {
+      best = d
+      bestMs = ms
+    }
+  }
+  return best
+}
+
+/**
+ * Sitemap mit allen Seiten und Beiträgen, jede Sprachfassung als eigener Eintrag mit allen
+ * hreflang-Alternativen. lastmod: Seiten = Zeitpunkt des Builds, Blog-Übersicht = neuester von Build
+ * und letztem Beitrag, Beiträge = Erscheinungsdatum.
+ */
+/** Offene Stelle für die Sitemap (§24.3): `/team/{id}`, zuletzt geändert. */
+export interface SitemapJob {
+  id: string
+  updatedAt: string
+}
+
+/** News-Beitrag des Teams (§30): `/blog/<slug>`, nur in den übersetzten Sprachen. */
+export interface SitemapNews {
+  slug: string
+  updatedAt: string
+  langs: readonly SeoLang[]
+}
+
+export function buildSitemap(
+  siteUrl: string,
+  posts: SitemapPost[],
+  buildTime: string | null,
+  jobs: SitemapJob[] = [],
+  circuits: SitemapJob[] = [],
+  news: SitemapNews[] = [],
+): string {
+  const newestPost = latest([...posts.map((p) => p.date), ...news.map((n) => n.updatedAt)])
+  const newestJob = latest(jobs.map((j) => j.updatedAt))
+  const newestCircuit = latest(circuits.map((c) => c.updatedAt))
+  const lastmodOf = (path: string) =>
+    path === '/blog' ? latest([buildTime, newestPost]) : path === '/team' ? latest([buildTime, newestJob]) : path === '/circuits' ? latest([buildTime, newestCircuit]) : buildTime
+  const urls = [
+    ...SITE_PAGES.flatMap((pg) => sitemapEntries(siteUrl, pg.path, lastmodOf(pg.path), pg.priority)),
+    ...posts.flatMap((p) => sitemapEntries(siteUrl, `/blog/${p.version}`, p.date, 0.5)),
+    ...news.flatMap((n) => sitemapEntries(siteUrl, `/blog/${n.slug}`, n.updatedAt, 0.5, n.langs.includes(DEFAULT_LANG) ? n.langs : [DEFAULT_LANG])),
+    ...jobs.flatMap((j) => sitemapEntries(siteUrl, `/team/${j.id}`, j.updatedAt, 0.4)),
+    // Schaltungs-Bibliothek (§25): jede veröffentlichte Schaltung hat eine eigene Seite.
+    ...circuits.flatMap((c) => sitemapEntries(siteUrl, `/circuits/${c.id}`, c.updatedAt, 0.4)),
+  ]
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`
+}
+
+/**
+ * robots.txt: alles außer API und Admin darf gecrawlt werden. Ausnahmen in /v1: die öffentlichen
+ * Website-Daten (Google rendert Seiten mit denselben Abrufen) und die Umhang-Bilder (Bildersuche).
+ */
+export function buildRobots(siteUrl: string): string {
+  return [
+    'User-agent: *',
+    // Kurzfassung und Volltext für Sprachmodelle (llmstxt.org), server/lib/llms.ts
+    'Allow: /llms.txt',
+    'Allow: /llms-full.txt',
+    'Allow: /v1/site/',
+    'Allow: /v1/capes/*.png',
+    // Kosmetik-Seite: Karten, Texturen und Modelle der 3D-Vorschau (öffentlich, zum Rendern der Seite)
+    'Allow: /v1/cosmetics/*.png',
+    'Allow: /v1/cosmetics/*/model.json',
+    'Allow: /v1/cosmetics/*/template.json',
+    'Disallow: /v1/',
+    'Disallow: /admin',
+    'Disallow: /auth/',
+    'Disallow: /login',
+    'Disallow: /applications',
+    'Disallow: /circuits/submit',
+    'Disallow: /circuits/mine',
+    'Disallow: /issues/new',
+    'Disallow: /issues/mine',
+    'Disallow: /pitch/',
+    '',
+    `Sitemap: ${trimBase(siteUrl)}/sitemap.xml`,
+    '',
+  ].join('\n')
+}

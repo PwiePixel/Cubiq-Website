@@ -1,0 +1,853 @@
+#!/usr/bin/env node
+/**
+ * End-to-End-Smoke-Test gegen den GEBAUTEN Server (`pnpm build` vorher).
+ * Startet einen Mojang-Session-Server-Mock auf 127.0.0.1 und die API mit
+ * einem Wegwerf-Datenordner, spielt die wichtigsten Abläufe per HTTP durch.
+ *
+ *   node scripts/smoke.mjs            (Node-Binary = aktuelles `node`)
+ *   NODE_BIN=/pfad/zu/node24 node scripts/smoke.mjs
+ */
+import { spawn } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { createServer } from 'node:http'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { deflateSync, crc32 } from 'node:zlib'
+import { startMsMock } from './ms-mock.mjs'
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+const PORT = 3000 + Math.floor(Math.random() * 1000) + 3000
+const BASE = `http://127.0.0.1:${PORT}`
+const ADMIN_KEY = 'smoke-admin-key-0123456789abcdef-0123456789'
+const ADMIN_UUID = '0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b'
+const ORIGIN = 'https://allowed.example'
+/** Größte Umhang-Datei (server/lib/png.ts MAX_UPLOAD_BYTES). */
+const MAX_UPLOAD = 20 * 1024 * 1024
+
+// ------------------------------------------------------------ Mojang-Mock
+const joins = new Map()
+// Konten für Skin-Abfragen (Name → UUID → Textur)
+const SKIN_UUID = '5ce0000000000000000000000000abcd'
+const skinTextures = Buffer.from(JSON.stringify({
+  timestamp: 1, profileId: SKIN_UUID, profileName: 'Skinny',
+  textures: { SKIN: { url: 'http://textures.minecraft.net/texture/5ce1', metadata: { model: 'slim' } } },
+})).toString('base64')
+let mojangProfileCalls = 0
+const mojang = createServer((req, res) => {
+  const u = new URL(req.url, 'http://x')
+  const p = joins.get(u.searchParams.get('serverId'))
+  const json = (body) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify(body))
+  }
+  if (u.pathname === '/users/profiles/minecraft/Skinny') {
+    mojangProfileCalls++
+    json({ id: SKIN_UUID, name: 'Skinny' })
+  } else if (u.pathname === `/session/minecraft/profile/${SKIN_UUID}`) {
+    mojangProfileCalls++
+    json({ id: SKIN_UUID, name: 'Skinny', properties: [{ name: 'textures', value: skinTextures }] })
+  } else if (u.pathname === '/session/minecraft/hasJoined' && p && p.name.toLowerCase() === u.searchParams.get('username')?.toLowerCase()) {
+    json({ id: p.uuid, name: p.name, properties: [] })
+  } else {
+    res.writeHead(204)
+    res.end()
+  }
+})
+await new Promise((r) => mojang.listen(0, '127.0.0.1', r))
+const MOJANG = `http://127.0.0.1:${mojang.address().port}`
+
+// ------------------------------------------------------------ Microsoft-/Xbox-/Minecraft-Attrappe (§24.1)
+const MS_CLIENT_ID = 'ac3d320e-d0a2-4910-8e3c-b425883984a9'
+const APPLICANT = 'dddddddddddddddddddddddddddddddd'
+const ms = await startMsMock({
+  clientId: MS_CLIENT_ID,
+  clientSecret: 'smoke-client-secret',
+  accounts: [{ name: 'Applicant', uuid: APPLICANT }, { name: 'Kiddo', uuid: 'e'.repeat(32), xerr: 2148916238 }],
+})
+
+// ------------------------------------------------------------ API starten
+const data = mkdtempSync(join(tmpdir(), 'cubiq-api-smoke-'))
+const api = spawn(process.env.NODE_BIN ?? process.execPath, [join(ROOT, '.output/server/index.mjs')], {
+  env: {
+    ...process.env,
+    PORT: String(PORT),
+    HOST: '127.0.0.1',
+    DATA_DIR: data,
+    SECRET_KEY: 'smoke-secret-0123456789abcdef-0123456789abcdef',
+    ADMIN_API_KEY: ADMIN_KEY,
+    ADMIN_UUIDS: ADMIN_UUID,
+    CORS_ORIGINS: ORIGIN,
+    MOJANG_SESSIONSERVER_URL: MOJANG,
+    MOJANG_API_URL: MOJANG,
+    ALLOW_INSECURE_MOJANG_URL: 'true',
+    PUBLIC_BASE_URL: BASE,
+    TRUST_PROXY: 'cloudflare',
+    RELAY_SECRET: 'smoke-relay-secret-0123456789abcdef-0123456789',
+    RELAY_HOST: 'relay.example.test',
+    MS_CLIENT_ID,
+    MS_CLIENT_SECRET: 'smoke-client-secret',
+    MS_REDIRECT_URI: `${BASE}/auth/microsoft/callback`,
+    MS_AUTHORITY_URL: ms.authority,
+    XBOX_USER_AUTH_URL: ms.xbl,
+    XBOX_XSTS_URL: ms.xsts,
+    MINECRAFT_SERVICES_URL: ms.minecraft,
+    ALLOW_INSECURE_MS_URLS: 'true',
+  },
+  stdio: ['ignore', 'pipe', 'pipe'],
+})
+let serverLog = ''
+api.stdout.on('data', (d) => (serverLog += d))
+api.stderr.on('data', (d) => (serverLog += d))
+
+let failures = 0
+let passed = 0
+function check(name, cond, extra = '') {
+  if (cond) passed++
+  else {
+    failures++
+    console.log(`  ✗ ${name} ${extra}`)
+  }
+}
+async function http(method, path, { token, body, headers = {}, raw, ip = '203.0.113.7' } = {}) {
+  const h = { 'cf-connecting-ip': ip, ...headers }
+  if (token) h.authorization = `Bearer ${token}`
+  let payload
+  if (raw !== undefined) payload = raw
+  else if (body !== undefined) {
+    h['content-type'] = 'application/json'
+    payload = JSON.stringify(body)
+  }
+  const res = await fetch(BASE + path, { method, headers: h, body: payload })
+  const text = await res.text()
+  let json = null
+  try {
+    json = JSON.parse(text)
+  } catch {
+    // kein JSON
+  }
+  return { status: res.status, headers: res.headers, json, text }
+}
+async function loginAs(name, uuid) {
+  const c = await http('POST', '/v1/auth/challenge', { ip: `198.51.100.${Math.floor(Math.random() * 200)}` })
+  joins.set(c.json.serverId, { name, uuid })
+  const v = await http('POST', '/v1/auth/verify', { body: { username: name, serverId: c.json.serverId } })
+  return v
+}
+function png(w, h, rgba = [200, 30, 20, 255]) {
+  const row = Buffer.alloc(1 + w * 4)
+  for (let x = 0; x < w; x++) row.set(rgba, 1 + x * 4)
+  const raw = Buffer.concat(Array.from({ length: h }, () => row))
+  const chunk = (t, d) => {
+    const l = Buffer.alloc(4)
+    l.writeUInt32BE(d.length)
+    const td = Buffer.concat([Buffer.from(t), d])
+    const c = Buffer.alloc(4)
+    c.writeUInt32BE(crc32(td) >>> 0)
+    return Buffer.concat([l, td, c])
+  }
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
+  ihdr[8] = 8
+  ihdr[9] = 6
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
+try {
+  for (let i = 0; i < 100; i++) {
+    try {
+      if ((await fetch(`${BASE}/v1/health`)).ok) break
+    } catch {
+      // startet noch
+    }
+    await new Promise((r) => setTimeout(r, 100))
+  }
+
+  console.log('health, headers, errors')
+  const h = await http('GET', '/v1/health')
+  check('health 200', h.status === 200 && h.json.status === 'ok')
+  check('HSTS', h.headers.get('strict-transport-security')?.includes('max-age=63072000'))
+  check('nosniff', h.headers.get('x-content-type-options') === 'nosniff')
+  check('frame DENY', h.headers.get('x-frame-options') === 'DENY')
+  check('CSP', h.headers.get('content-security-policy')?.startsWith("default-src 'none'"))
+  check('no-store', h.headers.get('cache-control') === 'no-store')
+  const nf = await http('GET', '/v1/does-not-exist')
+  check('404 json', nf.status === 404 && nf.json.error.code === 'not_found')
+  const page = await http('GET', '/')
+  check('website start page', page.status === 200 && page.headers.get('content-type')?.startsWith('text/html') && /script-src [^;]*'nonce-/.test(page.headers.get('content-security-policy') ?? ''))
+
+  console.log('CORS')
+  const pf = await http('OPTIONS', '/v1/me', { headers: { origin: 'https://evil.example', 'access-control-request-method': 'GET' } })
+  check('preflight foreign origin 403', pf.status === 403 && !pf.headers.get('access-control-allow-origin'))
+  const pf2 = await http('OPTIONS', '/v1/me', { headers: { origin: ORIGIN, 'access-control-request-method': 'GET' } })
+  check('preflight allowed origin 204', pf2.status === 204 && pf2.headers.get('access-control-allow-origin') === ORIGIN)
+  const cors = await http('GET', '/v1/health', { headers: { origin: 'https://evil.example' } })
+  check('no ACAO for foreign origin', cors.headers.get('access-control-allow-origin') === null)
+
+  console.log('auth')
+  const unauth = await http('GET', '/v1/me')
+  check('401 without token', unauth.status === 401 && unauth.headers.get('www-authenticate') === 'Bearer')
+  const a = await loginAs('PwiePixel', ADMIN_UUID)
+  check('verify 200', a.status === 200 && /^cubiq_/.test(a.json.token) && a.json.user.admin === true, JSON.stringify(a.json))
+  const A = a.json.token
+  const b = await loginAs('Bob', 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0')
+  const B = b.json.token
+  const c0 = await http('POST', '/v1/auth/challenge')
+  const bad = await http('POST', '/v1/auth/verify', { body: { username: 'Bob', serverId: c0.json.serverId } })
+  check('not joined → 401', bad.status === 401 && bad.json.error.code === 'not_joined')
+  const reuse = await http('POST', '/v1/auth/verify', { body: { username: 'Bob', serverId: c0.json.serverId } })
+  check('challenge single-use', reuse.json?.error.code === 'invalid_challenge')
+  const inval = await http('POST', '/v1/auth/verify', { body: { username: 'Bob', serverId: 'nope', extra: 1 } })
+  check('validation 400 with fields', inval.status === 400 && inval.json.error.code === 'invalid_request' && inval.json.error.fields.length >= 1)
+  const ctype = await http('POST', '/v1/auth/verify', { raw: '{}', headers: { 'content-type': 'text/plain' } })
+  check('415 wrong content type', ctype.status === 415)
+  const big = await http('PATCH', '/v1/me', { token: A, raw: JSON.stringify({ showBadge: true, pad: 'x'.repeat(20000) }), headers: { 'content-type': 'application/json' } })
+  check('413 body too large', big.status === 413)
+  const broken = await http('PATCH', '/v1/me', { token: A, raw: '{"showBadge":', headers: { 'content-type': 'application/json' } })
+  check('400 invalid json', broken.status === 400 && broken.json.error.code === 'invalid_json')
+
+  console.log('profile')
+  const me = await http('GET', '/v1/me', { token: B })
+  check('me defaults', me.json.settings.showBadge === true && me.json.settings.shareServer === false && me.json.settings.presenceVisibility === 'friends')
+  const patched = await http('PATCH', '/v1/me', { token: B, body: { shareServer: true } })
+  check('patch settings', patched.json.settings.shareServer === true)
+
+  console.log('capes')
+  const cat = await http('GET', '/v1/capes', { token: B })
+  check('catalog', cat.status === 200 && Array.isArray(cat.json.capes))
+  const up = await http('POST', '/v1/capes/upload?name=Bobs%20Umhang', { token: B, raw: png(64, 32), headers: { 'content-type': 'image/png' } })
+  check('upload 201 pending', up.status === 201 && up.json.cape.status === 'pending' && up.json.cape.scale === 1, JSON.stringify(up.json))
+  const capeId = up.json.cape.id
+  const fake = await http('POST', '/v1/capes/upload', { token: B, raw: Buffer.from('GIF89a not a png at all.............................'), headers: { 'content-type': 'image/png' } })
+  check('fake png 400', fake.status === 400 && fake.json.error.code === 'invalid_png')
+  const poly = await http('POST', '/v1/capes/upload', { token: B, raw: Buffer.concat([png(64, 32), Buffer.from('PK\x03\x04<html>')]), headers: { 'content-type': 'image/png' } })
+  check('polyglot 400', poly.status === 400)
+  const dims = await http('POST', '/v1/capes/upload', { token: B, raw: png(100, 50), headers: { 'content-type': 'image/png' } })
+  check('wrong dims 400', dims.json?.error.code === 'invalid_dimensions')
+  const huge = await http('POST', '/v1/capes/upload', { token: B, raw: Buffer.alloc(MAX_UPLOAD + 1, 1), headers: { 'content-type': 'image/png' } })
+  check('oversized 413', huge.status === 413)
+  const hidden = await http('GET', `/v1/capes/${capeId}.png`)
+  check('pending texture hidden', hidden.status === 404)
+  const own = await fetch(`${BASE}/v1/capes/${capeId}.png`, { headers: { authorization: `Bearer ${B}` } })
+  check('owner sees pending texture (private)', own.status === 200 && own.headers.get('cache-control') === 'private, no-store')
+  await own.arrayBuffer()
+  const pend = await http('GET', '/v1/admin/capes?status=pending', { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('admin list pending', pend.json.capes.some((c) => c.id === capeId))
+  const noadmin = await http('GET', '/v1/admin/stats', { token: B })
+  check('non-admin 403', noadmin.status === 403)
+  const wrongkey = await http('GET', '/v1/admin/stats', { headers: { 'x-admin-key': 'x'.repeat(40) } })
+  check('wrong admin key 401', wrongkey.status === 401)
+  const appr = await http('POST', `/v1/admin/capes/${capeId}/approve`, { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('approve', appr.json.cape.status === 'approved')
+  const tex = await fetch(appr.json.cape.url.replace(BASE, BASE))
+  const etag = tex.headers.get('etag')
+  check('public texture', tex.status === 200 && tex.headers.get('content-type') === 'image/png' && tex.headers.get('cache-control') === 'public, max-age=31536000, immutable' && tex.headers.get('cross-origin-resource-policy') === 'cross-origin')
+  await tex.arrayBuffer()
+  const stale = await fetch(`${BASE}/v1/capes/${capeId}.png`, { headers: { authorization: `Bearer cubiq_${'x'.repeat(43)}` } })
+  check('invalid token still loads public texture', stale.status === 200)
+  await stale.arrayBuffer()
+  const t304 = await fetch(`${BASE}/v1/capes/${capeId}.png`, { headers: { 'if-none-match': etag } })
+  check('304 with ETag', t304.status === 304)
+  const meta = await http('GET', `/v1/capes/${capeId}`)
+  check('cape metadata', meta.json.cape.animated === false && meta.json.cape.frames === 1 && meta.json.cape.scale === 1)
+  const setc = await http('PUT', '/v1/me/cape', { token: B, body: { capeId } })
+  check('set active cape', setc.json.activeCape.id === capeId)
+
+  console.log('lookup + presence + friends + events')
+  const lookupBody = { uuids: ['b0b0b0b0-b0b0-b0b0-b0b0-b0b0b0b0b0b0', 'ffffffffffffffffffffffffffffffff'] }
+  const lk0 = await http('POST', '/v1/players/lookup', { token: A, body: lookupBody })
+  check('lookup: no live badge while nobody plays', lk0.json.players.length === 1 && lk0.json.players[0].cape.id === capeId && lk0.json.players[0].badge === false, JSON.stringify(lk0.json))
+  const game = { version: '1.21.1', loader: 'fabric' }
+  const pa = await http('POST', '/v1/presence', { token: A, body: { state: 'in-game', via: 'client', game } })
+  const pb = await http('POST', '/v1/presence', { token: B, body: { state: 'in-game', via: 'launcher', game } })
+  check('presence with via', pa.status === 200 && pb.status === 200, `${pa.status} ${pb.status}`)
+  const lk = await http('POST', '/v1/players/lookup', { token: A, body: lookupBody })
+  check('lookup', lk.json.players.length === 1 && lk.json.players[0].cape.id === capeId && lk.json.players[0].badge === true, JSON.stringify(lk.json))
+  await http('POST', '/v1/presence', { token: B, body: { state: 'offline', via: 'launcher' } })
+
+  // SSE-Stream von A öffnen, dann schickt B eine Anfrage.
+  const ac = new AbortController()
+  const events = []
+  const sse = fetch(`${BASE}/v1/events`, { headers: { authorization: `Bearer ${A}`, accept: 'text/event-stream' }, signal: ac.signal }).then(async (res) => {
+    check('sse content-type', res.headers.get('content-type')?.startsWith('text/event-stream'), res.headers.get('content-type'))
+    const reader = res.body.getReader()
+    const dec = new TextDecoder()
+    let buf = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buf += dec.decode(value)
+      for (const m of buf.matchAll(/event: (\S+)\ndata: (.*)\n\n/g)) events.push(m[1])
+      buf = buf.slice(buf.lastIndexOf('\n\n') + 2)
+    }
+  }).catch(() => {})
+  await new Promise((r) => setTimeout(r, 300))
+  const fr = await http('POST', '/v1/friends/requests', { token: B, body: { target: 'pwiepixel' } })
+  check('friend request 201', fr.status === 201 && fr.json.status === 'sent')
+  const acc = await http('POST', '/v1/friends/requests/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0/accept', { token: A })
+  check('accept', acc.status === 200 && acc.json.friend.name === 'Bob')
+  const pr = await http('POST', '/v1/presence', { token: B, body: { state: 'in-game', game: { version: '1.21.1', loader: 'fabric', server: 'Play.Example.net' } } })
+  check('presence', pr.json.expiresInSec === 180)
+  await new Promise((r) => setTimeout(r, 300))
+  const fl = await http('GET', '/v1/friends', { token: A })
+  const bob = fl.json.friends.find((f) => f.name === 'Bob')
+  check('friend presence with server', bob?.presence?.state === 'in-game' && bob.presence.game.server === 'play.example.net', JSON.stringify(fl.json))
+  check('sse events', events.includes('hello') && events.includes('friend_request') && events.includes('presence'), events.join(','))
+  ac.abort()
+  await sse
+
+  console.log('cosmetics + emotes + player events + skins')
+  const BOB = 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0'
+  const tpl = await fetch(`${BASE}/v1/cosmetics/templates`)
+  const tplJson = await tpl.json()
+  check('templates public + cacheable', tpl.status === 200 && tpl.headers.get('cache-control') === 'public, max-age=300' && tplJson.templates.some((t) => t.id === 'crown' && t.textureWidth === 64))
+  const tpl304 = await fetch(`${BASE}/v1/cosmetics/templates`, { headers: { 'if-none-match': tpl.headers.get('etag') } })
+  check('templates 304', tpl304.status === 304)
+  const guide = await fetch(`${BASE}/v1/cosmetics/templates/crown.png?scale=2`)
+  const guideBuf = Buffer.from(await guide.arrayBuffer())
+  check('template guide png', guide.status === 200 && guide.headers.get('content-type') === 'image/png' && guideBuf.readUInt32BE(16) === 128 && guideBuf.readUInt32BE(20) === 32)
+  const one = await http('GET', '/v1/cosmetics/templates/wings')
+  check('single template', one.json?.template?.cubes?.length === 2 && one.json.template.cubes[0].anim === 'flap')
+  const ccat = await http('GET', '/v1/cosmetics', { token: B })
+  const ids = ccat.json?.cosmetics?.map((c) => c.id) ?? []
+  check('cosmetic catalog', ccat.status === 200 && ccat.json.templates.length >= 10 && ['cubiq_cap', 'lamp_helmet', 'top_hat', 'dragon_wings', 'footprints', 'winken', 'tanzen'].every((i) => ids.includes(i)), ids.join(','))
+  check('public cap is free for Bob', ccat.json.cosmetics.find((c) => c.id === 'cubiq_cap')?.owned === true)
+  const eqMissing = await http('PUT', '/v1/me/cosmetics', { token: B, body: { hat: 'no_such_hat' } })
+  check('equip unknown → 404', eqMissing.status === 404 && eqMissing.json.error.code === 'cosmetic_not_found')
+  const eqSlot = await http('PUT', '/v1/me/cosmetics', { token: B, body: { wings: 'cubiq_cap' } })
+  check('equip wrong slot → 400', eqSlot.status === 400 && eqSlot.json.error.code === 'wrong_slot')
+  const eqEmpty = await http('PUT', '/v1/me/cosmetics', { token: B, body: {} })
+  check('equip empty body → 400', eqEmpty.status === 400 && eqEmpty.json.error.code === 'invalid_request')
+
+  // A beobachtet Bob über den Spieler-Stream
+  const pac = new AbortController()
+  const pevents = []
+  const psse = fetch(`${BASE}/v1/events/players?uuids=${BOB},ffffffff-ffff-ffff-ffff-ffffffffffff`, { headers: { authorization: `Bearer ${A}` }, signal: pac.signal }).then(async (res) => {
+    check('player sse content-type', res.headers.get('content-type') === 'text/event-stream')
+    const reader = res.body.getReader()
+    const dec = new TextDecoder()
+    let buf = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buf += dec.decode(value)
+      for (const m of buf.matchAll(/event: (\S+)\ndata: (.*)\n\n/g)) pevents.push({ event: m[1], data: JSON.parse(m[2]) })
+      buf = buf.slice(buf.lastIndexOf('\n\n') + 2)
+    }
+  }).catch(() => {})
+  await new Promise((r) => setTimeout(r, 300))
+  const badStream = await http('GET', '/v1/events/players?uuids=nope', { token: A })
+  check('player sse bad uuids → 400', badStream.status === 400)
+  const eq = await http('PUT', '/v1/me/cosmetics', { token: B, body: { hat: 'cubiq_cap', aura: 'footprints' } })
+  check('equip free', eq.status === 200 && eq.json.equipped.hat?.id === 'cubiq_cap' && eq.json.equipped.aura?.template === 'trail' && eq.json.equipped.wings === null, JSON.stringify(eq.json))
+  const emote = await http('POST', '/v1/emotes/play', { token: B, body: { emote: 'winken' } })
+  check('emote play', emote.status === 200 && emote.json.emote === 'winken' && emote.json.durationMs === 2000)
+  const emote2 = await http('POST', '/v1/emotes/play', { token: B, body: { emote: 'jubeln' } })
+  check('emote rate limit 429', emote2.status === 429 && Number(emote2.headers.get('retry-after')) >= 1)
+  const emoteLocked = await http('POST', '/v1/emotes/play', { token: B, body: { emote: 'tanzen' } })
+  check('locked emote 403', emoteLocked.status === 403 && emoteLocked.json.error.code === 'emote_locked')
+  const skinChanged = await http('POST', '/v1/me/skin-changed', { token: B })
+  check('skin-changed 204', skinChanged.status === 204)
+
+  // Uploads
+  const upc = await http('POST', '/v1/cosmetics/upload?template=crown&name=Bobs%20Krone', { token: B, raw: png(64, 16), headers: { 'content-type': 'image/png' } })
+  check('cosmetic upload 201 pending', upc.status === 201 && upc.json.cosmetic.status === 'pending' && upc.json.cosmetic.texture.scale === 1, JSON.stringify(upc.json))
+  const cid = upc.json.cosmetic.id
+  const upAnimNoTime = await http('POST', '/v1/cosmetics/upload?template=halo', { token: B, raw: png(32, 32), headers: { 'content-type': 'image/png' } })
+  check('animated without frameTimeMs → 400', upAnimNoTime.json?.error.code === 'frame_time_required')
+  const upAnim = await http('POST', '/v1/cosmetics/upload?template=halo&frameTimeMs=100', { token: B, raw: png(64, 64, [250, 200, 60, 255]), headers: { 'content-type': 'image/png' } })
+  check('animated strip upload', upAnim.status === 201 && upAnim.json.cosmetic.texture.frames === 4 && upAnim.json.cosmetic.texture.scale === 2 && upAnim.json.cosmetic.texture.frameTimeMs === 100, JSON.stringify(upAnim.json))
+  const upBad = await http('POST', '/v1/cosmetics/upload?template=crown', { token: B, raw: png(60, 16), headers: { 'content-type': 'image/png' } })
+  check('wrong size → 400', upBad.json?.error.code === 'invalid_dimensions')
+  const upNoTpl = await http('POST', '/v1/cosmetics/upload?template=nope', { token: B, raw: png(64, 16), headers: { 'content-type': 'image/png' } })
+  check('unknown template → 400', upNoTpl.json?.error.code === 'unknown_template')
+  const hiddenC = await http('GET', `/v1/cosmetics/${cid}.png`)
+  check('pending cosmetic texture hidden', hiddenC.status === 404 && hiddenC.json.error.code === 'cosmetic_not_found')
+  const ownC = await fetch(`${BASE}/v1/cosmetics/${cid}.png`, { headers: { authorization: `Bearer ${B}` } })
+  check('owner sees pending cosmetic (private)', ownC.status === 200 && ownC.headers.get('cache-control') === 'private, no-store')
+  await ownC.arrayBuffer()
+  const eqOwn = await http('PUT', '/v1/me/cosmetics', { token: B, body: { hat: cid } })
+  check('equip own pending upload', eqOwn.json?.equipped?.hat?.id === cid)
+  const lkc = await http('POST', '/v1/players/lookup', { token: A, body: { uuids: [BOB] } })
+  check('lookup: pending hat hidden from others, aura shown', lkc.json.players[0].cosmetics.hat === null && lkc.json.players[0].cosmetics.aura?.id === 'footprints', JSON.stringify(lkc.json))
+  const lkSelf = await http('POST', '/v1/players/lookup', { token: B, body: { uuids: [BOB] } })
+  check('lookup: owner sees own pending hat', lkSelf.json.players[0].cosmetics.hat?.id === cid)
+  const pendC = await http('GET', '/v1/admin/cosmetics?status=pending', { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('admin lists pending cosmetics', pendC.json.cosmetics.some((c) => c.id === cid && c.owner.name === 'Bob'))
+  const apprC = await http('POST', `/v1/admin/cosmetics/${cid}/approve`, { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('approve cosmetic', apprC.json?.cosmetic?.status === 'approved')
+  const pubC = await fetch(apprC.json.cosmetic.texture.url)
+  check('approved cosmetic texture public', pubC.status === 200 && pubC.headers.get('cache-control') === 'public, max-age=31536000, immutable')
+  await pubC.arrayBuffer()
+  const lkc2 = await http('POST', '/v1/players/lookup', { token: A, body: { uuids: [BOB] } })
+  check('lookup: approved hat visible', lkc2.json.players[0].cosmetics.hat?.id === cid && lkc2.json.players[0].cosmetics.hat.template === 'crown')
+  const hideC = await http('PATCH', '/v1/me', { token: B, body: { showCosmeticsToOthers: false } })
+  check('setting showCosmeticsToOthers', hideC.json?.settings?.showCosmeticsToOthers === false)
+  const lkc3 = await http('POST', '/v1/players/lookup', { token: A, body: { uuids: [BOB] } })
+  check('lookup: hidden cosmetics', lkc3.json.players[0].cosmetics.hat === null && lkc3.json.players[0].cosmetics.aura === null)
+  await http('PATCH', '/v1/me', { token: B, body: { showCosmeticsToOthers: true } })
+
+  // Codes für Kosmetik/Emotes
+  const cc = await http('POST', '/v1/admin/codes', { headers: { 'x-admin-key': ADMIN_KEY }, body: { cosmeticId: 'tanzen', count: 1 } })
+  check('create emote code', cc.status === 201 && cc.json.codes[0].cosmeticId === 'tanzen' && cc.json.codes[0].capeId === null)
+  const rd = await http('POST', '/v1/redeem', { token: B, body: { code: cc.json.codes[0].code } })
+  check('redeem emote code', rd.status === 200 && rd.json.kind === 'cosmetic' && rd.json.cosmetic.id === 'tanzen' && rd.json.cape === null && rd.json.alreadyOwned === false, JSON.stringify(rd.json))
+  const mine = await http('GET', '/v1/me/cosmetics', { token: B })
+  check('me/cosmetics lists unlocked emote', mine.json.emotes.includes('tanzen') && mine.json.equipped.hat?.id === cid)
+  const both = await http('POST', '/v1/admin/codes', { headers: { 'x-admin-key': ADMIN_KEY }, body: { cosmeticId: 'tanzen', capeId: 'team' } })
+  check('code with capeId and cosmeticId → 400', both.status === 400)
+
+  // Skins
+  const sk = await http('GET', '/v1/skins/by-name/Skinny', { token: B })
+  check('skin by name', sk.status === 200 && sk.json.uuid === '5ce0000000000000000000000000abcd' && sk.json.model === 'slim' && sk.json.textureUrl === 'https://textures.minecraft.net/texture/5ce1', JSON.stringify(sk.json))
+  const calls = mojangProfileCalls
+  const sk2 = await http('GET', '/v1/skins/by-uuid/5ce00000-0000-0000-0000-00000000abcd', { token: B })
+  check('skin by uuid from cache', sk2.json?.name === 'Skinny' && mojangProfileCalls === calls)
+  const skNone = await http('GET', '/v1/skins/by-name/NoSuchPlayer', { token: B })
+  check('unknown skin 404', skNone.status === 404 && skNone.json.error.code === 'player_not_found')
+  const skAnon = await http('GET', '/v1/skins/by-name/Skinny')
+  check('skin lookup needs auth', skAnon.status === 401)
+
+  await new Promise((r) => setTimeout(r, 300))
+  const types = pevents.map((e) => e.event)
+  check('player sse hello', pevents[0]?.event === 'hello' && pevents[0].data.watching === 2, JSON.stringify(pevents[0]))
+  check('player sse emote/skin/cosmetics', types.includes('emote') && types.includes('skin') && types.includes('cosmetics'), types.join(','))
+  check('player sse only for watched uuid', pevents.filter((e) => e.event !== 'hello').every((e) => e.data.uuid === BOB))
+  check('player sse: cosmetics event after approval shows hat', pevents.some((e) => e.event === 'cosmetics' && e.data.cosmetics.hat?.id === cid))
+  pac.abort()
+  await psse
+
+  console.log('sync')
+  const skinB64 = png(64, 64).toString('base64')
+  const sPut = await http('PUT', '/v1/me/sync/skins/a1b2c3d4e5f6', { token: A, body: { name: 'Mein Skin', variant: 'slim', png: skinB64 } })
+  check('sync skin upload', sPut.status === 200 && sPut.json.skin.id === 'a1b2c3d4e5f6' && /^[0-9a-f]{64}$/.test(sPut.json.skin.sha256), JSON.stringify(sPut.json))
+  const sPng = await http('GET', '/v1/me/sync/skins/a1b2c3d4e5f6.png', { token: A })
+  check('sync skin download private', sPng.status === 200 && sPng.headers.get('content-type') === 'image/png' && sPng.headers.get('cache-control') === 'private, no-store')
+  const sPngB = await http('GET', '/v1/me/sync/skins/a1b2c3d4e5f6.png', { token: B })
+  check('sync skin hidden from others', sPngB.status === 404 && sPngB.json.error.code === 'skin_not_found')
+  const sBadPng = await http('PUT', '/v1/me/sync/skins/a1b2c3d4e5f7', { token: A, body: { name: 'x', variant: 'classic', png: png(32, 32).toString('base64') } })
+  check('sync skin wrong size → 400', sBadPng.status === 400 && sBadPng.json.error.code === 'invalid_dimensions')
+  const sBadId = await http('PUT', '/v1/me/sync/skins/NOT-AN-ID', { token: A, body: { name: 'x', variant: 'classic', png: skinB64 } })
+  check('sync skin bad id → 404', sBadId.status === 404)
+  const sPatch = await http('PATCH', '/v1/me/sync/skins/a1b2c3d4e5f6', { token: A, body: { name: 'Neu' } })
+  check('sync skin rename', sPatch.json?.skin?.name === 'Neu' && sPatch.json.skin.variant === 'slim')
+  const sDel = await http('DELETE', '/v1/me/sync/skins/0000000000aa', { token: A })
+  check('sync skin delete unknown 204', sDel.status === 204)
+  const sPre = await http('PUT', '/v1/me/sync/presets', { token: A, body: { data: { presets: [{ name: 'PvP' }] }, updatedAt: '2026-09-25T10:00:00.000Z' } })
+  check('sync presets', sPre.status === 200 && sPre.json.presets.updatedAt === '2026-09-25T10:00:00.000Z')
+  const sStale = await http('PUT', '/v1/me/sync/presets', { token: A, body: { data: {}, updatedAt: '2026-09-25T09:00:00.000Z' } })
+  check('sync presets stale 409 + current', sStale.status === 409 && sStale.json.error.code === 'stale' && sStale.json.error.current.data.presets[0].name === 'PvP', JSON.stringify(sStale.json))
+  const sSet = await http('PUT', '/v1/me/sync/settings', { token: A, body: { data: { theme: 'dark', accent: 'redstone', language: 'de' }, updatedAt: '2026-09-25T10:00:00.000Z' } })
+  check('sync settings', sSet.status === 200 && sSet.json.settings.data.language === 'de')
+  const sSetBad = await http('PUT', '/v1/me/sync/settings', { token: A, body: { data: { maxMemoryMb: 4096 }, updatedAt: '2026-09-25T10:00:00.000Z' } })
+  check('sync settings whitelist → 400', sSetBad.status === 400 && sSetBad.json.error.code === 'invalid_request')
+  const sAll = await http('GET', '/v1/me/sync', { token: A })
+  check('sync overview', sAll.json?.skins?.[0]?.name === 'Neu' && sAll.json.deletedSkins[0]?.id === '0000000000aa' && sAll.json.presets && sAll.json.settings, JSON.stringify(sAll.json))
+  const sAllB = await http('GET', '/v1/me/sync', { token: B })
+  check('sync overview of other account empty', sAllB.json?.skins?.length === 0 && sAllB.json.presets === null)
+
+  console.log('redeem brute force + rate limits')
+  const statuses = []
+  for (let i = 0; i < 7; i++) {
+    statuses.push((await http('POST', '/v1/capes/redeem', { token: B, body: { code: 'ABCDE-FGHJK-MNPQR-STVWX' } })).status)
+  }
+  check('redeem: 5× 404 then 429', statuses.slice(0, 5).every((s) => s === 404) && statuses[5] === 429, statuses.join(','))
+  const rl = []
+  for (let i = 0; i < 22; i++) rl.push(await http('POST', '/v1/auth/challenge', { ip: '192.0.2.99' }))
+  const last = rl.at(-1)
+  check('challenge rate limit 429 + Retry-After', last.status === 429 && Number(last.headers.get('retry-after')) > 0)
+
+  console.log('chat + realtime stream')
+  /** Öffnet `GET /v1/events/me` und sammelt die SSE-Blöcke. */
+  async function openStream(token, lastEventId) {
+    const ctrl = new AbortController()
+    const headers = { authorization: `Bearer ${token}`, 'cf-connecting-ip': '203.0.113.9' }
+    if (lastEventId) headers['last-event-id'] = lastEventId
+    const res = await fetch(`${BASE}/v1/events/me`, { headers, signal: ctrl.signal })
+    const frames = []
+    const waiters = []
+    let buf = ''
+    ;(async () => {
+      const dec = new TextDecoder()
+      try {
+        for await (const chunk of res.body) {
+          buf += dec.decode(chunk, { stream: true })
+          let i
+          while ((i = buf.indexOf('\n\n')) >= 0) {
+            const block = buf.slice(0, i)
+            buf = buf.slice(i + 2)
+            const f = { id: /^id: (.+)$/m.exec(block)?.[1] ?? null, event: /^event: (.+)$/m.exec(block)?.[1], data: JSON.parse(/^data: (.+)$/m.exec(block)?.[1] ?? 'null'), at: Date.now() }
+            frames.push(f)
+            for (const w of waiters.splice(0)) w()
+          }
+        }
+      } catch {
+        // abgebrochen
+      }
+    })()
+    const waitFor = async (pred, ms = 3000) => {
+      const end = Date.now() + ms
+      while (Date.now() < end) {
+        const hit = frames.find(pred)
+        if (hit) return hit
+        await new Promise((r) => {
+          waiters.push(r)
+          setTimeout(r, 50)
+        })
+      }
+      return null
+    }
+    return { res, frames, waitFor, close: () => ctrl.abort() }
+  }
+  // A und B sind seit „friends + events“ befreundet.
+  const sB = await openStream(B)
+  check('events/me content type', sB.res.status === 200 && sB.res.headers.get('content-type')?.startsWith('text/event-stream'))
+  const hello = await sB.waitFor((f) => f.event === 'hello')
+  check('events/me hello with id', hello?.id?.includes('.') && hello.data.keepaliveSec === 20, JSON.stringify(hello))
+  const dmR = await http('POST', '/v1/chat/dms', { token: A, body: { uuid: 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0' } })
+  check('open dm', dmR.status === 200 && dmR.json.conversation.kind === 'dm', JSON.stringify(dmR.json))
+  const dmId = dmR.json.conversation.id
+  const sentAt = Date.now()
+  const sent = await http('POST', `/v1/chat/conversations/${dmId}/messages`, { token: A, body: { text: 'Hallo Bob', nonce: 'smoke-nonce-1' } })
+  check('send message 201', sent.status === 201 && sent.json.message.text === 'Hallo Bob')
+  const live = await sB.waitFor((f) => f.event === 'chat_message')
+  check('message pushed ≤3 s', live && live.at - sentAt < 3000 && live.data.message.text === 'Hallo Bob', live ? `${live.at - sentAt} ms` : 'none')
+  const dup = await http('POST', `/v1/chat/conversations/${dmId}/messages`, { token: A, body: { text: 'Hallo Bob', nonce: 'smoke-nonce-1' } })
+  check('nonce idempotent 200', dup.status === 200 && dup.json.message.id === sent.json.message.id)
+  const lastId = sB.frames.filter((f) => f.id).at(-1).id
+  sB.close()
+  // Bilder: PNG und WebP (Wasm-Dekoder aus den Server-Assets), neu kodiert.
+  const upPng = await http('POST', '/v1/chat/attachments', { token: A, raw: png(40, 20), headers: { 'content-type': 'image/png' } })
+  check('upload png', upPng.status === 201 && upPng.json.attachment.mime === 'image/jpeg', JSON.stringify(upPng.json))
+  const webp1x1 = Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64')
+  const upWebp = await http('POST', '/v1/chat/attachments', { token: A, raw: webp1x1, headers: { 'content-type': 'image/webp' } })
+  check('upload webp (wasm in bundle)', upWebp.status === 201 && upWebp.json.attachment.width === 1, JSON.stringify(upWebp.json))
+  const mismatch = await http('POST', '/v1/chat/attachments', { token: A, raw: png(4, 4), headers: { 'content-type': 'image/webp' } })
+  check('upload type mismatch 415', mismatch.status === 415)
+  const withImg = await http('POST', `/v1/chat/conversations/${dmId}/messages`, { token: A, body: { attachments: [upPng.json.attachment.id, upWebp.json.attachment.id] } })
+  check('send with images', withImg.status === 201 && withImg.json.message.attachments.length === 2)
+  const img = await fetch(`${BASE}/v1/chat/attachments/${upPng.json.attachment.id}?thumb=1`, { headers: { authorization: `Bearer ${B}` } })
+  const imgBytes = Buffer.from(await img.arrayBuffer())
+  check('member reads image', img.status === 200 && img.headers.get('content-type') === 'image/jpeg' && imgBytes[0] === 0xff && img.headers.get('cache-control')?.startsWith('private'))
+  // Wiederaufnahme mit Last-Event-ID.
+  const sB2 = await openStream(B, lastId)
+  const replayed = await sB2.waitFor((f) => f.event === 'chat_message' && f.data.message.attachments.length === 2)
+  check('resume via Last-Event-ID', replayed !== null && sB2.frames[0].data.resumed === true)
+  sB2.close()
+  const sB3 = await openStream(B, 'altepoche.1')
+  check('resync on unknown epoch', (await sB3.waitFor((f) => f.event === 'resync'))?.data.reason === 'restart')
+  sB3.close()
+  const convs = await http('GET', '/v1/chat/conversations', { token: B })
+  check('conversation list + unread', convs.json.conversations[0]?.unread === 2, JSON.stringify(convs.json.conversations[0]?.unread))
+  const unread = await http('GET', '/v1/chat/unread', { token: B })
+  check('unread summary', unread.json.total === 2)
+  const read = await http('POST', `/v1/chat/conversations/${dmId}/read`, { token: B, body: { seq: 2 } })
+  check('mark read', read.json.conversation.unread === 0)
+  const react = await http('PUT', `/v1/chat/messages/${sent.json.message.id}/reactions/heart`, { token: B })
+  check('reaction', react.json.reactions[0]?.emoji === 'heart')
+  const badEmoji = await http('PUT', `/v1/chat/messages/${sent.json.message.id}/reactions/poop`, { token: B })
+  check('unknown reaction 404', badEmoji.status === 404)
+  const typing = await http('POST', `/v1/chat/conversations/${dmId}/typing`, { token: B, body: { typing: true } })
+  check('typing 204', typing.status === 204)
+  const priv = await http('GET', '/v1/servers/status?address=127.0.0.1:25565', { token: B })
+  check('server status refuses private address', priv.json.status.online === false && priv.json.status.reason === 'private_address')
+  const rep = await http('POST', '/v1/reports', { token: B, body: { kind: 'message', reason: 'spam', messageId: sent.json.message.id, note: 'smoke' } })
+  check('report message', rep.status === 201 && rep.json.report.status === 'open')
+  const adminList = await http('GET', '/v1/admin/reports?status=open', { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('admin report list', adminList.json.reports[0]?.id === rep.json.report.id && adminList.json.reports[0].preview === 'Hallo Bob')
+  const detail = await http('GET', `/v1/admin/reports/${rep.json.report.id}`, { headers: { 'x-admin-key': ADMIN_KEY } })
+  check('admin report detail with context', detail.json.report.evidence.messages.length >= 2)
+  const dismiss = await http('POST', `/v1/admin/reports/${rep.json.report.id}/actions`, { headers: { 'x-admin-key': ADMIN_KEY }, body: { action: 'dismiss' } })
+  check('admin dismiss', dismiss.json.report.status === 'resolved' && dismiss.json.report.outcome === 'dismissed')
+  const stranger = (await loginAs('Stranger', 'cccccccccccccccccccccccccccccccc')).json.token
+  const snoop = await http('GET', `/v1/chat/conversations/${dmId}/messages`, { token: stranger })
+  check('stranger gets 404', snoop.status === 404 && snoop.json.error.code === 'conversation_not_found')
+  const snoopImg = await http('GET', `/v1/chat/attachments/${upPng.json.attachment.id}`, { token: stranger })
+  check('stranger cannot read image', snoopImg.status === 404)
+
+  console.log('waypoints + shared screenshots')
+  {
+    const wp = { name: 'Basis', x: 100, y: 64, z: -20, dimension: 'minecraft:overworld', world: { type: 'server', address: 'Play.Example.net' }, color: 0xe0281e }
+    const sentWp = await http('POST', `/v1/chat/conversations/${dmId}/messages`, { token: A, body: { waypoint: wp } })
+    check('send waypoint card', sentWp.status === 201 && sentWp.json.message.waypoint?.world.address === 'play.example.net' && sentWp.json.message.text === null, JSON.stringify(sentWp.json))
+    const badWp = await http('POST', `/v1/chat/conversations/${dmId}/messages`, { token: A, body: { waypoint: { ...wp, world: { type: 'world', id: 'Meine Welt' } } } })
+    check('waypoint without free text', badWp.status === 400)
+    const up = await http('POST', '/v1/shares', { token: A, raw: png(64, 36), headers: { 'content-type': 'image/png' } })
+    check('share upload 201', up.status === 201 && /^[A-Za-z0-9_-]{22}$/.test(up.json.share.id) && up.json.share.mime === 'image/jpeg', JSON.stringify(up.json))
+    const sid = up.json.share.id
+    const mine = await http('GET', '/v1/shares', { token: A })
+    check('share list + limits', mine.json.shares[0]?.id === sid && mine.json.limits.maxActive === 50 && mine.json.limits.uploadsToday === 1)
+    const pub = await http('GET', `/v1/shares/${sid}`)
+    check('public share without owner', pub.status === 200 && !pub.text.includes('PwiePixel') && !pub.text.includes(ADMIN_UUID) && pub.headers.get('cache-control') === 'public, max-age=60')
+    const imgRes = await fetch(`${BASE}/v1/shares/${sid}/image`)
+    const imgBuf = Buffer.from(await imgRes.arrayBuffer())
+    check('public share image', imgRes.status === 200 && imgBuf[0] === 0xff && imgRes.headers.get('cross-origin-resource-policy') === 'cross-origin' && imgRes.headers.get('cache-control') === 'public, max-age=600')
+    const page = await fetch(`${BASE}/s/${sid}`, { headers: { 'cf-connecting-ip': '203.0.113.9', 'accept-language': 'de' } })
+    const html = await page.text()
+    check('share page with preview + noindex', page.status === 200 && html.includes(`/v1/shares/${sid}/image`) && html.includes('og:image') && /noindex/.test(page.headers.get('x-robots-tag') ?? '') && !html.includes(ADMIN_UUID), `${page.status} img=${html.includes(`/v1/shares/${sid}/image`)} og=${html.includes('og:image')} robots=${page.headers.get('x-robots-tag')} uuid=${html.includes(ADMIN_UUID)}`)
+    const gone = await fetch(`${BASE}/s/AAAAAAAAAAAAAAAAAAAAAA`, { headers: { 'cf-connecting-ip': '203.0.113.9' } })
+    check('unknown share page 404', gone.status === 404)
+    const anon = await http('POST', `/v1/shares/${sid}/report`, { body: { reason: 'inappropriate' }, ip: '203.0.113.50' })
+    check('anonymous share report 202', anon.status === 202)
+    const repShare = await http('POST', '/v1/reports', { token: B, body: { kind: 'share', shareId: sid, reason: 'spam' } })
+    check('player share report', repShare.status === 201)
+    const del = await http('POST', `/v1/admin/reports/${repShare.json.report.id}/actions`, { headers: { 'x-admin-key': ADMIN_KEY }, body: { action: 'delete_share', includeRelated: true } })
+    check('admin delete_share', del.json.report.status === 'resolved' && del.json.report.evidence.share.id === sid)
+    const kept = await fetch(`${BASE}${del.json.report.evidence.images[0].path}`, { headers: { 'x-admin-key': ADMIN_KEY } })
+    check('evidence copy kept', kept.status === 200)
+    const after = await http('GET', `/v1/shares/${sid}`)
+    check('deleted share 404', after.status === 404 && after.json.error.code === 'share_not_found')
+    const own = await http('POST', '/v1/shares', { token: A, raw: png(8, 8), headers: { 'content-type': 'image/png' } })
+    const rm = await http('DELETE', `/v1/shares/${own.json.share.id}`, { token: A })
+    check('owner deletes share', rm.status === 204)
+  }
+
+  console.log('world hosting')
+  {
+    const sA = await openStream(A)
+    const sB4 = await openStream(B)
+    await sA.waitFor((f) => f.event === 'hello')
+    await sB4.waitFor((f) => f.event === 'hello')
+    const room = await http('POST', '/v1/hosting/rooms', { token: A, body: { name: 'Smoke-Welt', mcVersion: '1.21.4', loader: 'fabric', maxPlayers: 4 } })
+    check('create world 201', room.status === 201 && /^[A-Z2-9]{6}$/.test(room.json.room.code) && room.json.role === 'host' && room.json.relay.token.startsWith('cbqr1.') && room.json.stun[0] === 'relay.example.test:25504', JSON.stringify(room.json))
+    const rid = room.json.room.id
+    const inv = await http('POST', `/v1/hosting/rooms/${rid}/invites`, { token: A, body: { uuid: 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0' } })
+    check('invite friend 201 + chat card', inv.status === 201 && inv.json.member.state === 'invited' && /^m/.test(inv.json.chatMessageId ?? ''), JSON.stringify(inv.json))
+    check('hosting_invite pushed', (await sB4.waitFor((f) => f.event === 'hosting_invite'))?.data.room.id === rid)
+    check('world card pushed', (await sB4.waitFor((f) => f.event === 'chat_message' && f.data.message.world))?.data.message.world.code === room.json.room.code)
+    const joined = await http('POST', '/v1/hosting/join', { token: B, body: { roomId: rid } })
+    check('invited join 200 accepted', joined.status === 200 && joined.json.status === 'accepted' && joined.json.role === 'guest' && joined.json.relay.token.startsWith('cbqr1.'), JSON.stringify(joined.json))
+    const sigAt = Date.now()
+    const sig = await http('POST', `/v1/hosting/rooms/${rid}/signal`, { token: B, body: { to: ADMIN_UUID, kind: 'offer', sid: 'smoke', data: '{"ufrag":"u"}' } })
+    check('signal 200 delivered', sig.status === 200 && sig.json.delivered === true, JSON.stringify(sig.json))
+    const gotSig = await sA.waitFor((f) => f.event === 'hosting_signal')
+    check('signal pushed ≤3 s', gotSig && gotSig.at - sigAt < 3000 && gotSig.data.kind === 'offer' && gotSig.data.from === 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0')
+    const snoopSig = await http('POST', `/v1/hosting/rooms/${rid}/signal`, { token: stranger, body: { to: ADMIN_UUID, kind: 'offer', data: 'x' } })
+    check('stranger signal 404', snoopSig.status === 404 && snoopSig.json.error.code === 'room_not_found')
+    const byId = await http('POST', '/v1/hosting/join', { token: stranger, body: { roomId: rid } })
+    check('stranger join by id 404', byId.status === 404)
+    const byCode = await http('POST', '/v1/hosting/join', { token: stranger, body: { code: room.json.room.code.toLowerCase() } })
+    check('join by code 202 requested', byCode.status === 202 && byCode.json.status === 'requested' && !('relay' in byCode.json))
+    check('hosting_join_request pushed', (await sA.waitFor((f) => f.event === 'hosting_join_request'))?.data.from.name === 'Stranger')
+    const badCode = await http('POST', '/v1/hosting/join', { token: stranger, body: { code: 'ZZZZZZ' } })
+    check('unknown code 404', badCode.status === 404 && badCode.json.error.code === 'room_not_found')
+    const decl = await http('POST', `/v1/hosting/rooms/${rid}/requests/cccccccccccccccccccccccccccccccc/decline`, { token: A })
+    check('decline 204', decl.status === 204)
+    const hb = await http('POST', `/v1/hosting/rooms/${rid}/heartbeat`, { token: A, body: { players: 2 } })
+    check('heartbeat', hb.status === 200 && typeof hb.json.expiresAt === 'string')
+    const fr = await http('GET', '/v1/hosting/friends-rooms', { token: B })
+    check('friends-rooms', fr.json.rooms?.[0]?.id === rid && fr.json.rooms[0].myState === 'accepted' && fr.json.rooms[0].players === 2, JSON.stringify(fr.json))
+    const conn = await http('POST', `/v1/hosting/rooms/${rid}/connect`, { token: B })
+    check('connect guest', conn.status === 200 && conn.json.role === 'guest')
+    const patch = await http('PATCH', `/v1/hosting/rooms/${rid}`, { token: A, body: { gameMode: 'creative' } })
+    check('patch world', patch.json.room?.gameMode === 'creative')
+    const bad = await http('POST', '/v1/hosting/rooms', { token: A, body: { name: 'x', mcVersion: '1.21', loader: 'bukkit' } })
+    check('invalid loader 400', bad.status === 400 && bad.json.error.code === 'invalid_request')
+    const close = await http('DELETE', `/v1/hosting/rooms/${rid}`, { token: A })
+    check('close world 204', close.status === 204)
+    check('hosting_room_closed pushed', (await sB4.waitFor((f) => f.event === 'hosting_room_closed'))?.data.reason === 'closed')
+    sA.close()
+    sB4.close()
+  }
+
+  console.log('moderation v2 (roles, sanctions, appeals, dashboard)')
+  {
+    const STR = 'cccccccccccccccccccccccccccccccc'
+    const K = { 'x-admin-key': ADMIN_KEY }
+    const role = await http('PUT', '/v1/admin/roles/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0', { token: A, body: { role: 'moderator' } })
+    check('grant moderator', role.status === 200 && role.json.roles.some((r) => r.uuid === 'b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0' && r.role === 'moderator'))
+    const modRoles = await http('GET', '/v1/admin/roles', { token: B })
+    check('moderator cannot manage roles', modRoles.status === 403 && modRoles.json.error.code === 'missing_permission')
+    const modDash = await http('GET', '/v1/admin/dashboard', { token: B })
+    check('moderator dashboard (work queues, no statistics)', modDash.status === 200 && modDash.json.reports !== null && modDash.json.series === null && modDash.json.server === null)
+    const ownerDash = await http('GET', '/v1/admin/dashboard', { headers: K })
+    check('owner dashboard', ownerDash.json.series.days.length === 30 && typeof ownerDash.json.server.dbBytes === 'number')
+    const perm = await http('POST', '/v1/admin/sanctions', { token: B, body: { uuid: STR, kind: 'chat_mute', duration: 'permanent', reasonCode: 'spam' } })
+    check('moderator: permanent refused', perm.status === 403 && perm.json.error.code === 'duration_not_allowed')
+    const noReason = await http('POST', '/v1/admin/sanctions', { token: B, body: { uuid: STR, kind: 'social_ban', duration: '1d' } })
+    check('reason template required', noReason.status === 400)
+    const sb = await http('POST', '/v1/admin/sanctions', { token: B, body: { uuid: STR, kind: 'social_ban', duration: '1d', reasonCode: 'spam', reason: 'Zu viele Anfragen', note: 'intern' } })
+    check('moderator: social ban 1d', sb.status === 201 && sb.json.sanction.kind === 'social_ban' && sb.json.sanction.createdRole === 'moderator')
+    const req = await http('POST', '/v1/friends/requests', { token: stranger, body: { target: 'PwiePixel' } })
+    check('social ban enforced (sanctioned)', req.status === 403 && req.json.error.code === 'sanctioned' && req.json.error.sanction?.kind === 'social_ban' && req.json.error.sanction.note === undefined, JSON.stringify(req.json))
+    const mine = await http('GET', '/v1/me/sanctions', { token: stranger })
+    check('me/sanctions', mine.json.active?.[0]?.reason === 'Zu viele Anfragen' && !JSON.stringify(mine.json).includes('intern') && !JSON.stringify(mine.json).includes('b0b0b0b0'))
+    const shortAppeal = await http('POST', `/v1/me/sanctions/${sb.json.sanction.id}/appeal`, { token: stranger, body: { text: 'zu kurz' } })
+    check('appeal too short 400', shortAppeal.status === 400)
+    const appeal = await http('POST', `/v1/me/sanctions/${sb.json.sanction.id}/appeal`, { token: stranger, body: { text: 'Ich habe nur meine Freunde eingeladen, bitte prüfen.' } })
+    check('appeal 201', appeal.status === 201 && appeal.json.sanction.appeal.status === 'open')
+    const twice = await http('POST', `/v1/me/sanctions/${sb.json.sanction.id}/appeal`, { token: stranger, body: { text: 'Ich habe nur meine Freunde eingeladen, bitte prüfen.' } })
+    check('appeal only once', twice.status === 409 && twice.json.error.code === 'appeal_exists')
+    const appeals = await http('GET', '/v1/admin/appeals', { headers: K })
+    const aid = appeals.json.appeals?.[0]?.id
+    const own = await http('POST', `/v1/admin/appeals/${aid}/decide`, { token: B, body: { decision: 'lift', response: 'ok' } })
+    check('moderator cannot decide own', own.status === 403 && own.json.error.code === 'own_sanction')
+    const dec = await http('POST', `/v1/admin/appeals/${aid}/decide`, { token: A, body: { decision: 'lift', response: 'Du hast recht.' } })
+    check('admin lifts via appeal', dec.status === 200 && dec.json.appeal.status === 'lifted' && dec.json.appeal.sanction.status === 'lifted')
+    const search = await http('GET', '/v1/admin/search?q=Str', { token: B })
+    check('search by name', search.json.players?.[0]?.uuid === STR)
+    const file = await http('GET', `/v1/admin/players/${STR}`, { token: B })
+    check('player file', file.status === 200 && file.json.file.sanctions.length === 1 && file.json.file.can.limits.permanent === false)
+    const list = await http('GET', '/v1/admin/sanctions?status=lifted', { headers: K })
+    check('sanction list filter', list.json.sanctions.length === 1 && list.json.sanctions[0].changes[0].action === 'lift')
+    const bulk = await http('POST', '/v1/admin/reports/bulk', { token: B, body: { ids: ['r0000000000000000'], action: 'dismiss' } })
+    check('bulk reports', bulk.status === 200 && bulk.json.skipped.length === 1)
+    const audit = await http('GET', '/v1/admin/audit?action=appeal.', { token: B })
+    check('audit filter', audit.json.entries.map((e) => e.action).join() === 'appeal.lifted,appeal.create')
+    const tempBan = await http('POST', '/v1/admin/sanctions', { headers: K, body: { uuid: STR, kind: 'account_ban', duration: '1h', reasonCode: 'cheating' } })
+    check('temporary account ban', tempBan.status === 201)
+    const relog = await loginAs('Stranger', STR)
+    check('banned login → appeal token', relog.status === 403 && relog.json.error.code === 'banned' && /^cubiq_/.test(relog.json.error.appealToken ?? ''))
+    const viaAppeal = await http('GET', '/v1/me/sanctions', { token: relog.json.error.appealToken })
+    check('appeal token reads own sanctions', viaAppeal.status === 200 && viaAppeal.json.active[0].kind === 'account_ban')
+    const notMe = await http('GET', '/v1/me', { token: relog.json.error.appealToken })
+    check('appeal token is not a session', notMe.status === 403 && notMe.json.error.code === 'banned')
+    await http('POST', `/v1/admin/sanctions/${tempBan.json.sanction.id}/lift`, { headers: K, body: { reason: 'smoke' } })
+    await http('DELETE', '/v1/admin/roles/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0', { token: A })
+  }
+
+  console.log('admin + deletion')
+  const stats = await http('GET', '/v1/admin/stats', { token: A })
+  check('stats', stats.json.users.total === 3 && stats.json.chat.messages === 4 && stats.json.reports.resolved === 3 && stats.json.capes.approved === 1 && stats.json.cosmetics.builtin === 14 && stats.json.cosmetics.approved === 1 && stats.json.cosmetics.pending === 1, JSON.stringify(stats.json))
+  const ban = await http('POST', '/v1/admin/users/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0/ban', { headers: { 'x-admin-key': ADMIN_KEY }, body: { reason: 'smoke' } })
+  check('ban', ban.json.user.banned?.reason === 'smoke')
+  const banned = await http('GET', '/v1/me', { token: B })
+  check('banned token rejected', banned.status === 401 || banned.status === 403)
+  await http('DELETE', '/v1/admin/users/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0/ban', { headers: { 'x-admin-key': ADMIN_KEY } })
+  const del = await http('DELETE', '/v1/me', { token: A })
+  check('delete account 204', del.status === 204)
+  const after = await http('GET', '/v1/me', { token: A })
+  check('token gone after deletion', after.status === 401)
+  const again = (await loginAs('PwiePixel', ADMIN_UUID)).json.token
+  const syncAfter = await http('GET', '/v1/me/sync', { token: again })
+  check('sync data gone after deletion', syncAfter.json?.skins?.length === 0 && syncAfter.json.deletedSkins.length === 0 && syncAfter.json.presets === null && syncAfter.json.settings === null, JSON.stringify(syncAfter.json))
+
+  console.log('Microsoft sign-in, roles, applications (§24)')
+  {
+    const K = { 'x-admin-key': ADMIN_KEY }
+    const cookiesOf = (res) => Object.fromEntries(res.headers.getSetCookie().map((l) => l.split(';')[0].split('=')).map(([k, ...v]) => [k, v.join('=')]))
+    // Anmelden: Weiterleitung zu Microsoft (Attrappe) und zurück.
+    const start = await fetch(`${BASE}/auth/microsoft/login?return=/team`, { redirect: 'manual', headers: { 'cf-connecting-ip': '203.0.113.50' } })
+    check('ms login redirects to Microsoft with PKCE', start.status === 302 && start.headers.get('location').startsWith(ms.authority) && start.headers.get('location').includes('code_challenge_method=S256'))
+    const oauth = cookiesOf(start).cubiq_oauth
+    ms.next = 'Applicant'
+    const back = (await fetch(start.headers.get('location'), { redirect: 'manual' })).headers.get('location')
+    const cb = await fetch(back, { redirect: 'manual', headers: { cookie: `cubiq_oauth=${oauth}`, 'cf-connecting-ip': '203.0.113.50' } })
+    const session = cookiesOf(cb).cubiq_session
+    check('ms callback sets session and returns', cb.status === 200 && !!session && (await cb.text()).includes('url=/team'))
+    const W = { cookie: `cubiq_session=${session}` }
+    const me = await http('GET', '/v1/web/me', { headers: W })
+    check('web/me after Microsoft sign-in', me.json?.uuid === APPLICANT && me.json.name === 'Applicant' && me.json.team === null && typeof me.json.csrf === 'string')
+    const replay = await fetch(back, { redirect: 'manual', headers: { cookie: `cubiq_oauth=${oauth}` } })
+    check('ms callback replay refused', replay.headers.get('location') === '/login?error=ms_state')
+    const start2 = await fetch(`${BASE}/auth/microsoft/login`, { redirect: 'manual' })
+    ms.next = 'Kiddo'
+    const back2 = (await fetch(start2.headers.get('location'), { redirect: 'manual' })).headers.get('location')
+    const kid = await fetch(back2, { redirect: 'manual', headers: { cookie: `cubiq_oauth=${cookiesOf(start2).cubiq_oauth}` } })
+    check('child account explained', kid.headers.get('location') === '/login?error=child_account')
+    const removed = await http('POST', '/v1/web-login/approve', { token: again, body: { code: 'ABCD-1234' } })
+    check('launcher code sign-in removed (410)', removed.status === 410 && removed.json.error.code === 'web_login_removed')
+    const notTeam = await http('GET', '/v1/admin/dashboard', { headers: W })
+    check('player session is not team', notTeam.status === 403)
+
+    // Stelle anlegen (Owner per Schlüssel), öffentlich sehen, bewerben.
+    const job = await http('POST', '/v1/admin/jobs', { headers: K, body: {
+      id: 'moderator', status: 'open', roleId: 'moderator',
+      texts: { en: { title: 'Moderator', summary: 'Keep the chat friendly' }, de: { title: 'Moderator', summary: 'Chat freundlich halten' } },
+      form: [{ id: 'why', type: 'long', required: true, label: { en: 'Why?' }, min: 10, max: 500 }],
+    } })
+    check('create job', job.status === 201 && job.json.job.id === 'moderator')
+    const site = await http('GET', '/v1/site/team')
+    check('team page data', site.json.jobs.some((j) => j.id === 'moderator') && Array.isArray(site.json.team?.groups))
+    const page = await http('GET', '/team/moderator?lang=de')
+    check('job page SSR', page.status === 200 && page.text.includes('Chat freundlich halten'))
+    const sitemap = await http('GET', '/sitemap.xml')
+    check('job in sitemap', sitemap.text.includes('/team/moderator?lang=es'))
+    const body = { discord: 'applicant.mc', ageGroup: '16-17', answers: { why: 'Ich helfe gern und bin oft online.' }, lang: 'de' }
+    const noCsrf = await http('POST', '/v1/team/jobs/moderator/applications', { headers: W, body })
+    check('apply needs CSRF', noCsrf.status === 403 && noCsrf.json.error.code === 'csrf_failed')
+    const WC = { ...W, 'x-csrf-token': me.json.csrf }
+    const bad = await http('POST', '/v1/team/jobs/moderator/applications', { headers: WC, body: { ...body, answers: {} } })
+    check('apply validates answers', bad.status === 400 && bad.json.error.code === 'invalid_answers')
+    const applied = await http('POST', '/v1/team/jobs/moderator/applications', { headers: WC, body })
+    check('apply 201', applied.status === 201 && applied.json.application.status === 'new')
+    const twiceApply = await http('POST', '/v1/team/jobs/moderator/applications', { headers: WC, body })
+    check('one open application per job', twiceApply.status === 409 && twiceApply.json.error.code === 'application_open')
+    const mineApps = await http('GET', '/v1/me/applications', { headers: W })
+    check('my applications', mineApps.json.applications?.length === 1)
+    const list = await http('GET', '/v1/admin/applications', { headers: K })
+    const appId = list.json.applications?.[0]?.id
+    check('team sees application', !!appId && list.json.applications[0].applicant.name === 'Applicant')
+    const accept = await http('POST', `/v1/admin/applications/${appId}/status`, { headers: K, body: { status: 'accepted', grantRole: true, response: 'Willkommen!' } })
+    check('accept + grant role', accept.status === 200 && accept.json.application.roleGranted === 'moderator')
+    const me2 = await http('GET', '/v1/web/me', { headers: W })
+    check('rights on the next request', me2.json.team?.roles?.[0]?.id === 'moderator' && me2.json.team.permissions.includes('reports.view') && !me2.json.team.permissions.includes('roles.manage'))
+    const teamList = await http('GET', '/v1/admin/team', { headers: K })
+    check('team roles + members', teamList.json.roles.length === 7 && teamList.json.members.some((m) => m.uuid === APPLICANT))
+    const modRoles = await http('GET', '/v1/admin/team', { headers: W })
+    check('moderator cannot open roles', modRoles.status === 403 && modRoles.json.error.code === 'missing_permission')
+    const out = await http('POST', '/v1/web/logout', { headers: WC })
+    check('web logout', out.status === 204 && (await http('GET', '/v1/web/me', { headers: W })).status === 401)
+  }
+
+  // ------------------------------------------------------------ Schaltungs-Bibliothek (§25)
+  {
+    const K = { 'x-admin-key': ADMIN_KEY }
+    const idx = await http('GET', '/v1/circuits/index')
+    check('circuit index seeded', idx.status === 200 && idx.json.circuits.length === 25 && idx.json.circuits[0].id === 'not_gate')
+    const etag = idx.headers.get('etag')
+    check('circuit index etag', etag === `"${idx.json.version}"` && /public/.test(idx.headers.get('cache-control') ?? ''))
+    check('circuit index 304', (await http('GET', '/v1/circuits/index', { headers: { 'if-none-match': etag } })).status === 304)
+    const one = await http('GET', '/v1/circuits/and_gate?rev=1')
+    check('circuit per rev immutable', one.status === 200 && one.json.format === 1 && one.json.rev === 1 && /immutable/.test(one.headers.get('cache-control') ?? '') && one.json.texts.de.name === 'UND-Gatter')
+    const old = await http('GET', '/v1/circuits/and_gate?rev=7')
+    check('wrong rev 404', old.status === 404 && old.json.error.code === 'rev_mismatch' && old.json.error.rev === 1 && old.headers.get('cache-control') === 'no-store')
+    const nbt = await fetch(`${BASE}/v1/circuits/piston_door_2x2/export?format=nbt`, { headers: { 'cf-connecting-ip': '203.0.113.9' } })
+    const nbtBytes = Buffer.from(await nbt.arrayBuffer())
+    check('circuit .nbt export', nbt.status === 200 && nbtBytes[0] === 0x1f && nbtBytes[1] === 0x8b)
+    // Einreichen (Bearer), Duplikat, Import-Umwandlung, Team-Prüfung
+    const sub = await loginAs('Builder', 'b'.repeat(32))
+    const circuit = { format: 1, id: 'lamp', category: 'basics', palette: { A: 'lever[face=floor]@A', '-': 'redstone_wire', L: 'redstone_lamp@Q' }, layers: [['A---L']] }
+    const s1 = await http('POST', '/v1/circuits/submissions', { token: sub.json.token, body: { circuit, name: 'Long lamp', category: 'basics', description: 'A lever and a lamp.', lang: 'en' } })
+    check('circuit submission 201', s1.status === 201 && /^cs[0-9a-f]{16}$/.test(s1.json.id) && s1.json.status === 'pending')
+    const dup = await http('POST', '/v1/circuits/submissions', { token: sub.json.token, body: { circuit, name: 'Again', category: 'basics', description: 'x', lang: 'en' } })
+    check('circuit duplicate 409', dup.status === 409 && dup.json.error.code === 'circuit_duplicate')
+    const bad = await http('POST', '/v1/circuits/submissions', { token: sub.json.token, body: { circuit: { ...circuit, palette: { A: 'tnt' }, layers: [['A']] }, name: 'Boom', category: 'basics', description: 'x', lang: 'en' } })
+    check('circuit invalid 400', bad.status === 400 && bad.json.error.code === 'invalid_circuit' && Array.isArray(bad.json.error.errors))
+    const conv = await http('POST', '/v1/circuits/convert?name=door.nbt', { token: sub.json.token, raw: nbtBytes, headers: { 'content-type': 'application/octet-stream' } })
+    check('circuit convert .nbt', conv.status === 200 && conv.json.format === 'nbt' && conv.json.blockCount > 30)
+    const mineC = await http('GET', '/v1/me/circuit-submissions', { token: sub.json.token })
+    check('my circuit submissions', mineC.json.submissions.length === 1 && mineC.json.limits.maxPerDay === 5)
+    const acc = await http('POST', `/v1/admin/circuit-submissions/${s1.json.id}/accept`, { headers: K, body: {} })
+    check('accept submission', acc.status === 200 && acc.json.circuit.id === 'long_lamp' && acc.json.submission.status === 'approved')
+    const idx2 = await http('GET', '/v1/circuits/index', { headers: { 'if-none-match': etag } })
+    check('index changed after accept', idx2.status === 200 && idx2.json.circuits.some((c) => c.id === 'long_lamp'))
+    const pub = await http('GET', '/v1/circuits/long_lamp')
+    check('accepted circuit has author', pub.json.author?.name === 'Builder')
+    const noPerm = await http('GET', '/v1/admin/circuits', { token: sub.json.token })
+    check('player cannot open circuit admin', noPerm.status === 403)
+    const page = await http('GET', '/circuits/and_gate?lang=de')
+    check('circuit page SSR', page.status === 200 && page.text.includes('UND-Gatter'))
+    const sm = await http('GET', '/sitemap.xml')
+    check('circuits in sitemap', sm.text.includes('/circuits/and_gate?lang=es') && sm.text.includes('/circuits/long_lamp'))
+  }
+} catch (err) {
+  failures++
+  console.error(err)
+} finally {
+  api.kill()
+  mojang.close()
+  await ms.close()
+  await new Promise((r) => setTimeout(r, 300))
+  rmSync(data, { recursive: true, force: true })
+}
+
+if (/at .*\.mjs:\d+/.test(serverLog)) console.log('server log contains stack traces (server side only):\n', serverLog.slice(0, 2000))
+console.log(`\n${passed} passed, ${failures} failed`)
+process.exit(failures === 0 ? 0 : 1)

@@ -1,0 +1,184 @@
+[
+  {
+    "file": "client/title-screen.png",
+    "page": "3.client/01.overview",
+    "what": "Cubiq title screen: own skin on the turntable, the menu buttons and the right bar (Wardrobe, Accounts, Social, Clips & Images, Cubiq Settings)",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'title' (-PcubiqAutotestOnly=title), shot cubiqclient-title (wide window, no hover)."
+  },
+  {
+    "file": "client/cubiq-menu.png",
+    "page": "3.client/01.overview",
+    "what": "Cubiq menu open on 'All' with module tiles, some switched on, category rail on the left",
+    "version": "1.21.11",
+    "scenario": "Full autotest without -PcubiqAutotestOnly (default run), shot cubiqclient-menu."
+  },
+  {
+    "file": "client/hud-editor.png",
+    "page": "3.client/02.menu-and-hud-editor",
+    "what": "HUD editor with one selected element (side panel with Text color, Shadow, Background, Opacity, Size) and guide lines",
+    "version": "1.21.11",
+    "scenario": "Full autotest (default run), shot cubiqclient-hud-editor (element selected)."
+  },
+  {
+    "file": "client/module-packs.png",
+    "page": "3.client/02.menu-and-hud-editor",
+    "what": "Cubiq menu → Presets with the PvP pack selected and the preview list (Turned on / Turned off / HUD template)",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'intro' (-PcubiqAutotestOnly=intro), shot cubiqclient-menu-packs. Small extension: click the PvP pack before the shot so the preview is visible."
+  },
+  {
+    "file": "client/perf-boost.png",
+    "page": "3.client/03.performance",
+    "what": "FPS Boost page: level buttons Low/Medium/High, FPS before → after line, graphics mode and performance check list",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'perf' (-PcubiqAutotestOnly=perf), shot cubiqclient-perf-boost (alternatively cubiqclient-perf-check)."
+  },
+  {
+    "file": "client/pvp-hud.png",
+    "page": "3.client/04.pvp",
+    "what": "In-game HUD with the PvP pack: keystrokes, CPS, ping, armour and the item counter",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'qol' (-PcubiqAutotestOnly=qol), shot cubiqclient-qol-hud. Extension: apply the PvP module pack (with HUD template) and give the player armour, arrows, totems and golden apples before the shot."
+  },
+  {
+    "file": "client/crosshair-editor.png",
+    "page": "3.client/04.pvp",
+    "what": "Crosshair editor with live preview",
+    "version": "1.21.11",
+    "scenario": "Full autotest (default run), shot cubiqclient-crosshair-editor."
+  },
+  {
+    "file": "client/zoom.png",
+    "page": "3.client/05.zoom-and-freelook",
+    "what": "Zoomed-in view while holding V (landscape with a distant structure)",
+    "version": "1.21.11",
+    "scenario": "Full autotest (default run), shot cubiqclient-zoom."
+  },
+  {
+    "file": "client/minimap.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "Round minimap in the HUD with compass ring, a waypoint box on the edge and coordinates/biome below",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'maps' (-PcubiqAutotestOnly=maps), shot minimap-round. Extension: create one waypoint ~300 blocks away first so it shows on the ring."
+  },
+  {
+    "file": "client/world-map.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "Fullscreen world map with the waypoint list open (2–3 waypoints) and the bottom bar with coordinates",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'maps' (shot worldmap-menu covers the map itself). New step needed: create 2–3 waypoints, open the world map with M and click the pin button (waypoint list) before the shot."
+  },
+  {
+    "file": "client/redstone-signal.png",
+    "page": "3.client/07.redstone-tools",
+    "what": "Signal Strength HUD while looking at a comparator in subtract mode",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'redstone' (-PcubiqAutotestOnly=redstone), shot cubiqclient-redstone-comparator."
+  },
+  {
+    "file": "client/redstone-overlay.png",
+    "page": "3.client/07.redstone-tools",
+    "what": "Signal overlay: numbers 0–15 above a redstone dust line",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'redstone', shot cubiqclient-redstone-overlay."
+  },
+  {
+    "file": "client/circuits-library.png",
+    "page": "3.client/08.circuit-library",
+    "what": "Circuit library detail page: 3D preview, explanation, material list with inventory count, 'Show as template here'",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'circuits' (-PcubiqAutotestOnly=circuits), shot cubiqclient-circuits-detail."
+  },
+  {
+    "file": "client/circuits-ghost.png",
+    "page": "3.client/08.circuit-library",
+    "what": "Placed template in the world with green, red and grey ghost blocks and the progress HUD",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'circuits', shot cubiqclient-circuits-ghost."
+  },
+  {
+    "file": "client/emote-wheel.png",
+    "page": "3.client/09.emotes-and-capes",
+    "what": "Emote wheel open with one emote highlighted and one locked emote",
+    "version": "1.21.11",
+    "scenario": "EmoteTest (shot cubiqclient-emote-wheel) only runs inside the full autotest with the emote API mock (node scratchpad/emotes/mock-api.mjs 8791 + -PcubiqApi=http://127.0.0.1:8791). New scenario suggested: -PcubiqAutotestOnly=emotes that jumps straight to EmoteTest."
+  },
+  {
+    "file": "client/wardrobe.png",
+    "page": "3.client/09.emotes-and-capes",
+    "what": "Wardrobe on the Skins tab: Current card, favourites, library and 3D preview",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'wardrobe' (-PcubiqAutotestOnly=wardrobe), shot cubiqclient-wardrobe (or cubiqclient-wardrobe-current)."
+  },
+  {
+    "file": "client/wardrobe-editor.png",
+    "page": "3.client/09.emotes-and-capes",
+    "what": "Skin editor with tool bar, palette and 3D figure",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'wardrobe', shot cubiqclient-wardrobe-editor."
+  },
+  {
+    "file": "client/screenshot-toast.png",
+    "page": "3.client/10.screenshots-and-clips",
+    "what": "Screenshot preview at the top right with the four hover buttons (Edit, Favourite, Copy picture, Send to friends), chat open",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'screenshots' (-PcubiqAutotestOnly=screenshots), shot cubiqclient-screenshots-toast-hover."
+  },
+  {
+    "file": "client/screenshot-editor.png",
+    "page": "3.client/10.screenshots-and-clips",
+    "what": "Screenshot editor with an arrow, a frame and a pixelated area",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'screenshots', shot cubiqclient-screenshots-editor."
+  },
+  {
+    "file": "client/notes.png",
+    "page": "3.client/11.notes",
+    "what": "Notes page of a world: list on the left, open note with a checklist and a clickable coordinate",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'notes' (-PcubiqAutotestOnly=notes), shot cubiqclient-notes-view (or cubiqclient-notes-coords)."
+  },
+  {
+    "file": "client/notes-hud.png",
+    "page": "3.client/11.notes",
+    "what": "Pinned note with checklist in the in-game HUD",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'notes', shot cubiqclient-notes-hud."
+  },
+  {
+    "file": "client/disconnect.png",
+    "page": "3.client/12.chat-and-comfort",
+    "what": "Cubiq-style disconnect screen after 'Invalid session' with Sign in again, Connect again, Switch account, Copy error, Server status",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'disconnect' (-PcubiqAutotestOnly=disconnect), shot cubiqclient-disconnect-session."
+  },
+  {
+    "file": "client/tooltips.png",
+    "page": "3.client/12.chat-and-comfort",
+    "what": "Better Tooltips: shulker box contents as a coloured grid",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'comfort' (-PcubiqAutotestOnly=comfort), shot cubiqclient-comfort-shulker."
+  },
+  {
+    "file": "client/keysearch.png",
+    "page": "3.client/12.chat-and-comfort",
+    "what": "Controls → Key Binds with the search box and the query 'conflict' showing double-bound keys",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'keysearch' (-PcubiqAutotestOnly=keysearch), one of the per-query shots cubiqclient-keysearch-<query>. Make sure the 'conflict' query is shot (bind two actions to the same key first if the test world has no conflict)."
+  },
+  {
+    "file": "client/social-chat.png",
+    "page": "3.client/13.social-in-game",
+    "what": "Social screen, Chat tab: a conversation with a reply, a reaction and a server invite card",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'social' (-PcubiqAutotestOnly=social) with the local API (gameserver.mjs, see memory social-client). Needs seeded chat data (reply, reaction, invite card)."
+  },
+  {
+    "file": "client/hosting.png",
+    "page": "3.client/15.world-hosting",
+    "what": "Host world window: Players tab with one guest (Direct, ping), join code and Stop hosting",
+    "version": "1.21.11",
+    "scenario": "Existing autotest 'hosting' (-PcubiqAutotestOnly=hosting, HostingTest) shows the host dialog; a player row needs a guest – use the E2E script (scratchpad/hosting/e2e/run_e2e.py, flow code) and take the shot on the host side."
+  }
+]

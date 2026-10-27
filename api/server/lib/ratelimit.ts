@@ -1,0 +1,344 @@
+/** Regel: höchstens `limit` Anfragen je `windowMs` (Token-Bucket, füllt gleichmäßig nach). */
+export interface Rule {
+  limit: number
+  windowMs: number
+}
+
+interface Bucket {
+  tokens: number
+  updated: number
+  rule: Rule
+}
+
+export interface TakeResult {
+  ok: boolean
+  /** Sekunden bis wieder ein Token frei ist (nur bei ok=false sinnvoll). */
+  retryAfter: number
+}
+
+/**
+ * Speicher-Rate-Limiter (ein Prozess, ein Container). Schlüssel enthalten nie
+ * Klartext-Tokens; IPs liegen nur flüchtig im RAM.
+ */
+export class RateLimiter {
+  private buckets = new Map<string, Bucket>()
+  constructor(
+    private readonly now: () => number = Date.now,
+    private readonly maxKeys = 200_000,
+  ) {}
+
+  private refill(key: string, rule: Rule): Bucket {
+    const t = this.now()
+    let b = this.buckets.get(key)
+    if (!b) {
+      if (this.buckets.size >= this.maxKeys) this.sweep(true)
+      b = { tokens: rule.limit, updated: t, rule }
+      this.buckets.set(key, b)
+      return b
+    }
+    const elapsed = Math.max(0, t - b.updated)
+    b.tokens = Math.min(rule.limit, b.tokens + (elapsed * rule.limit) / rule.windowMs)
+    b.updated = t
+    b.rule = rule
+    return b
+  }
+
+  private retry(b: Bucket, need: number): number {
+    const missing = need - b.tokens
+    return Math.max(1, Math.ceil((missing * b.rule.windowMs) / b.rule.limit / 1000))
+  }
+
+  /** Verbraucht einen Token. */
+  take(key: string, rule: Rule): TakeResult {
+    if (rule.limit === Infinity) return { ok: true, retryAfter: 0 }
+    const b = this.refill(key, rule)
+    if (b.tokens >= 1) {
+      b.tokens -= 1
+      return { ok: true, retryAfter: 0 }
+    }
+    return { ok: false, retryAfter: this.retry(b, 1) }
+  }
+
+  /** Prüft, ob noch ein Token da ist, ohne ihn zu verbrauchen (z. B. Fehlversuchs-Zähler). */
+  check(key: string, rule: Rule): TakeResult {
+    if (rule.limit === Infinity) return { ok: true, retryAfter: 0 }
+    const b = this.refill(key, rule)
+    return b.tokens >= 1 ? { ok: true, retryAfter: 0 } : { ok: false, retryAfter: this.retry(b, 1) }
+  }
+
+  reset(key: string): void {
+    this.buckets.delete(key)
+  }
+
+  /** Entfernt volle (also wirkungslose) Buckets. `force` leert bei Überlauf zusätzlich die älteste Hälfte. */
+  sweep(force = false): void {
+    const t = this.now()
+    for (const [k, b] of this.buckets) {
+      const tokens = b.tokens + ((t - b.updated) * b.rule.limit) / b.rule.windowMs
+      if (tokens >= b.rule.limit) this.buckets.delete(k)
+    }
+    if (force && this.buckets.size >= this.maxKeys) {
+      let drop = Math.ceil(this.buckets.size / 2)
+      for (const k of this.buckets.keys()) {
+        if (drop-- <= 0) break
+        this.buckets.delete(k)
+      }
+    }
+  }
+
+  get size(): number {
+    return this.buckets.size
+  }
+}
+
+const MIN = 60_000
+const HOUR = 60 * MIN
+/** Kein Limit: normale Nutzung (Lesen, Schreiben, Sozial/Chat) wird nicht gebremst. */
+const OFF: Rule = { limit: Infinity, windowMs: MIN }
+
+/** Alle Limits an einer Stelle (je IP bzw. je Konto). */
+export const RULES = {
+  globalIp: { limit: 300, windowMs: MIN },
+  challengeIp: { limit: 20, windowMs: MIN },
+  verifyIp: { limit: 10, windowMs: MIN },
+  verifyName: { limit: 10, windowMs: 10 * MIN },
+  loginUuid: { limit: 20, windowMs: HOUR },
+  readUser: OFF,
+  writeUser: OFF,
+  lookupUser: OFF,
+  presenceUser: OFF,
+  friendsWriteUser: OFF,
+  redeemUser: { limit: 10, windowMs: MIN },
+  redeemFailUser: { limit: 5, windowMs: 15 * MIN },
+  redeemFailIp: { limit: 20, windowMs: 15 * MIN },
+  uploadUser: { limit: 5, windowMs: 24 * HOUR },
+  reportUser: { limit: 10, windowMs: HOUR },
+  eventsUser: OFF,
+  adminActor: { limit: 240, windowMs: MIN },
+  deleteUser: { limit: 3, windowMs: HOUR },
+  cosmeticUploadUser: { limit: 5, windowMs: 24 * HOUR },
+  emoteUser: { limit: 1, windowMs: 2000 },
+  skinChangedUser: { limit: 6, windowMs: MIN },
+  skinLookupUser: OFF,
+  /** Ausgehende Mojang-Profilabfragen insgesamt (nur Cache-Fehlschläge). */
+  mojangGlobal: { limit: 100, windowMs: MIN },
+  playerEventsUser: OFF,
+  /** Website-Login mit Microsoft (§24.1): Weiterleitung starten bzw. Rücksprung, je IP. */
+  msLoginIp: { limit: 20, windowMs: 10 * MIN },
+  msCallbackIp: { limit: 30, windowMs: 10 * MIN },
+  /** Bewerbungen (§24.3): abschicken je Konto und je IP, zurückziehen je Konto. */
+  applyUser: { limit: 5, windowMs: HOUR },
+  applyIp: { limit: 20, windowMs: HOUR },
+  withdrawUser: { limit: 10, windowMs: HOUR },
+  /** Team: Stimmen, Notizen, Statuswechsel an Bewerbungen, je Team-Mitglied. */
+  adminApplication: { limit: 60, windowMs: MIN },
+  /** Cubiq-Sync (`/v1/me/sync*`): alle Anfragen je Konto, dazu Skin-Uploads extra. */
+  syncUser: OFF,
+  syncUploadUser: OFF,
+  /** Umhänge teilen: anbieten, annehmen, ablehnen, entziehen (je Konto). */
+  capeShareUser: { limit: 30, windowMs: MIN },
+  // ------------------------------------------------ Chat
+  /** Nachrichten senden/bearbeiten: 30 / min, dazu höchstens 5 in 5 s (Spam-Bremse). */
+  chatSendUser: OFF,
+  chatBurstUser: OFF,
+  chatReactUser: OFF,
+  chatTypingUser: OFF,
+  /** Lesen/ungelesen/stumm, je Konto. */
+  chatStateUser: OFF,
+  /** DMs öffnen, Gruppen anlegen/ändern/Mitglieder. */
+  chatGroupUser: OFF,
+  chatUploadUser: OFF,
+  /** Bilder abrufen (Vorschauen in Listen). */
+  chatImageUser: OFF,
+  /** Server-Status für Einladungen (Aufrufe; der Ping selbst ist gecacht). */
+  serverStatusUser: OFF,
+  /** Meldungen im Chat (Nachricht, Bild, Spieler, Gruppe). */
+  chatReportUser: { limit: 10, windowMs: HOUR },
+  /** `GET /v1/events/me` Verbindungen. */
+  eventsMeUser: OFF,
+  // ------------------------------------------------ Welt-Hosting
+  /** Alle `/v1/hosting/*`-Anfragen je Konto (eigener Topf, Herzschläge + Signale laufen viel). */
+  hostingUser: { limit: 240, windowMs: MIN },
+  /** Räume anlegen. */
+  hostingCreateUser: { limit: 10, windowMs: 10 * MIN },
+  /** Einladen, annehmen, ablehnen, kicken, sperren, Einstellungen. */
+  hostingManageUser: { limit: 60, windowMs: MIN },
+  /** Beitreten (per Raum oder Code). */
+  hostingJoinUser: { limit: 20, windowMs: MIN },
+  /** Unbekannte Codes (gegen Durchprobieren), je Konto und je IP. */
+  hostingCodeFailUser: { limit: 10, windowMs: 10 * MIN },
+  hostingCodeFailIp: { limit: 30, windowMs: 10 * MIN },
+  /** Signale (Angebot/Antwort/Kandidaten): 120 / min und höchstens 30 in 5 s. */
+  hostingSignalUser: { limit: 120, windowMs: MIN },
+  hostingSignalBurstUser: { limit: 30, windowMs: 5000 },
+  /** Relay-Tokens (connect). */
+  hostingConnectUser: { limit: 30, windowMs: MIN },
+  // ------------------------------------------------ Moderation v2 (§22)
+  /** Globale Suche im Team-Bereich, je Team-Mitglied. */
+  adminSearch: { limit: 60, windowMs: MIN },
+  /** Sammelaktionen (je bis zu 50 Einträge), je Team-Mitglied. */
+  adminBulk: { limit: 10, windowMs: MIN },
+  /** Strafen verhängen/ändern/aufheben und Einsprüche entscheiden, je Team-Mitglied. */
+  adminSanction: { limit: 60, windowMs: MIN },
+  // ------------------------------------------------ Team-Seite (§26)
+  /** Köpfe für Admin-Listen (bis 120 UUIDs je Aufruf, höchstens 6 neue Mojang-Abfragen je Aufruf). */
+  adminHeads: { limit: 40, windowMs: MIN },
+  /** Team-Seite bearbeiten (hinzufügen, ändern, sortieren, entfernen). */
+  adminTeamPage: { limit: 60, windowMs: MIN },
+  /** Einsprüche (Spieler): höchstens 5 je Stunde (und genau einer je Strafe). */
+  appealUser: { limit: 5, windowMs: HOUR },
+  /** Eigene Strafen lesen (auch mit Einspruch-Token). */
+  mySanctionsUser: { limit: 30, windowMs: MIN },
+  // ------------------------------------------------ Geteilte Screenshots (§23)
+  /** Hochladen (dazu die Tagesgrenze in der Datenbank). */
+  shareUploadUser: { limit: 10, windowMs: MIN },
+  /** Eigene Liste, Löschen. */
+  shareManageUser: { limit: 60, windowMs: MIN },
+  /** Öffentliche Abrufe (Seite, Bild) je IP – zusätzlich zur globalen IP-Grenze. */
+  sharePublicIp: { limit: 240, windowMs: MIN },
+  /** Anonyme Meldungen von der öffentlichen Seite je IP. */
+  shareReportIp: { limit: 5, windowMs: HOUR },
+  // ------------------------------------------------ Geteilte Modpacks (§27)
+  /** Hochladen (neu + neue Version, Sitzung anlegen, abschließen) – die Tagesgrenze steht zusätzlich in der Datenbank. */
+  packUploadUser: { limit: 6, windowMs: MIN },
+  /** Stücke eines großen Packs (32 MiB). Ein 1-GB-Pack hat 32 Stücke, dazu Wiederholungen. */
+  packChunkUser: { limit: 120, windowMs: MIN },
+  /** Eigene Liste, Laufzeit, Löschen, an Freunde schicken, Posteingang. */
+  packManageUser: { limit: 60, windowMs: MIN },
+  /** Code einlösen / Update-Prüfung mit Konto. */
+  packLookupUser: { limit: 60, windowMs: MIN },
+  /** Pack-Datei herunterladen. */
+  packDownloadUser: { limit: 20, windowMs: MIN },
+  /** Öffentliche Vorschau (Website) je IP – bremst das Durchprobieren von Codes. */
+  packPublicIp: { limit: 60, windowMs: MIN },
+  /** Modrinth-Symbole der Pack-Inhalte (über unseren Server) je IP. */
+  modrinthIconIp: { limit: 600, windowMs: MIN },
+  // ------------------------------------------------ Schaltungs-Bibliothek (§25)
+  /** Öffentliche Abrufe (Index, Schaltung, Download) je IP – zusätzlich zur globalen IP-Grenze. */
+  circuitPublicIp: { limit: 240, windowMs: MIN },
+  /** Einreichen und Umwandeln (Datei → Schaltung) je Konto – die Tagesgrenze steht zusätzlich in der Datenbank. */
+  circuitSubmitUser: { limit: 20, windowMs: HOUR },
+  circuitConvertUser: { limit: 30, windowMs: HOUR },
+  /** Team: Import/Export und Speichern im Editor. */
+  adminCircuit: { limit: 120, windowMs: MIN },
+  // ------------------------------------------------ Issues & Roadmap (§28)
+  /** Öffentliche Abrufe (Liste, Issue, Roadmap, Bilder) je IP – zusätzlich zur globalen IP-Grenze. */
+  issuePublicIp: { limit: 240, windowMs: MIN },
+  /** Issues anlegen – die Tagesgrenze steht zusätzlich in der Datenbank. */
+  issueCreateUser: { limit: 5, windowMs: HOUR },
+  /** Kommentieren (dazu die Tagesgrenze in der Datenbank). */
+  issueCommentUser: { limit: 10, windowMs: 5 * MIN },
+  /** Eigene Issues/Kommentare bearbeiten oder löschen. */
+  issueEditUser: { limit: 30, windowMs: 10 * MIN },
+  issueVoteUser: { limit: 60, windowMs: MIN },
+  issueFollowUser: { limit: 60, windowMs: MIN },
+  /** Bilder hochladen (dazu die Tagesgrenze in der Datenbank). */
+  issueUploadUser: { limit: 20, windowMs: 10 * MIN },
+  // ------------------------------------------------ Anmeldung per Cubiq Launcher (§29)
+  /** Neue Anmelde-Anfragen der Website je IP. */
+  launcherLoginCreateIp: { limit: 10, windowMs: 10 * MIN },
+  /** Abfragen des Stands (Website, alle 2 s) je IP. */
+  launcherLoginPollIp: { limit: 120, windowMs: MIN },
+  /** Launcher: Anfrage nachschlagen (Link oder Code) je Konto. */
+  launcherLoginLookupUser: { limit: 30, windowMs: 10 * MIN },
+  /** Falsch eingegebene Codes je Konto und je IP (streng – Codes sind kurz). */
+  launcherLoginCodeFailUser: { limit: 5, windowMs: 10 * MIN },
+  launcherLoginCodeFailIp: { limit: 20, windowMs: 10 * MIN },
+  /** Bestätigen/Ablehnen je Konto. */
+  launcherLoginDecideUser: { limit: 20, windowMs: 10 * MIN },
+  // ------------------------------------------------ Blog (§30)
+  /** Team: Speichern, Veröffentlichen, Löschen. */
+  adminBlog: { limit: 120, windowMs: MIN },
+  /** Team: Bilder hochladen. */
+  adminBlogUpload: { limit: 30, windowMs: MIN },
+  /** Öffentliche Blog-Bilder je IP (zusätzlich zur globalen IP-Grenze). */
+  blogMediaIp: { limit: 600, windowMs: MIN },
+  // ------------------------------------------------ Erfolge (§31)
+  /** Öffentlicher Katalog je IP. */
+  achievementCatalogIp: { limit: 60, windowMs: MIN },
+  /** Launcher-Meldungen je Konto. */
+  achievementReportUser: { limit: 30, windowMs: MIN },
+  /** Erfolge eines Spielers (selbst/Freund) je Konto. */
+  achievementViewUser: { limit: 60, windowMs: MIN },
+  // ------------------------------------------------ Push (§33)
+  /** Gerät anmelden (mit DNS-Prüfung des Endpunkts). */
+  pushRegisterUser: { limit: 10, windowMs: 10 * MIN },
+  /** Geräte ändern/löschen. */
+  pushManageUser: { limit: 60, windowMs: MIN },
+  /** Abruf der wartenden Benachrichtigungen (iOS-Hintergrundabruf). */
+  pushPendingUser: { limit: 30, windowMs: MIN },
+  // PC-Fernbedienung (§34)
+  remoteRegisterUser: { limit: 10, windowMs: HOUR },
+  remotePairUser: { limit: 20, windowMs: 10 * MIN },
+  remotePairFailUser: { limit: 5, windowMs: 10 * MIN },
+  remotePairFailIp: { limit: 20, windowMs: 10 * MIN },
+  remoteManageUser: { limit: 60, windowMs: MIN },
+  /** Befehle je Handy: 30 je Minute, höchstens 5 in 5 s. */
+  remoteCommandPhone: { limit: 30, windowMs: MIN },
+  remoteCommandBurst: { limit: 5, windowMs: 5000 },
+  /** Befehle je Ziel-PC (alle Handys zusammen). */
+  remoteCommandDesktop: { limit: 60, windowMs: MIN },
+  /** Status-Meldungen je PC (entprellt etwa alle 2 s, Herzschlag 60 s). */
+  remoteStatusDesktop: { limit: 40, windowMs: MIN },
+  remoteClaimDesktop: { limit: 120, windowMs: MIN },
+  // ------------------------------------------------ Creator-Programm (§35)
+  /** Creator: Codes, Packs, Löschen wartender Uploads. */
+  creatorManageUser: { limit: 60, windowMs: MIN },
+  /** Creator: Symbol- bzw. Fan-Umhang-Uploads (je eigener Topf). */
+  creatorUploadUser: { limit: 5, windowMs: 24 * HOUR },
+  /** Creator: Anfragen ans Team. */
+  creatorRequestUser: { limit: 10, windowMs: HOUR },
+  /** Fans: Blockieren/Entblocken, Einstellung, Unterstützung beenden. */
+  creatorFanUser: { limit: 30, windowMs: MIN },
+  /** Team: Creator-Verwaltung (Prüfung, Status, Anfragen, Vorschau-Builds). */
+  adminCreators: { limit: 120, windowMs: MIN },
+  // ------------------------------------------------ Halloween 2026 (§36)
+  /** Kürbis melden: höchstens einer je 2 s und Konto. */
+  halloweenPumpkinUser: { limit: 1, windowMs: 2000 },
+  /** Anklopfen (einmal je Tag zählt ohnehin; das hier bremst nur Wiederholungen). */
+  halloweenTrickUser: { limit: 10, windowMs: MIN },
+  /** Spuk-Effekt-Freigaben ändern. */
+  halloweenEffectsUser: { limit: 20, windowMs: MIN },
+  /** Öffentliche Sticker-/Abzeichen-Bilder und -Listen je IP – zusätzlich zur globalen IP-Grenze. */
+  halloweenPublicIp: { limit: 600, windowMs: MIN },
+  /** Owner-ausgelöster Schreck (Part C): bremst die Auslöse-Knöpfe. */
+  halloweenScareOwner: { limit: 30, windowMs: MIN },
+  /** Private MiyakoMC-Routen (Part A): Intro-Flag und Bündel, je Konto. */
+  miyakoUser: { limit: 60, windowMs: MIN },
+  // ---- Empfohlene Modpacks (§37)
+  /** Team: Packs anlegen/ändern/sortieren/auffrischen/löschen. */
+  adminFeatured: { limit: 120, windowMs: MIN },
+  /** Öffentliche Liste und Bilder je IP – zusätzlich zur globalen IP-Grenze. */
+  featuredPublicIp: { limit: 600, windowMs: MIN },
+  // ---- Pitch-Links (§38)
+  /** Team: Pitch-Links anlegen/widerrufen/löschen. */
+  adminPitch: { limit: 60, windowMs: MIN },
+  /** Aufrufe der Pitch-Seite (/pitch/<token>, nur die Seite selbst) je IP – zusätzlich zur globalen IP-Grenze. */
+  pitchIp: { limit: 60, windowMs: MIN },
+  // ---- Creator auf der Website (§35.11)
+  /** Öffentliche Creator-Liste und Creator-Seiten je IP – zusätzlich zur globalen IP-Grenze. */
+  creatorsPublicIp: { limit: 240, windowMs: MIN },
+  /** Creator: Profil (Beschreibung + Links) einreichen – jede Fassung landet beim Team. */
+  creatorProfileUser: { limit: 10, windowMs: HOUR },
+  // ---- Mail + Newsletter (§40)
+  /** Öffentliche Anmeldung je IP (zusätzlich je Adresse, s. u.). */
+  newsletterSubscribeIp: { limit: 10, windowMs: HOUR },
+  /** Anmeldungen je Adresse (Schlüssel = HMAC der Adresse) – bremst Mail-Bomben an fremde Adressen. */
+  newsletterSubscribeAddr: { limit: 3, windowMs: 24 * HOUR },
+  /** Bestätigen/Abmelden per Token je IP (falsche Tokens zählen mit). */
+  newsletterTokenIp: { limit: 30, windowMs: 10 * MIN },
+  /** Launcher: Adresse eintragen/ändern/abmelden je Konto. */
+  newsletterMeUser: { limit: 10, windowMs: HOUR },
+  /** Team/API-Schlüssel: Kampagnen anlegen/ändern/lesen. */
+  adminNewsletter: { limit: 240, windowMs: MIN },
+  /** Live-Vorschau im Editor (rendert bei jeder Pause im Tippen). */
+  newsletterPreview: { limit: 240, windowMs: MIN },
+  /** Testmails je Akteur. */
+  newsletterTest: { limit: 20, windowMs: HOUR },
+  /** Jede Anfrage mit einem API-Schlüssel. */
+  newsletterKey: { limit: 240, windowMs: MIN },
+  /** Eigene Team-Benachrichtigungen speichern (mit Bestätigungs-Mail bei neuer Adresse). */
+  teamNotifyUser: { limit: 10, windowMs: HOUR },
+  /** Bilder der Mails (Pixel-Überschriften, Köpfe) je IP. */
+  mailImageIp: { limit: 600, windowMs: MIN },
+} satisfies Record<string, Rule>

@@ -1,0 +1,141 @@
+---
+title: "Cubiq Launcher Doku"
+description: "Anleitungen für den Cubiq Launcher, den kostenlosen Minecraft-Launcher von PwiePixel, und die Cubiq-Client-Mod – installieren, spielen, Probleme lösen."
+navigation: false
+---
+
+::u-page-hero{class="cubiq-hero"}
+#headline
+  :::u-badge{color="primary" variant="subtle" label="Docs"}
+  :::
+
+#title
+Cubiq Launcher [Doku]{.text-primary}
+
+#description
+Alles über den **Cubiq Launcher** – den kostenlosen Open-Source-Minecraft-Launcher von PwiePixel – und die eingebaute **Cubiq-Client**-Mod. Installieren, Instanzen und Modpacks einrichten, jedes Client-Modul kennenlernen und Probleme schnell lösen.
+
+#links
+  :::u-button
+  ---
+  to: /de/getting-started
+  size: xl
+  trailing-icon: i-lucide-arrow-right
+  ---
+  Los geht’s
+  :::
+
+  :::u-button
+  ---
+  to: https://cubiq-launcher.invalid/download?lang=de
+  size: xl
+  color: neutral
+  variant: subtle
+  icon: i-lucide-download
+  ---
+  Download
+  :::
+::
+
+::u-page-section
+#title
+Finde dich zurecht
+
+#description
+Fünf Bereiche decken alles ab – vom ersten Start bis zum Quellcode. Mit :kbd{value="meta"} :kbd{value="K"} durchsuchst du alle Seiten.
+
+#default
+  :::u-page-grid
+    ::::u-page-card
+    ---
+    title: Erste Schritte
+    description: Launcher herunterladen und installieren, mit Microsoft anmelden und das erste Spiel starten.
+    icon: i-lucide-rocket
+    to: /de/getting-started
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: Launcher
+    description: Instanzen, Mod-Loader, Mods und Modpacks, Skins, Freunde, Clips, Welt-Hosting und Einstellungen.
+    icon: i-lucide-app-window
+    to: /de/launcher
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: Cubiq Client
+    description: Die eingebaute Client-Mod – FPS-Boost, HUD, Redstone-Werkzeuge, Minimap, Emotes, Umhänge und mehr.
+    icon: i-lucide-blocks
+    to: /de/client
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: Hilfe
+    description: Absturz-Helfer, häufige Fehler, Tipps für mehr Leistung und wie du einen Fehler meldest.
+    icon: i-lucide-life-buoy
+    to: /de/help
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: Entwickler
+    description: Quellcode, selbst bauen, die Cubiq API und wie du mithelfen kannst.
+    icon: i-lucide-code-xml
+    to: /de/developers
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: Community
+    description: Fragen, Ideen und Bug-Meldungen – leg ein Issue auf der Website an und sieh, was geplant ist.
+    icon: i-lucide-messages-square
+    to: https://cubiq-launcher.invalid/issues
+    target: _blank
+    spotlight: true
+    ---
+    ::::
+  :::
+::
+
+::u-page-section
+#title
+Auf dem Handy
+
+#description
+Minecraft: Java Edition mit Touch-Steuerung, Freunde, Chat und deine Garderobe – unter Android und auf iPhone und iPad.
+
+#default
+  :::u-page-grid
+    ::::u-page-card
+    ---
+    title: "Android"
+    description: "APK laden, Installation einmal erlauben, anmelden und spielen. Benachrichtigungen über ntfy."
+    icon: i-lucide-smartphone
+    to: /de/getting-started/android
+    spotlight: true
+    ---
+    ::::
+
+    ::::u-page-card
+    ---
+    title: "iPhone & iPad"
+    description: "Mit AltStore oder SideStore installieren, JIT zum Spielen einschalten und alle 7 Tage auffrischen."
+    icon: i-lucide-tablet-smartphone
+    to: /de/getting-started/iphone-ipad
+    spotlight: true
+    ---
+    ::::
+  :::
+::

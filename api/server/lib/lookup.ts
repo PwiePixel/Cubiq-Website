@@ -1,0 +1,262 @@
+import type { AppContext } from './context'
+import { all, placeholders } from './db'
+import { capeView, type CapeRow } from './capes'
+import { badgeFxFor, type FxKind } from './badge-lookup'
+import { creatorLookupData, ownedPets, petCount, type LookupCreator, type LookupFan } from './creator-lookup'
+import { cosmeticView, optionsOf, renderable, type CosmeticRow } from './cosmetics'
+import { visiblePetExtras } from './pet-extras-lookup'
+import { WEARABLE_SLOTS, type WearableSlot } from './templates'
+import { ACTIVE_BANS } from './users'
+
+export interface LookupCape {
+  id: string
+  url: string
+  scale: number
+  animated: boolean
+  frames: number
+  frameTimeMs: number | null
+}
+
+/**
+ * Flache Form für Lookup und Ereignisse. Format 1: `template` + `templateUrl` + Textur. Format 2 (§11.9): kein `template`/`templateUrl`/`emissive`
+ * (ältere Mods kennen nur Vorlagen und lassen das Teil dann weg), dafür `format`, `model`, `glow`, `glowFrames`,
+ * `glowFrameTimeMs`, `hash`; `url`/`scale`/`frames`/`frameTimeMs` beschreiben die Grundtextur.
+ */
+export interface LookupCosmetic {
+  id: string
+  template?: string
+  /** Pfad der v1-Vorlage (`/v1/cosmetics/<id>/template.json?v=<hash>`). Fehlt bei Format 2. */
+  templateUrl?: string
+  url: string
+  scale: number
+  animated: boolean
+  frames: number
+  frameTimeMs: number | null
+  emissive?: boolean
+  format?: 2
+  model?: string
+  glow?: string | null
+  glowFrames?: number
+  glowFrameTimeMs?: number | null
+  hash?: string
+  /** Format 2 mit `options` im Modell (Winter 2026): Wahl des Trägers je Option, vollständig (`{ "beard": false }`). */
+  options?: Record<string, boolean>
+  /** Nur im Platz `pet`: wie viele dieser Begleiter laufen (1…4; Creator-Pinguine nach Fans, sonst 1). */
+  count?: number
+  /**
+   * Nur im Platz `pet` (Format 2): Größe dieses Begleiters relativ zu anderen (1 = normal, Kaiserpinguin 1.25). NICHT mit
+   * `scale` verwechseln – das ist der Pixel-Faktor der Textur.
+   */
+  petScale?: number
+  /**
+   * Nur im Platz `pet`: Begleiter-Gefolge eines Creators (§35.13) – weitere Begleiter je 1× in dieser Reihenfolge, gleiche
+   * Form wie das Haupt-Pet (Format 2, mit `petScale`, ohne `count`/`extras`). Fehlt, wenn es keins gibt.
+   */
+  extras?: LookupCosmetic[]
+}
+
+export type LookupCosmetics = Record<WearableSlot, LookupCosmetic | null>
+
+export interface LookupEntry {
+  uuid: string
+  badge: boolean
+  cape: LookupCape | null
+  cosmetics: LookupCosmetics
+  /** Der Spieler ist ein aktiver Creator (§35.5); fehlt sonst. */
+  creator?: LookupCreator
+  /** Der Spieler ist Fan eines aktiven Creators mit freigegebenem Symbol (für den Fragenden sichtbar); fehlt sonst. */
+  fan?: LookupFan
+  /** Profil-Abzeichen (§36, z. B. `halloween2026`), älteste zuerst; leer bei `showBadge` aus (außer für einen selbst). */
+  badges: string[]
+  /** Spuk-Effekte, die der Spieler anderen zeigt (`hits`, `trail`) – nur solange Halloween für ihn läuft. */
+  fx: FxKind[]
+}
+
+interface Row {
+  uuid: string
+  show_badge: number
+  show_cape: number
+  show_cosmetics: number
+  cape_id: string | null
+  cape_status: CapeRow['status'] | null
+  cape_sha: string | null
+  cape_frames: number | null
+  cape_frame_time: number | null
+  cape_width: number | null
+  cape_height: number | null
+  cape_name: string | null
+  cape_kind: CapeRow['kind'] | null
+  cape_unlock: CapeRow['unlock'] | null
+}
+
+/** Sichtbar für andere nur freigegeben; man selbst sieht auch den eigenen wartenden Upload. */
+const visibleStatus = (status: string, self: boolean) => status === 'approved' || (self && status === 'pending')
+
+export function emptyCosmetics(): LookupCosmetics {
+  return { hat: null, wings: null, back: null, aura: null, companion: null, pet: null }
+}
+
+/**
+ * Das Cubiq-Abzeichen ist „live“: Es zeigt, dass jemand **gerade** mit Cubiq spielt
+ * (Cubiq Client in einer Welt oder ein vom Cubiq Launcher gestartetes Spiel, also
+ * Präsenz `in-game`) – und nur, wenn er `showBadge` anhat. Weil das verrät,
+ * dass jemand gerade spielt, sehen es andere nur, wenn sie selbst gerade im
+ * Spiel sind (typisch: Mitspieler auf demselben Server). Das eigene Abzeichen
+ * sieht man immer.
+ */
+export function liveBadge(ctx: AppContext, showBadge: boolean, subject: string, viewerSeesLive: boolean): boolean {
+  return showBadge && viewerSeesLive && ctx.presence.isInGame(subject)
+}
+
+/** Darf `viewer` Live-Abzeichen anderer sehen (ist er selbst gerade im Spiel)? */
+export function seesLiveBadges(ctx: AppContext, viewer: string): boolean {
+  return viewer !== '' && ctx.presence.isInGame(viewer)
+}
+
+/**
+ * Sichtbare Abzeichen/Umhänge/Kosmetik für `uuids`. `viewer` ist der Fragende
+ * (für „selbst“, Blockaden und Live-Abzeichen); `''` bedeutet „irgendein anderer
+ * Spieler“ ohne Blockadeprüfung (die macht dann der Aufrufer) und ohne
+ * Live-Abzeichen. Gesperrte fehlen immer.
+ */
+function collect(ctx: AppContext, viewer: string, uuids: string[]): LookupEntry[] {
+  const unique = [...new Set(uuids)]
+  if (unique.length === 0) return []
+  const rows = all<Row>(
+    ctx.db,
+    `SELECT u.uuid, u.show_badge, u.show_cape, u.show_cosmetics,
+            c.id AS cape_id, c.status AS cape_status, c.sha256 AS cape_sha, c.frames AS cape_frames,
+            c.frame_time_ms AS cape_frame_time, c.width AS cape_width, c.height AS cape_height,
+            c.name AS cape_name, c.kind AS cape_kind, c.unlock AS cape_unlock
+     FROM users u
+     LEFT JOIN capes c ON c.id = u.active_cape_id
+     WHERE u.uuid IN (${placeholders(unique.length)})
+       AND u.uuid NOT IN (${ACTIVE_BANS})
+       AND NOT EXISTS (SELECT 1 FROM blocks b WHERE b.blocker = u.uuid AND b.blocked = ?)`,
+    ...unique, ctx.now(), viewer,
+  )
+  if (rows.length === 0) return []
+  const equipped = all<CosmeticRow & { eq_uuid: string, eq_slot: WearableSlot, eq_options: string | null }>(
+    ctx.db,
+    `SELECT c.*, e.uuid AS eq_uuid, e.slot AS eq_slot, e.options AS eq_options FROM equipped_cosmetics e
+     JOIN cosmetics c ON c.id = e.cosmetic_id
+     WHERE e.uuid IN (${placeholders(rows.length)})`,
+    ...rows.map((r) => r.uuid),
+  )
+  const worn = new Map<string, (CosmeticRow & { eq_slot: WearableSlot, eq_options: string | null })[]>()
+  for (const e of equipped) {
+    const list = worn.get(e.eq_uuid)
+    if (list) list.push(e)
+    else worn.set(e.eq_uuid, [e])
+  }
+
+  // Tier-Anzahl eigener Creator-Haustiere (§35.13): nur nachschlagen, wenn jemand etwas im Platz `pet` trägt.
+  const petWearers = equipped.filter((e) => e.eq_slot === 'pet').map((e) => e.eq_uuid)
+  const petOwners = ownedPets(ctx, petWearers)
+  const petExtras = visiblePetExtras(ctx, petWearers)
+  const viewerLive = seesLiveBadges(ctx, viewer)
+  const extra = creatorLookupData(ctx, viewer, rows.map((r) => r.uuid))
+  const badgeFx = badgeFxFor(ctx, viewer, rows)
+  const players: LookupEntry[] = []
+  for (const r of rows) {
+    const self = r.uuid === viewer
+    let cape: LookupCape | null = null
+    if (r.cape_id && (self || r.show_cape === 1) && visibleStatus(r.cape_status!, self)) {
+      const v = capeView(ctx, {
+        id: r.cape_id,
+        sha256: r.cape_sha!,
+        frames: r.cape_frames!,
+        frame_time_ms: r.cape_frame_time,
+        width: r.cape_width!,
+        height: r.cape_height!,
+        name: r.cape_name!,
+        kind: r.cape_kind!,
+        unlock: r.cape_unlock!,
+        status: r.cape_status!,
+      } as CapeRow)
+      cape = { id: v.id, url: v.url, scale: v.scale, animated: v.animated, frames: v.frames, frameTimeMs: v.frameTimeMs }
+    }
+    const cosmetics = emptyCosmetics()
+    let any = false
+    if (self || r.show_cosmetics === 1) {
+      for (const c of worn.get(r.uuid) ?? []) {
+        if (!visibleStatus(c.status, self) || !renderable(ctx, c) || !WEARABLE_SLOTS.includes(c.eq_slot)) continue
+        const view = cosmeticView(ctx, c)
+        const tex = view.texture
+        if (!tex) continue
+        if (view.format === 2) {
+          const item = v2Lookup(ctx, c, c.eq_options)
+          if (!item) continue
+          if (c.eq_slot === 'pet') {
+            item.count = petCount(c.id, petOwners.get(r.uuid))
+            const extras = (petExtras.get(r.uuid) ?? []).map((x) => v2Lookup(ctx, x, null)).filter((x) => x !== null)
+            if (extras.length) item.extras = extras
+          }
+          cosmetics[c.eq_slot] = item
+        } else {
+          if (!c.template) continue
+          cosmetics[c.eq_slot] = {
+            id: c.id,
+            template: c.template,
+            ...(view.templateUrl ? { templateUrl: view.templateUrl } : {}),
+            url: tex.url,
+            scale: tex.scale,
+            animated: tex.animated,
+            frames: tex.frames,
+            frameTimeMs: tex.frameTimeMs,
+            emissive: c.emissive === 1,
+          }
+        }
+        any = true
+      }
+    }
+    const badge = liveBadge(ctx, r.show_badge === 1, r.uuid, self || viewerLive)
+    const creator = extra.creators.get(r.uuid)
+    const fan = extra.fans.get(r.uuid)
+    const { badges, fx } = badgeFx.get(r.uuid) ?? { badges: [], fx: [] }
+    // Nur Creator-/Fan-Daten (§35.5) bzw. Abzeichen/Effekte (§36) reichen auch.
+    if (!badge && !cape && !any && !creator && !fan && badges.length === 0 && fx.length === 0) continue
+    players.push({ uuid: r.uuid, badge, cape, cosmetics, ...(creator ? { creator } : {}), ...(fan ? { fan } : {}), badges, fx })
+  }
+  return players
+}
+
+/** Lookup-Form eines v2-Teils (`null`, wenn es keine Textur hat). Im Platz `pet` mit `petScale`. */
+function v2Lookup(ctx: AppContext, c: CosmeticRow, rawOptions: string | null): LookupCosmetic | null {
+  const view = cosmeticView(ctx, c)
+  const tex = view.texture
+  if (!tex) return null
+  const item: LookupCosmetic = {
+    id: c.id,
+    format: 2,
+    model: view.model!,
+    url: tex.url,
+    scale: tex.scale,
+    animated: tex.animated,
+    frames: tex.frames,
+    frameTimeMs: tex.frameTimeMs,
+    glow: view.glow ?? null,
+    glowFrames: view.glowFrames ?? 0,
+    glowFrameTimeMs: view.glowFrameTimeMs ?? null,
+    hash: view.hash!,
+  }
+  const options = optionsOf(ctx, c, rawOptions)
+  if (options) item.options = options
+  if (view.petScale !== undefined) item.petScale = view.petScale
+  return item
+}
+
+/**
+ * Batch-Abfrage für den In-Game-Mod. Nur Cubiq-Nutzer, die etwas zeigen,
+ * erscheinen in der Antwort. `badge` ist live (siehe {@link liveBadge}). Anderen werden nur freigegebene Umhänge und
+ * Kosmetik gezeigt; eigene wartende Uploads nur einem selbst. Gesperrte Nutzer
+ * und Nutzer, die den Fragenden blockiert haben, fehlen.
+ */
+export function lookupPlayers(ctx: AppContext, viewer: string, uuids: string[]): { players: LookupEntry[] } {
+  return { players: collect(ctx, viewer, uuids) }
+}
+
+/** Sicht auf einen einzelnen Spieler – `self` = der Spieler selbst, sonst „ein anderer“ (ohne Blockadeprüfung). */
+export function visualsOf(ctx: AppContext, subject: string, self: boolean): LookupEntry {
+  return collect(ctx, self ? subject : '', [subject])[0] ?? { uuid: subject, badge: false, cape: null, cosmetics: emptyCosmetics(), badges: [], fx: [] }
+}

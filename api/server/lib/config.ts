@@ -1,0 +1,569 @@
+import { hkdfSync } from 'node:crypto'
+import { join } from 'node:path'
+import { z } from 'zod'
+import { normalizeUuid } from './ids'
+import { parseVapidKeys, type VapidKeys } from './push-crypto'
+import type { MicrosoftConfig } from './microsoft'
+
+/** Laufzeit-Konfiguration – ausschließlich aus Umgebungsvariablen (.env). */
+export interface Config {
+  dataDir: string
+  /**
+   * Proprietäre Built-ins (Code/Team), nicht im Repository.
+   * Leer oder ungesetzt → `<DATA_DIR>/private-assets`.
+   */
+  privateAssetsDir: string
+  publicBaseUrl: string
+  /** Adresse der Website (Links, Weiterleitungen, Sitemap). */
+  siteUrl: string
+  /** Hosts, die nur die API bedienen (Seiten dort → 301 zur Website), klein geschrieben. */
+  apiOnlyHosts: ReadonlySet<string>
+  /** Adresse der Doku-Domain (`https://docs.cubiq-launcher.invalid`, ohne `/` am Ende) – Ziel von /docs/… der Website. */
+  wikiUrl: string
+  /** Hosts der Doku-Domain (klein, ohne Port): dort liefert server/lib/wiki.ts die Doku an der Wurzel aus. */
+  wikiHosts: ReadonlySet<string>
+  /** Ordner mit dem Docs-Build. Leer = automatisch (`.output/docs-wiki` neben dem Server bzw. docs-site/.output/public). */
+  docsDir: string
+  adminUuids: ReadonlySet<string>
+  adminApiKey: string | null
+  secretKey: string
+  corsOrigins: ReadonlySet<string>
+  trustProxy: 'cloudflare' | 'none'
+  mojangSessionUrl: string
+  mojangApiUrl: string
+  logRequests: boolean
+  /**
+   * Schlüssel für die Verschlüsselung der Chat-Inhalte (AES-256-GCM). Der erste ist aktiv (neue Daten),
+   * die übrigen nur zum Entschlüsseln alter Daten (Schlüsseltausch, s. API.md §18.9). Leer = aus
+   * SECRET_KEY abgeleitet (`derived: true`).
+   */
+  chatKeys: { keys: { id: string, key: Buffer }[], derived: boolean }
+  /** Höchstens so viele Bytes Chat-Bilder insgesamt (Plattenplatz), `CHAT_STORAGE_MAX_MB`. */
+  chatStorageMaxBytes: number
+  /** Höchstens so viele Bytes geteilte Screenshots insgesamt (§23), `SHARE_STORAGE_MAX_MB`. */
+  shareStorageMaxBytes: number
+  /** Geteilte Modpacks (§27): größte Pack-Datei, `PACK_MAX_MB` (Vorgabe 1024). */
+  packMaxBytes: number
+  /** Höchstens so viele Bytes geteilte Modpacks insgesamt, `PACK_STORAGE_MAX_MB`. */
+  packStorageMaxBytes: number
+  /** Stückgröße des wiederaufnehmbaren Uploads, `PACK_CHUNK_BYTES` (Vorgabe 32 MiB). */
+  packChunkBytes: number
+  /** Server-Einladungen: Status vom Server abfragen (Ping mit SSRF-Schutz). `SERVER_PING=false` schaltet ab. */
+  serverPing: boolean
+  /** Welt-Hosting (§21): Relay-Adresse + gemeinsames Geheimnis. `null` = Hosting aus (503 hosting_unavailable). */
+  hosting: HostingConfig | null
+  /** Website-Anmeldung mit Microsoft (§24.1). `null` = aus (MS_CLIENT_ID/MS_CLIENT_SECRET fehlen). */
+  microsoft: MicrosoftConfig | null
+  /** Push für die Apps (§33): VAPID-Schlüssel. `null` = UnifiedPush aus (Abruf-Geräte gehen trotzdem). */
+  vapid: VapidKeys | null
+  /** CurseForge-API-Schlüssel (empfohlene Modpacks, §37). `null` = CurseForge-Links → 503 curseforge_unavailable. */
+  curseforgeApiKey: string | null
+  /** Mail über SMTP (§40). `null` = aus (SMTP_HOST leer): Versand → 503 `mail_unavailable`, alles andere geht. */
+  mail: MailConfig | null
+  limits: Limits
+}
+
+export interface MailConfig {
+  host: string
+  port: number
+  /** `true` = TLS ab dem ersten Byte (Port 465), sonst STARTTLS (Pflicht, außer bei 127.0.0.1/localhost). */
+  secure: boolean
+  /** System-Konto (`no-reply@…`): Bestätigungen, Team-Benachrichtigungen. */
+  system: MailAccount
+  /** Newsletter-Konto (`newsletter@…`): Kampagnen + Testmails. Ohne NEWSLETTER_* = das System-Konto (`shared`). */
+  newsletter: MailAccount & { shared: boolean }
+  replyTo: string | null
+  /** Fallback-Empfänger der Team-Benachrichtigungen (wenn kein Team-Mitglied sie aktiviert hat). */
+  teamTo: string[]
+  /** Höchstens so viele Mails je Minute und Konto (Ausgangs-Warteschlange). */
+  ratePerMin: number
+}
+
+export interface MailAccount {
+  user: string | null
+  pass: string | null
+  /** Absender, z. B. `Cubiq Launcher <no-reply@cubiq-launcher.invalid>`. */
+  from: string
+}
+
+export interface HostingConfig {
+  /** Öffentlicher Name/IP des Relays (TCP + UDP). */
+  relayHost: string
+  relayTcpPort: number
+  relayUdpPort: number
+  /** HMAC-Schlüssel für Relay-Tokens; der erste signiert (weitere nur fürs Relay beim Schlüsseltausch). */
+  relaySecrets: string[]
+  /** STUN-Server `host:port`, die Clients für ihre öffentliche Adresse fragen. */
+  stun: string[]
+}
+
+export interface Limits {
+  sessionTtlMs: number
+  maxSessionsPerUser: number
+  challengeTtlMs: number
+  presenceTtlMs: number
+  maxFriends: number
+  maxOutgoingRequests: number
+  maxIncomingRequests: number
+  maxUploadsPerUser: number
+  maxPendingUploadsPerUser: number
+  maxSseStreamsPerUser: number
+  maxSseStreamsTotal: number
+  maxCosmeticUploadsPerUser: number
+  maxPendingCosmeticUploadsPerUser: number
+  maxPlayerStreamsPerUser: number
+  maxPlayerStreamsTotal: number
+  /** Höchstzahl beobachteter Spieler je `GET /v1/events/players`-Stream. */
+  maxWatchedPerStream: number
+  /** Geteilte Umhänge: höchstens so viele Inhaber je Umhang außer dem Ersteller (angenommen + offene Angebote). */
+  maxCapeHolders: number
+  /** Offene Umhang-Angebote, die ein Spieler gleichzeitig bekommen kann. */
+  maxIncomingCapeOffers: number
+  // ------------------------------------------------ Chat, Echtzeit, Meldungen
+  /** Offene `GET /v1/events/me`-Streams je Konto (Launcher + Mod + Reserve). */
+  maxUserStreamsPerUser: number
+  /** Wiederaufnahme per Last-Event-ID: so viele Ereignisse je Konto … */
+  replayBufferSize: number
+  /** … höchstens so alt (danach `resync`). */
+  replayWindowMs: number
+  /** Zeichen je Nachricht (nach dem Säubern). */
+  maxMessageLength: number
+  maxAttachmentsPerMessage: number
+  /** Mitglieder je Gruppe inkl. Besitzer. */
+  maxGroupMembers: number
+  maxGroupsOwned: number
+  maxGroupsJoined: number
+  /** Gespeicherte Chat-Bilder je Konto (Bytes, nach dem Neukodieren). */
+  maxAttachmentBytesPerUser: number
+  /** Hochgeladene, noch keiner Nachricht zugeordnete Bilder verfallen nach … */
+  pendingAttachmentTtlMs: number
+  /** Auto-Stumm: so viele verschiedene Melder … */
+  autoMuteReporters: number
+  /** … innerhalb dieses Fensters. */
+  autoMuteWindowMs: number
+  /** Offene Meldungen je Melder. */
+  maxOpenReportsPerUser: number
+  /** Beweise erledigter Meldungen werden nach … gelöscht. */
+  reportEvidenceRetentionMs: number
+  /** Erledigte Meldungen (ohne Inhalte) werden nach … ganz gelöscht. */
+  reportRetentionMs: number
+  // ------------------------------------------------ Welt-Hosting
+  /** Raum schließt, wenn der Host so lange keinen Herzschlag schickt. */
+  hostingRoomTtlMs: number
+  /** Relay-Tokens gelten so lange zum Verbinden (≤ 2 min). */
+  relayTokenTtlMs: number
+  /** Offene Einladungen je Raum. */
+  hostingMaxInvites: number
+  /** Offene Beitrittsanfragen je Raum. */
+  hostingMaxRequests: number
+  /** Dauerhafte Sperren je Host. */
+  hostingMaxBans: number
+  /** Größe von `data` in Signal-Nachrichten (Zeichen). */
+  hostingMaxSignalData: number
+  // ------------------------------------------------ Geteilte Screenshots (§23)
+  /** Ein geteilter Link gilt so lange, danach wird das Bild gelöscht. */
+  shareTtlMs: number
+  /** Gleichzeitig aktive Links je Konto. */
+  maxActiveShares: number
+  /** Uploads je Konto in 24 Stunden (auch wenn sie inzwischen gelöscht sind). */
+  maxSharesPerDay: number
+  // ------------------------------------------------ Schaltungs-Bibliothek (§25)
+  /** Einreichungen je Konto in 24 Stunden (auch entschiedene zählen). */
+  maxCircuitSubmissionsPerDay: number
+  // ------------------------------------------------ Geteilte Modpacks (§27)
+  /** Gleichzeitig geteilte Modpacks je Konto. */
+  maxSharedPacks: number
+  /** Uploads (neue Packs + neue Versionen) je Konto in 24 Stunden. */
+  maxPackUploadsPerDay: number
+  /** Ungelesene an dich geschickte Packs (danach lehnt der Server weitere ab). */
+  maxPackInbox: number
+  // ------------------------------------------------ Push (§33)
+  /** Push-Geräte je Konto. */
+  maxPushDevices: number
+  /** Stream der App/des Desktops gilt noch so lange nach dem Schließen als „aktiv“ (keine doppelte Benachrichtigung). */
+  pushActiveWindowMs: number
+  /** Abruf-Liste (iOS): Einträge höchstens so lange … */
+  pushPendingTtlMs: number
+  /** … und höchstens so viele je Gerät. */
+  maxPushPendingPerDevice: number
+  /** Wartende Sendungen insgesamt (darüber wird verworfen). */
+  pushQueueMax: number
+  /** Gleichzeitige Sendungen an Push-Dienste. */
+  pushConcurrency: number
+}
+
+export const DEFAULT_LIMITS: Limits = {
+  sessionTtlMs: 30 * 24 * 60 * 60 * 1000,
+  maxSessionsPerUser: 10,
+  challengeTtlMs: 60 * 1000,
+  presenceTtlMs: 3 * 60 * 1000,
+  maxFriends: 200,
+  maxOutgoingRequests: 50,
+  maxIncomingRequests: 100,
+  maxUploadsPerUser: 10,
+  maxPendingUploadsPerUser: 3,
+  maxSseStreamsPerUser: 3,
+  maxSseStreamsTotal: 2000,
+  maxCosmeticUploadsPerUser: 10,
+  maxPendingCosmeticUploadsPerUser: 3,
+  maxPlayerStreamsPerUser: 3,
+  maxPlayerStreamsTotal: 2000,
+  maxWatchedPerStream: 200,
+  maxCapeHolders: 20,
+  maxIncomingCapeOffers: 50,
+  maxUserStreamsPerUser: 5,
+  replayBufferSize: 300,
+  replayWindowMs: 10 * 60 * 1000,
+  maxMessageLength: 2000,
+  maxAttachmentsPerMessage: 10,
+  maxGroupMembers: 25,
+  maxGroupsOwned: 20,
+  maxGroupsJoined: 100,
+  maxAttachmentBytesPerUser: 250 * 1024 * 1024,
+  pendingAttachmentTtlMs: 60 * 60 * 1000,
+  autoMuteReporters: 3,
+  autoMuteWindowMs: 24 * 60 * 60 * 1000,
+  maxOpenReportsPerUser: 20,
+  reportEvidenceRetentionMs: 90 * 24 * 60 * 60 * 1000,
+  reportRetentionMs: 365 * 24 * 60 * 60 * 1000,
+  hostingRoomTtlMs: 90 * 1000,
+  relayTokenTtlMs: 120 * 1000,
+  hostingMaxInvites: 50,
+  hostingMaxRequests: 20,
+  hostingMaxBans: 500,
+  hostingMaxSignalData: 4096,
+  shareTtlMs: 30 * 24 * 60 * 60 * 1000,
+  maxActiveShares: 50,
+  maxSharesPerDay: 20,
+  maxCircuitSubmissionsPerDay: 5,
+  maxSharedPacks: 10,
+  maxPackUploadsPerDay: 30,
+  maxPackInbox: 100,
+  maxPushDevices: 10,
+  pushActiveWindowMs: 60 * 1000,
+  pushPendingTtlMs: 72 * 60 * 60 * 1000,
+  maxPushPendingPerDevice: 200,
+  pushQueueMax: 5000,
+  pushConcurrency: 8,
+}
+
+const bool = z
+  .enum(['true', 'false', '1', '0', ''])
+  .transform((v) => v === 'true' || v === '1')
+
+const listOf = (item: (s: string) => string | null, label: string) =>
+  z.string().transform((raw, ctx) => {
+    const out = new Set<string>()
+    for (const part of raw.split(',').map((s) => s.trim()).filter(Boolean)) {
+      const v = item(part)
+      if (!v) {
+        ctx.addIssue({ code: 'custom', message: `invalid ${label}` })
+        return z.NEVER
+      }
+      out.add(v)
+    }
+    return out
+  })
+
+const origin = (s: string): string | null => {
+  try {
+    const u = new URL(s)
+    if (u.protocol !== 'https:' && u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') return null
+    if (u.origin !== s.replace(/\/$/, '')) return null
+    return u.origin
+  } catch {
+    return null
+  }
+}
+
+/** Leerer Wert (`KEY=` in .env) zählt wie nicht gesetzt – dann gilt der Standard. */
+const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v)
+
+/** Optionale http(s)-Adresse ohne `/` am Ende; leer = nicht gesetzt. */
+const optionalUrl = () =>
+  z.preprocess(emptyToUndefined, z.url({ protocol: /^https?$/ }).optional()).transform((s) => s?.replace(/\/+$/, ''))
+
+const envSchema = z.object({
+  DATA_DIR: z.string().min(1).default('/data'),
+  // Proprietäre Kosmetik. Leer = `<DATA_DIR>/private-assets`. Der Ordner darf beim Start fehlen.
+  PRIVATE_ASSETS_DIR: z
+    .string()
+    .max(4096)
+    .default('')
+    .refine((s) => !s.includes('\0'), 'invalid path')
+    .transform((s) => s.trim()),
+  // Adresse der API für Umhang-/Bild-URLs in Antworten. Leer = SITE_URL (Website und API auf einer Domain).
+  PUBLIC_BASE_URL: optionalUrl(),
+  // Adresse der Website, z. B. https://cubiq-launcher.de – die eine Einstellung, die jede Installation braucht.
+  SITE_URL: z
+    .url({ protocol: /^https?$/ })
+    .default('https://cubiq-launcher.invalid')
+    .transform((s) => s.replace(/\/+$/, '')),
+  // Weitere Namen, die nur die API bedienen (Komma-Liste, z. B. api.example.com); andere Pfade leiten auf SITE_URL.
+  API_ONLY_HOSTS: z
+    .string()
+    .default('')
+    .transform((raw) => new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean))),
+  // Doku auf eigener Domain (server/lib/wiki.ts). Der Host-Name dieser Adresse bedient nur die Doku.
+  // Leer = docs.<Host von SITE_URL>.
+  WIKI_URL: optionalUrl(),
+  DOCS_DIR: z
+    .string()
+    .max(4096)
+    .default('')
+    .refine((s) => !s.includes('\0'), 'invalid path')
+    .transform((s) => s.trim()),
+  ADMIN_UUIDS: listOf(normalizeUuid, 'uuid').default(new Set<string>()),
+  ADMIN_API_KEY: z
+    .string()
+    .default('')
+    .refine((s) => s === '' || s.length >= 32, 'must be empty or at least 32 characters'),
+  SECRET_KEY: z.string().min(32, 'must be at least 32 characters'),
+  CORS_ORIGINS: listOf(origin, 'origin (https only, no wildcard)').default(new Set<string>()),
+  TRUST_PROXY: z.enum(['cloudflare', 'none']).default('cloudflare'),
+  MOJANG_SESSIONSERVER_URL: z
+    .url({ protocol: /^https?$/ })
+    .default('https://sessionserver.mojang.com')
+    .transform((s) => s.replace(/\/+$/, '')),
+  MOJANG_API_URL: z
+    .url({ protocol: /^https?$/ })
+    .default('https://api.mojang.com')
+    .transform((s) => s.replace(/\/+$/, '')),
+  // Nur für lokale Tests mit einem Mojang-Mock (http://…). Nie in Produktion setzen.
+  ALLOW_INSECURE_MOJANG_URL: bool.default(false),
+  LOG_REQUESTS: bool.default(false),
+  // Chat-Verschlüsselung: "id:base64(32 Byte)", kommagetrennt, der erste ist aktiv.
+  CHAT_KEYS: z.string().default(''),
+  CHAT_STORAGE_MAX_MB: z.coerce.number().int().min(10).max(1_000_000).default(1024),
+  SHARE_STORAGE_MAX_MB: z.coerce.number().int().min(10).max(1_000_000).default(1024),
+  PACK_MAX_MB: z.coerce.number().int().min(1).max(2048).default(1024),
+  PACK_STORAGE_MAX_MB: z.coerce.number().int().min(10).max(1_000_000).default(51200),
+  /** Nur für Tests kleiner als 32 MiB setzen. Clients müssen `chunkSize` aus der Antwort nehmen. */
+  PACK_CHUNK_BYTES: z.coerce.number().int().min(1).max(33_554_432).default(33_554_432),
+  SERVER_PING: bool.default(true),
+  // Welt-Hosting: Relay (eigener Pterodactyl-Server). Ohne RELAY_SECRET + RELAY_HOST ist Hosting aus.
+  RELAY_SECRET: z.string().default(''),
+  RELAY_HOST: z
+    .string()
+    .trim()
+    .default('')
+    .refine((s) => s === '' || /^[A-Za-z0-9.-]{1,253}$/.test(s), 'must be a hostname or IPv4 address'),
+  RELAY_TCP_PORT: z.coerce.number().int().min(1).max(65535).default(25503),
+  RELAY_UDP_PORT: z.coerce.number().int().min(1).max(65535).default(25504),
+  // STUN-Server (host:port, kommagetrennt). Leer = nur das Relay selbst (RELAY_HOST:RELAY_UDP_PORT).
+  HOSTING_STUN: z.string().default(''),
+  // Website-Anmeldung mit Microsoft (vertraulicher Client). Ohne ID + Secret ist sie aus.
+  MS_CLIENT_ID: z.string().trim().default('').refine((s) => s === '' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s), 'must be a GUID'),
+  MS_CLIENT_SECRET: z.string().trim().default(''),
+  // Leer = SITE_URL + /auth/microsoft/callback.
+  MS_REDIRECT_URI: z.preprocess(emptyToUndefined, z.url({ protocol: /^https?$/ }).optional()),
+  // Nur für lokale Tests mit Attrappen (http://…). Nie in Produktion ändern.
+  MS_AUTHORITY_URL: z.url({ protocol: /^https?$/ }).default('https://login.microsoftonline.com/consumers/oauth2/v2.0').transform((s) => s.replace(/\/+$/, '')),
+  XBOX_USER_AUTH_URL: z.url({ protocol: /^https?$/ }).default('https://user.auth.xboxlive.com/user/authenticate'),
+  XBOX_XSTS_URL: z.url({ protocol: /^https?$/ }).default('https://xsts.auth.xboxlive.com/xsts/authorize'),
+  MINECRAFT_SERVICES_URL: z.url({ protocol: /^https?$/ }).default('https://api.minecraftservices.com').transform((s) => s.replace(/\/+$/, '')),
+  ALLOW_INSECURE_MS_URLS: bool.default(false),
+  // Push für die Apps (§33): VAPID-Schlüsselpaar (base64url, `node scripts/vapid-keys.mjs`) + Kontakt. Alle drei oder keiner.
+  VAPID_PUBLIC_KEY: z.string().trim().default(''),
+  VAPID_PRIVATE_KEY: z.string().trim().default(''),
+  VAPID_SUBJECT: z.string().trim().max(256).default(''),
+  // Empfohlene Modpacks (§37): CurseForge-API-Schlüssel (console.curseforge.com). Leer = nur Modrinth.
+  CURSEFORGE_API_KEY: z.string().trim().max(200).default(''),
+  // Mail (§40): SMTP-Zugang nur hier (Server-.env), nie im Repo oder Log. SMTP_HOST leer = Mail aus.
+  SMTP_HOST: z.string().trim().max(253).default('').refine((s) => s === '' || /^[A-Za-z0-9.-]{1,253}$/.test(s), 'must be a hostname'),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: bool.default(false),
+  SMTP_USER: z.string().max(320).default(''),
+  SMTP_PASS: z.string().max(1024).default(''),
+  // Leer = `Cubiq Launcher <no-reply@<Host von SITE_URL>>`.
+  MAIL_FROM: z.string().trim().max(200).default(''),
+  // Eigenes Konto für Kampagnen (gleicher SMTP-Server). Leer = Kampagnen über das System-Konto.
+  NEWSLETTER_SMTP_USER: z.string().max(320).default(''),
+  NEWSLETTER_SMTP_PASS: z.string().max(1024).default(''),
+  // Leer = `Cubiq Launcher <newsletter@<Host von SITE_URL>>`.
+  NEWSLETTER_FROM: z.string().trim().max(200).default(''),
+  MAIL_REPLY_TO: z.string().trim().max(254).default(''),
+  MAIL_TEAM_TO: z.string().trim().max(2000).default(''),
+  MAIL_RATE_PER_MIN: z.coerce.number().int().min(1).max(6000).default(60),
+})
+
+const HOST_PORT = /^[A-Za-z0-9.-]{1,253}:(\d{1,5})$/
+
+/** Relay-/STUN-Einstellungen lesen; ohne Geheimnis oder Host → `null` (Hosting aus). */
+function parseHosting(e: z.output<typeof envSchema>): HostingConfig | null {
+  const secrets = e.RELAY_SECRET.split(',').map((s) => s.trim()).filter(Boolean)
+  if (secrets.length === 0 || e.RELAY_HOST === '') return null
+  if (secrets.some((s) => s.length < 32)) throw new ConfigError('Invalid configuration: RELAY_SECRET (each secret must be at least 32 characters)')
+  const stun = e.HOSTING_STUN.split(',').map((s) => s.trim()).filter(Boolean)
+  for (const s of stun) {
+    const m = HOST_PORT.exec(s)
+    if (!m || Number(m[1]) < 1 || Number(m[1]) > 65535) throw new ConfigError('Invalid configuration: HOSTING_STUN (expected host:port, comma-separated)')
+  }
+  return {
+    relayHost: e.RELAY_HOST,
+    relayTcpPort: e.RELAY_TCP_PORT,
+    relayUdpPort: e.RELAY_UDP_PORT,
+    relaySecrets: secrets,
+    stun: stun.length > 0 ? stun.slice(0, 8) : [`${e.RELAY_HOST}:${e.RELAY_UDP_PORT}`],
+  }
+}
+
+/** Microsoft-Anmeldung lesen; ohne Client-ID oder Secret → `null` (aus). */
+function parseMicrosoft(e: z.output<typeof envSchema>): MicrosoftConfig | null {
+  if (e.MS_CLIENT_ID === '' || e.MS_CLIENT_SECRET === '') return null
+  const redirectUri = e.MS_REDIRECT_URI ?? `${e.SITE_URL}/auth/microsoft/callback`
+  const urls = {
+    MS_REDIRECT_URI: redirectUri,
+    MS_AUTHORITY_URL: e.MS_AUTHORITY_URL,
+    XBOX_USER_AUTH_URL: e.XBOX_USER_AUTH_URL,
+    XBOX_XSTS_URL: e.XBOX_XSTS_URL,
+    MINECRAFT_SERVICES_URL: e.MINECRAFT_SERVICES_URL,
+  }
+  for (const [key, url] of Object.entries(urls)) {
+    const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)
+    if (url.startsWith('http:') && !(e.ALLOW_INSECURE_MS_URLS || (key === 'MS_REDIRECT_URI' && local))) {
+      throw new ConfigError(`Invalid configuration: ${key} (must be https)`)
+    }
+  }
+  if (!new URL(redirectUri).pathname.endsWith('/auth/microsoft/callback')) {
+    throw new ConfigError('Invalid configuration: MS_REDIRECT_URI (path must be /auth/microsoft/callback)')
+  }
+  return {
+    clientId: e.MS_CLIENT_ID,
+    clientSecret: e.MS_CLIENT_SECRET,
+    redirectUri,
+    authorityUrl: e.MS_AUTHORITY_URL,
+    xboxUserAuthUrl: e.XBOX_USER_AUTH_URL,
+    xboxXstsUrl: e.XBOX_XSTS_URL,
+    minecraftServicesUrl: e.MINECRAFT_SERVICES_URL,
+  }
+}
+
+const MAIL_ADDRESS = /^[^\s@<>",;]{1,64}@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,63}$/
+
+/** SMTP lesen; ohne SMTP_HOST → `null` (Mail aus). Werte erscheinen nie in Fehlermeldungen. */
+function parseMail(e: z.output<typeof envSchema>): MailConfig | null {
+  if (e.SMTP_HOST === '') return null
+  const checkFrom = (value: string, key: string) => {
+    const m = /^(?:([^<>\r\n]{1,100}?)\s*<([^<>\s]+)>|([^<>\s]+))$/.exec(value)
+    const addr = m ? (m[2] ?? m[3]!) : ''
+    if (!m || !MAIL_ADDRESS.test(addr)) throw new ConfigError(`Invalid configuration: ${key} (expected "Name <address>" or an address)`)
+  }
+  const host = new URL(e.SITE_URL).hostname
+  const mailFrom = e.MAIL_FROM || `Cubiq Launcher <no-reply@${host}>`
+  const newsletterFrom = e.NEWSLETTER_FROM || `Cubiq Launcher <newsletter@${host}>`
+  checkFrom(mailFrom, 'MAIL_FROM')
+  if (e.MAIL_REPLY_TO !== '' && !MAIL_ADDRESS.test(e.MAIL_REPLY_TO)) throw new ConfigError('Invalid configuration: MAIL_REPLY_TO')
+  const teamTo = e.MAIL_TEAM_TO.split(',').map((s) => s.trim()).filter(Boolean)
+  if (teamTo.some((a) => !MAIL_ADDRESS.test(a))) throw new ConfigError('Invalid configuration: MAIL_TEAM_TO (comma-separated addresses)')
+  if ((e.SMTP_USER === '') !== (e.SMTP_PASS === '')) throw new ConfigError('Invalid configuration: SMTP_USER and SMTP_PASS must be set together')
+  if ((e.NEWSLETTER_SMTP_USER === '') !== (e.NEWSLETTER_SMTP_PASS === '')) throw new ConfigError('Invalid configuration: NEWSLETTER_SMTP_USER and NEWSLETTER_SMTP_PASS must be set together')
+  const system: MailAccount = { user: e.SMTP_USER || null, pass: e.SMTP_PASS || null, from: mailFrom }
+  // Ohne eigenes Newsletter-Konto: alles über das System-Konto (Absender inklusive – der Server lässt meist nur die eigene Adresse zu).
+  const own = e.NEWSLETTER_SMTP_USER !== ''
+  if (own) checkFrom(newsletterFrom, 'NEWSLETTER_FROM')
+  return {
+    host: e.SMTP_HOST,
+    port: e.SMTP_PORT,
+    secure: e.SMTP_SECURE,
+    system,
+    newsletter: own
+      ? { user: e.NEWSLETTER_SMTP_USER, pass: e.NEWSLETTER_SMTP_PASS, from: newsletterFrom, shared: false }
+      : { ...system, shared: true },
+    replyTo: e.MAIL_REPLY_TO === '' ? null : e.MAIL_REPLY_TO,
+    teamTo: teamTo.slice(0, 10),
+    ratePerMin: e.MAIL_RATE_PER_MIN,
+  }
+}
+
+/** VAPID lesen; alle drei leer → `null` (UnifiedPush aus). Teilweise gesetzt oder unpassend → Fehler. */
+function parseVapid(e: z.output<typeof envSchema>): VapidKeys | null {
+  const set = [e.VAPID_PUBLIC_KEY, e.VAPID_PRIVATE_KEY, e.VAPID_SUBJECT].filter((v) => v !== '').length
+  if (set === 0) return null
+  if (set !== 3) throw new ConfigError('Invalid configuration: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT must be set together')
+  const keys = parseVapidKeys(e.VAPID_PUBLIC_KEY, e.VAPID_PRIVATE_KEY)
+  if (!keys) throw new ConfigError('Invalid configuration: VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY (expected a matching P-256 key pair, base64url)')
+  if (!/^mailto:[^\s@]+@[^\s@]+$/.test(e.VAPID_SUBJECT) && !/^https:\/\/[^\s]+$/.test(e.VAPID_SUBJECT)) {
+    throw new ConfigError('Invalid configuration: VAPID_SUBJECT (expected mailto:… or https://…)')
+  }
+  return { ...keys, subject: e.VAPID_SUBJECT }
+}
+
+/** `CHAT_KEYS` lesen; leer → ein Schlüssel aus SECRET_KEY (HKDF, Kennung `s1`). */
+function parseChatKeys(raw: string, secret: string): Config['chatKeys'] {
+  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  const derived = () => Buffer.from(hkdfSync('sha256', secret, 'cubiq-chat', 'chat-at-rest-v1', 32))
+  if (parts.length === 0) return { keys: [{ id: 's1', key: derived() }], derived: true }
+  const keys: { id: string, key: Buffer }[] = []
+  for (const part of parts) {
+    // `s1:derived` = der aus SECRET_KEY abgeleitete Schlüssel (zum Umstieg auf eigene Schlüssel).
+    if (part === 's1:derived') {
+      if (keys.some((k) => k.id === 's1')) throw new ConfigError('Invalid configuration: CHAT_KEYS (duplicate key id)')
+      keys.push({ id: 's1', key: derived() })
+      continue
+    }
+    const m = /^([A-Za-z0-9_-]{1,16}):([A-Za-z0-9+/=_-]{40,64})$/.exec(part)
+    const key = m ? Buffer.from(m[2]!.replaceAll('-', '+').replaceAll('_', '/'), 'base64') : null
+    if (!m || !key || key.length !== 32) throw new ConfigError('Invalid configuration: CHAT_KEYS (expected id:base64-of-32-bytes, comma-separated)')
+    if (keys.some((k) => k.id === m[1])) throw new ConfigError('Invalid configuration: CHAT_KEYS (duplicate key id)')
+    keys.push({ id: m[1]!, key })
+  }
+  return { keys, derived: false }
+}
+
+export class ConfigError extends Error {}
+
+/** Doku-Adresse aus der Website-Adresse: `docs.<host>`; bei IP-Adressen (lokal) `docs.localhost` mit gleichem Port. */
+function docsUrl(site: URL): string {
+  const ip = /^\d+\.\d+\.\d+\.\d+$/.test(site.hostname) || site.hostname.startsWith('[')
+  const host = ip ? 'docs.localhost' : `docs.${site.hostname}`
+  return `${site.protocol}//${host}${site.port ? `:${site.port}` : ''}`
+}
+
+/** Liest die Konfiguration. Wirft `ConfigError` mit den Namen der fehlerhaften Variablen (nie deren Werte). */
+export function loadConfig(env: Record<string, string | undefined>, limits: Partial<Limits> = {}): Config {
+  const parsed = envSchema.safeParse(env)
+  if (!parsed.success) {
+    const keys = [...new Set(parsed.error.issues.map((i) => `${String(i.path[0])} (${i.message})`))]
+    throw new ConfigError(`Invalid configuration: ${keys.join(', ')}`)
+  }
+  const e = parsed.data
+  const site = new URL(e.SITE_URL)
+  const wikiUrl = e.WIKI_URL ?? docsUrl(site)
+  for (const key of ['MOJANG_SESSIONSERVER_URL', 'MOJANG_API_URL'] as const) {
+    if (e[key].startsWith('http:') && !e.ALLOW_INSECURE_MOJANG_URL) {
+      throw new ConfigError(`Invalid configuration: ${key} (must be https)`)
+    }
+  }
+  return {
+    dataDir: e.DATA_DIR,
+    privateAssetsDir: e.PRIVATE_ASSETS_DIR === '' ? join(e.DATA_DIR, 'private-assets') : e.PRIVATE_ASSETS_DIR,
+    publicBaseUrl: e.PUBLIC_BASE_URL ?? e.SITE_URL,
+    siteUrl: e.SITE_URL,
+    apiOnlyHosts: e.API_ONLY_HOSTS,
+    wikiUrl,
+    wikiHosts: new Set([new URL(wikiUrl).hostname.toLowerCase()]),
+    docsDir: e.DOCS_DIR,
+    adminUuids: e.ADMIN_UUIDS,
+    adminApiKey: e.ADMIN_API_KEY === '' ? null : e.ADMIN_API_KEY,
+    secretKey: e.SECRET_KEY,
+    corsOrigins: e.CORS_ORIGINS,
+    trustProxy: e.TRUST_PROXY,
+    mojangSessionUrl: e.MOJANG_SESSIONSERVER_URL,
+    mojangApiUrl: e.MOJANG_API_URL,
+    logRequests: e.LOG_REQUESTS,
+    chatKeys: parseChatKeys(e.CHAT_KEYS, e.SECRET_KEY),
+    chatStorageMaxBytes: e.CHAT_STORAGE_MAX_MB * 1024 * 1024,
+    shareStorageMaxBytes: e.SHARE_STORAGE_MAX_MB * 1024 * 1024,
+    packMaxBytes: e.PACK_MAX_MB * 1024 * 1024,
+    packStorageMaxBytes: e.PACK_STORAGE_MAX_MB * 1024 * 1024,
+    packChunkBytes: e.PACK_CHUNK_BYTES,
+    serverPing: e.SERVER_PING,
+    hosting: parseHosting(e),
+    microsoft: parseMicrosoft(e),
+    vapid: parseVapid(e),
+    curseforgeApiKey: e.CURSEFORGE_API_KEY === '' ? null : e.CURSEFORGE_API_KEY,
+    mail: parseMail(e),
+    limits: { ...DEFAULT_LIMITS, ...limits },
+  }
+}
