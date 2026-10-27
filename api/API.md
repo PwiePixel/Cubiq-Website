@@ -500,7 +500,7 @@ This object is used everywhere a cape is returned.
 
 | Field | Meaning |
 |---|---|
-| `id` | `^[a-z0-9][a-z0-9_-]{0,39}$`. Built-in capes have readable ids such as `redstone` or `team`. Uploads use `u` followed by 20 hex digits. |
+| `id` | `^[a-z0-9][a-z0-9_-]{0,39}$`. Built-in capes have readable ids such as `cubiq_black` or `team`. Uploads use `u` followed by 20 hex digits. |
 | `kind` | `builtin` \| `upload` |
 | `unlock` | `free` \| `code` (unlockable with a code or an admin grant) \| `admin` (admin grant or code only) \| `owner` (an upload, only for its uploader) \| `event` (free to claim while an event is active for you, §32; the event id is in `event`) \| `reward` (only the server gives it, e.g. trick or treat, §36; not claimable, no codes; show as "Halloween reward") |
 | `event` | Only on event capes (`unlock: "event"`), e.g. `"halloween"`. |
@@ -512,6 +512,19 @@ This object is used everywhere a cape is returned.
 | `animated` | `frames > 1` |
 | `frames` | 1–64 |
 | `frameTimeMs` | Duration of each frame (20–10000), or `null` for a static cape. |
+
+**Built-in capes (since October 2026):** `cubiq_black` ("Cubiq Schwarz") and `cubiq_white` ("Cubiq Weiß") – the Cubiq
+logo in **scale 16** (1024×512, static, real HD artwork: clients should filter it smoothly with mipmaps like the Cubiq
+Client does; clients that only know scale ≤ 8 don't show it) – and `kirschbluete` (scale 8, pixel art), all `free`. Plus
+the proprietary code/team capes on servers that have them (§11.8).
+
+**Retired built-in capes.** A built-in cape that is no longer in the catalog is marked `retired`: it is not listed in
+`GET /v1/capes` or `GET /v1/site/capes`, can't be put on (`403 cape_locked`), and codes for it are `invalid_code`.
+Ownership rows stay, so it is back for its owners if it returns to the catalog. Normally the current wearers keep showing
+it; for the October 2026 cleanup (all capes except `kirschbluete`: `redstone`, `lamp`, `deepslate`, `lapis`,
+`emerald`, `amethyst`, `phoenix`, `nether`, `ender`, `ozean`, `wald`, `frost`, `drache`, `sonne`, `halloween` and the
+seven Halloween 2026 reward capes) **migration 39** took them off once for everyone (`activeCape: null`). The PNGs stay in
+the repository (`api/assets/capes/`); `scripts/generate-capes.mjs` keeps the list (`RETIRED`).
 
 ### 5.2 Texture layout (important for the mod)
 
@@ -549,8 +562,8 @@ Auth required. Returns the catalog from the user's point of view: every built-in
 ```json
 {
   "capes": [
-    { "id": "redstone", "name": "Redstone", "kind": "builtin", "unlock": "free", "status": "approved",
-      "url": "https://api.cubiq-launcher.invalid/v1/capes/redstone.png?v=0c1d…", "width": 128, "height": 64, "scale": 2,
+    { "id": "cubiq_black", "name": "Cubiq Schwarz", "kind": "builtin", "unlock": "free", "status": "approved",
+      "url": "https://api.cubiq-launcher.invalid/v1/capes/cubiq_black.png?v=0c1d…", "width": 1024, "height": 512, "scale": 16,
       "animated": false, "frames": 1, "frameTimeMs": null, "owned": true, "active": false },
     { "id": "u3f9a0c1d2e4b5a697887", "name": "Mein Umhang", "kind": "upload", "unlock": "owner", "status": "rejected",
       "url": "…", "width": 64, "height": 32, "scale": 1, "animated": false, "frames": 1, "frameTimeMs": null,
@@ -1368,18 +1381,12 @@ A **format-2** CosmeticView has `template: null`, `emissive: false` and these ex
 |---|---|---|---|---|
 | `redstone_crown` | Redstone-Krone | **format 2** (hat) | code | glow 12 × 140 ms, idle animation |
 | `team_crown` | Team-Krone | **format 2** (hat) | **admin** | glow 12 × 200 ms, idle animation |
-| `cubiq_cap` | Cubiq-Cap | **format 2** (hat) | free | glow 12 × 150 ms |
-| `lamp_helmet` | Redstone-Lampen-Helm | **format 2** (hat) | free | glow 12 × 160 ms, idle animation |
-| `top_hat` | Zylinder | **format 2** (hat) | free | glow 12 × 150 ms, idle animation |
 | `redstone_wings` | Redstone-Flügel | `wings` | code | 8 × 120 ms, emissive |
 | `dragon_wings` | Drachenflügel | `wings` | free | – |
 | `backpack` | Rucksack | `backpack` | free | – |
 | `halo` | Heiligenschein | **format 2** (hat) | code | glow 12 × 150 ms, idle animation |
-| `redstone_aura` | Redstone-Partikel-Aura | `orbit` (aura) | free | 4 × 150 ms, emissive |
 | `footprints` | Fußspuren | `trail` (aura) | free | – |
 | `rubber_duck` | Quietscheente | `duck` (rig) | code, **hidden** | – (animated by the rig) |
-| `witch_hat` | Hexenhut | **format 2** (hat) | **event** `halloween` | glow 12 × 160 ms |
-| `pumpkin_head` | Kürbiskopf | **format 2** (hat) | **event** `halloween` | glow 12 × 120 ms |
 | `bat_buddy` | Fledermaus-Begleiter | **format 2** (**companion**) | **event** `halloween` | glow 12 × 150 ms, orbit animation |
 | `snow_wings` | Schneeflügel | **format 2** (wings) | code | glow 12 × 200 ms, idle/air/sneak, snowflakes as animated cubes |
 | `ice_wings` | Eisflügel | **format 2** (wings) | code | glow 12 × 180 ms, translucent, halos |
@@ -1391,7 +1398,12 @@ A **format-2** CosmeticView has `template: null`, `emissive: false` and these ex
 | `penguin_shades` | Pinguin mit Sonnenbrille | **format 2** (**pet**) | **admin**, **hidden** (entourage) | like `penguin` |
 | `penguin_heist` | Schwarzes Schaf | **format 2** (**pet**) | code (listed with the code badge); can also be an entourage extra | like `penguin` + `sneak`/`grab`/`flee`/`handsup` (9 animations) |
 
-Templates without a built-in item (`ring`, and since format 2 also `crown`, `cap`, `lamp_helmet`, `tophat`, `halo`) are available for uploads. The six format-2 items kept their ids, so owners and codes still work; a `halo` equipped in `aura` moved to `hat` at the first start with format 2 (taken off if `hat` was already in use).
+**Retired (October 2026):** all public head cosmetics – `cubiq_cap`, `lamp_helmet`, `top_hat`, `witch_hat`,
+`pumpkin_head` – and `redstone_aura`. They are no longer in the catalog (`retired`: not listed, not wearable, codes
+`invalid_code`, ownership kept); **migration 39** took them off once for everyone who wore them. Their files stay in
+`api/assets/cosmetics/` so they can return. The `hat` slot itself stays (uploads, proprietary items).
+
+Templates without a built-in item (`ring`, `orbit`, and since format 2 also `crown`, `cap`, `lamp_helmet`, `tophat`, `halo`) are available for uploads. The six format-2 items kept their ids, so owners and codes still work; a `halo` equipped in `aura` moved to `hat` at the first start with format 2 (taken off if `hat` was already in use).
 
 **Proprietary built-ins.** Items with unlock `code` or `admin` are not in this repository: capes `cubiq`, `team`, `tester`, `content-team`, `veteran`, `ideengeber` and cosmetics `redstone_crown`, `team_crown`, `halo`, `redstone_wings`, `rubber_duck` and the Winter 2026 items `snow_wings`, `ice_wings`, `santa_hat`, `snow_cloud`, `penguin`, plus the entourage penguins `penguin_emperor`, `penguin_beanie`, `penguin_shades` and the code pet `penguin_heist`. Their textures, models, glow maps and cards live only on the server in `PRIVATE_ASSETS_DIR` (default `<DATA_DIR>/private-assets`). Layout: `capes/`, `cosmetics/`, `cosmetics/v2/`, plus `capes/catalog.private.json`, `cosmetics/catalog.private.json` (same entry schema as the public catalogs, with the original `sort` index) and `cosmetics/templates.private.json` (same schema as `templates.json`; the `duck` rig lives only there). At startup the server merges the private catalogs and `templates.private.json` with the public built-ins. Ids, hashes, routes, cards, models, glow maps, lookup, codes and ownership stay the same. If the directory is missing, it logs one warning and skips every private item. If one item's files are missing or invalid, it logs one warning and skips that item. Startup does not crash, and `user_capes` / `user_cosmetics` rows are not deleted: the item is usable again on the next start once the files exist. A broken **public** catalog still stops startup. `node api/scripts/import-cosmetics-v2.mjs [--private <dir>] [--only <id,id>]` (or `PRIVATE_ASSETS_DIR`, default `E:/ai/cubiq-private-assets`) writes the proprietary models there and the free/event models to `api/assets`; `--only` limits the run to the given ids. `generate-capes.mjs` and `generate-cosmetics.mjs` take the same `--private` flag.
 
@@ -1552,7 +1564,11 @@ Launcher and mod can also call Mojang directly. These endpoints exist so that ma
   "textureUrl": "https://textures.minecraft.net/texture/5ce1…", "capeUrl": null }
 ```
 
-- Auth is required. The limit is 30 per minute per account.
+- **Launcher and Cubiq Client** send their Bearer token (both routes). There is no extra limit per account – only the
+  shared Mojang budget below. An invalid token is `401`; it never falls back to an anonymous lookup.
+- **Website** (the cape preview on your own skin, §16): `GET /v1/skins/by-name/{name}` also works **without a token**.
+  Then the limit is **20 per minute per IP** (cached answers count too), and anonymous lookups may use at most **40** of
+  the 100 Mojang calls per minute – the rest always stays for launcher and client. `by-uuid` still needs a token.
 - `name` must be a valid Minecraft name, and `uuid` a UUID. Otherwise the answer is `404 not_found`.
 - `model` is `classic` or `slim`.
 - `textureUrl` and `capeUrl` are always `https://textures.minecraft.net/texture/<hex>`. The server rewrites Mojang's `http://` and drops anything else.
@@ -1563,7 +1579,8 @@ Errors:
 
 - `404 player_not_found`: there is no such account.
 - `502 upstream_unavailable`: Mojang is down.
-- `429 rate_limited`: your account limit, or the global Mojang budget, is used up.
+- `429 rate_limited`: the per-IP limit (without a token) or the Mojang budget (global, or the website's share) is used
+  up. `error.retryAfter` says when to try again.
 
 Caching:
 
@@ -1592,6 +1609,12 @@ Public, cached for 5 minutes (`Cache-Control: public, max-age=300`). Used by the
 | `GET /v1/site/cosmetics` | `{ hats: [{ id, name, unlock, achievement, texture, animated, format: 2, model, glow, card, cardNight, frames, frameTimeMs, glowFrames, glowFrameTimeMs, hash }] }`. Built-in format-2 head items (§11.9), never hidden or retired ones; all URLs relative. `achievement` = title `{en,de,es}` if an achievement grants the item, else `null`. Ground companions (`pets`) also carry `petScale` and `states` (the pet states the model animates, in `PET_STATES` order, `idle` first – the website shows a button per state in the 3D preview). |
 
 If GitHub is unreachable, the last good answer is kept. Without one, `release` is `null` and `posts` is empty.
+
+**Cape preview on your own skin.** The 3D cape preview on `/cosmetics` (and on the home page) can show the selected cape
+on a player's skin: the field "Player name" looks the name up with `GET /v1/skins/by-name/{name}` (§14, no token
+needed) and loads the texture straight from `textures.minecraft.net`. Without a name, for default skins and on errors
+the preview shows the neutral mannequin. The last name is remembered per browser (`localStorage`); signed-in players see
+their own skin unless they picked another name or the mannequin.
 
 **Contributors (`contributors`).** Read from the text of the GitHub release `v{version}` (the same cached request as
 `/v1/site/releases`, last 30 releases, drafts ignored): preferably from the machine-readable comment
@@ -2701,6 +2724,9 @@ The website signs in **only** with the Microsoft account that owns Minecraft: Ja
 | `GET /v1/web/login` | `{ microsoft: boolean }` – is the sign-in configured? |
 | `GET /v1/web/me` | `{ uuid, name, skin, csrf, expiresAt, team: MyTeamView \| null, events, eventLook }` for the cookie session, else `401`. `events`/`eventLook` as in `GET /v1/me` (§32.2, §32.6). `skin` = texture URL (textures.minecraft.net) or `null`. |
 | `POST /v1/web/logout` | **204**, session deleted on the server. Needs `X-CSRF-Token`. |
+
+**Without Microsoft:** while Microsoft has not approved the Azure app (`ms_not_approved`), the server owner signs in
+with a one-time link created on the server shell (`cubiq-server.sh login`, §41).
 
 **Error codes** (`/login?error=`): `ms_disabled`, `ms_cancelled` (user cancelled at Microsoft), `ms_state` (state/cookie missing, expired, replayed or tampered), `ms_failed` (Microsoft/Xbox/Minecraft not reachable or rejected – details only in the server log), `ms_not_approved` (`login_with_xbox` answered 403: Microsoft has not approved the Azure app for the Minecraft services yet), `ms_config` (wrong or expired client secret, or Microsoft rejected the app settings, e.g. `unauthorized_client` – details in the server log), `no_xbox` (XSTS 2148916233 or no Xbox profile), `child_account` (XSTS 2148916238), `xbox_region` (2148916235), `xbox_verification` (2148916236/7), `xbox_banned` (2148916227), `no_minecraft` (profile 404 = no Java Edition or no profile name), `banned` (active Cubiq `account_ban`), `rate_limited`.
 
@@ -4657,10 +4683,15 @@ token (launcher, Cubiq Client) **or** the website session (cookie + `X-CSRF-Toke
 |---|---|
 | Profile badges | `halloween2026` ("Halloween 2026", icon `moonbat`), `pumpkinhunter2026` ("Kürbisjäger 2026" / "Pumpkin Hunter 2026" / "Cazador de calabazas 2026", icon `pk8`) |
 | Pumpkins (hint order) | `launcher-titlebar`, `launcher-settings`, `launcher-skins`, `launcher-social`, `launcher-logs`, `web-home`, `web-features`, `web-roadmap`, `web-creator`, `client-title`, `client-wardrobe`, `client-hud`, `client-modules` |
-| "Mondnacht" capes (6 colours, **one per player**) | `halloween_night_violet`, `halloween_moon_silver`, `halloween_ghost_white`, `halloween_poison_green`, `halloween_blood_moon`, `halloween_pumpkin_glow` |
-| Pumpkin Hunter cape | `halloween_hunter_2026` (13 pumpkins) |
+| "Mondnacht" capes (6 colours, **one per player**) – **retired since October 2026** | `halloween_night_violet`, `halloween_moon_silver`, `halloween_ghost_white`, `halloween_poison_green`, `halloween_blood_moon`, `halloween_pumpkin_glow` |
+| Pumpkin Hunter cape (13 pumpkins) – **retired since October 2026** | `halloween_hunter_2026` |
 | Emotes (§12) | `count_bow`, `ghost_float`, `zombie_walk`, `moon_howl` |
 | Stickers | `pumpkin_hihi` (Hihi/Hehe/Jiji), `ghost_boo` (Buh!/Boo!/¡Bu!), `bat_flutter` (Flatter/Flutter/Aleteo), `moon_goodnight` (Gute Nacht/Good night/Buenas noches), `cauldron_blubb` (Blubb/Blub/Glu glu), `grave_riplag` (RIP Lag) |
+
+**October 2026:** the 7 reward capes were retired with all other capes except `kirschbluete` (§5.1): they are not in the
+catalog, so the trick-or-treat pool skips the Mondnacht item and the 13th pumpkin gives the badge (and the wings choice,
+§36.2a) but no cape. Owned capes stay owned; if a cape returns to the catalog, the next start hands out pending hunter
+capes. The rest of this section describes the mechanics as they work whenever the capes are in the catalog.
 
 All 7 capes and 4 emotes are **reward items**: `unlock: "reward"`, `rewardOf: "halloween2026"` in CapeView/CosmeticView
 (§5.1, §11.6). They are not claimable (`claim` → `400 not_claimable`) and codes can't be made for them
@@ -4676,7 +4707,7 @@ the capes while the event is globally on (`GET /v1/site/capes`: `unlock: "reward
 | route | answer |
 |---|---|
 | `GET /v1/me/halloween` | `HalloweenView` (below). Also grants `halloween2026` like `GET /v1/me`. |
-| `POST /v1/me/halloween/pumpkins/{id}` | `{ found: string[], count, complete, reward?: { badge: "pumpkinhunter2026", cape: "halloween_hunter_2026" } }` – `404 pumpkin_unknown`, `403 event_inactive`, `429` (one per 2 s and account). Idempotent: a found pumpkin doesn't count twice; `reward` is only in the answer to the find that completes the hunt. |
+| `POST /v1/me/halloween/pumpkins/{id}` | `{ found: string[], count, complete, reward?: { badge: "pumpkinhunter2026", cape?: "halloween_hunter_2026" } }` – `404 pumpkin_unknown`, `403 event_inactive`, `429` (one per 2 s and account). Idempotent: a found pumpkin doesn't count twice; `reward` is only in the answer to the find that completes the hunt. `reward.cape` is only there while the hunter cape is in the catalog (not since October 2026). |
 | `POST /v1/me/halloween/trick` | `{ result: "sweet", reward: Reward, next }` or `{ result: "sour", next }` – `403 event_inactive`; `409 trick_used` with `next` in the error body (`{ "error": { "code": "trick_used", "message": "…", "next": "…" } }`). |
 | `PUT /v1/me/halloween/effects` | body `{ hits: boolean, trail: boolean }` → `{ effects: { hits, trail } }`. Whether **other** Cubiq players may see my spooky effects (default both `true`). Works outside the event too. |
 
@@ -4697,11 +4728,12 @@ Reward = { "kind": "cape" | "emote" | "sticker", "id": "halloween_blood_moon", "
 - **Badge `halloween2026`:** granted on any authenticated `GET /v1/me` (and `GET /v1/me/halloween`) while the features
   work – never afterwards.
 - **13 pumpkins** → badge `pumpkinhunter2026` + cape `halloween_hunter_2026` (source `reward`). If the cape is missing in the
-  catalog at that moment, it is granted on the next start.
-- **Trick or treat:** one roll per account and Europe/Berlin calendar day, server side with crypto random. Pool = 11 items:
-  **one** "Mondnacht cape" item + 4 emotes + 6 stickers. 1 in 4 rolls is sour; otherwise a random item you don't own yet.
+  catalog or retired at that moment, only the badge is given; the cape is granted on the next start once it is back.
+- **Trick or treat:** one roll per account and Europe/Berlin calendar day, server side with crypto random. Pool = the
+  items that exist in the catalog, at most 11: **one** "Mondnacht cape" item + 4 emotes + 6 stickers (since October 2026
+  without the retired Mondnacht capes: 10). 1 in 4 rolls is sour; otherwise a random item you don't own yet.
   When the Mondnacht item is won, the colour is rolled too (one of the 6, `reward.id` = that colour); once you own any
-  colour, the Mondnacht item is out of the pool. All 11 owned → always sour.
+  colour, the Mondnacht item is out of the pool. Everything owned → always sour.
 
 ### 36.2a Pumpkin Hunter wings
 
@@ -4769,7 +4801,8 @@ data kept). Everything hangs on the account via `ON DELETE CASCADE`. Idempotent.
 branch also added a migration 26.
 
 Assets: `node api/scripts/generate-halloween.mjs` builds the capes (`assets/capes/halloween_*.png`, entries in
-`studio.json` + `catalog.json` with `unlock: { "type": "reward", "reward": "halloween2026" }`), the stickers
+`studio.json` with `unlock: { "type": "reward", "reward": "halloween2026" }`; existing `catalog.json` entries are replaced,
+new ones are not added – `generate-capes.mjs` decides what is offered), the stickers
 (`assets/halloween/stickers/<id>.png`) and badges (`assets/halloween/badges/<id>.png`) from the pixel art in
 `shared/halloween-art.ts`; ids, names and riddles live in `shared/halloween.ts`.
 
@@ -5237,3 +5270,40 @@ texts. The confirmed address is also the target of the own test newsletters.
 Migration 38: `newsletter_subscribers`, `newsletter_campaigns`, `mail_outbox`, `mail_api_keys`, `mail_team_prefs`,
 `mail_team_pending`, `mail_team_state`; permissions `newsletter.manage` + `newsletter.send` for Owner/Admin. Idempotent.
 When merging: renumber if a parallel branch also added a migration 38.
+
+---
+
+## 41. Owner sign-in with a one-time link (server shell)
+
+For the server owner while the Microsoft sign-in does not work (e.g. the Azure app is not approved yet, `ms_not_approved`,
+§24.1). Only someone with shell access to the server can create a link; the link signs **one browser** in as that account,
+**once**, within **10 minutes**. Tests: `tests/loginlink.test.ts`.
+
+**Create (server shell):** `sudo bash deploy/cubiq-server.sh login [player name]` – without a name the first entry of
+`ADMIN_UUIDS`. The script runs `node -e "fetch('http://127.0.0.1:3000/v1/internal/login-link', …)"` **inside** the API
+container (`docker compose exec`), because the runtime image only contains `.output`.
+
+| Request | Response |
+|---|---|
+| `POST /v1/internal/login-link` body `{ name? }` (`name` = Minecraft name, optional), header `X-Cubiq-Internal: <secret>` | **200** `{ link, uuid, name, expiresAt }` with `link` = `<SITE_URL>/login-link#<token>`. `404 not_found` unless the request comes over the **loopback socket** of the server itself (both socket addresses `127.0.0.0/8` or `::1`; headers are never trusted, and proxy headers such as `CF-Connecting-IP`, `X-Forwarded-For`, `Forwarded` make it `404` too – over the Cloudflare tunnel the route looks like any unknown address). `403 forbidden` without the right secret (constant-time compare). `404 player_not_found`, `502 upstream_unavailable` (Mojang), `400 no_admin` (no name and `ADMIN_UUIDS` empty), `403 banned` (active `account_ban`), `429` (10 links per 10 minutes). |
+| `POST /v1/web/login-link/peek` body `{ token }` | **200** `{ uuid, name, skin, expiresAt }` – who the link signs in as (for the confirmation page). Does **not** use the link. `404 login_link_invalid`. 30 per 10 minutes per IP. |
+| `POST /v1/web/login-link` body `{ token }` | **200** `{ name, returnTo }` (`/admin` for team members, else `/`) and the normal website session: cookie `cubiq_session` exactly like after the Microsoft callback (§24.1: httpOnly, Secure, SameSite=Strict, 8 hours, session rotation, old `cubiq_admin` cookie deleted). `404 login_link_invalid` (unknown, expired, used, or replaced by a newer link), `403 banned`, `403 cross_site`, `429` (10 per 10 minutes per IP, plus the per-account login limit of §2 – checked **before** the link is used). |
+
+How it is protected:
+
+- **Secret:** `<DATA_DIR>/internal.secret`, 32 random bytes, created with mode `0600` on the first start (permissions
+  are reset on every start; delete the file and restart to rotate it). Only the server user can read it – whoever can,
+  already controls the server.
+- **Token:** 32 random bytes (256 bit, base64url). Only its SHA-256 is stored (`login_links`). Valid 10 minutes, used at
+  most once (atomic update), and a new link replaces an unused older one of the same account. It travels in the URL
+  **fragment** (`#…`), so it never appears in a request line, server or proxy log or `Referer`.
+- **Confirmation page** `/login-link` (rendered in the browser only, `noindex`, `Referrer-Policy: no-referrer`): removes
+  the token from the address bar, shows who the link signs in as, and only the button **Sign in** sends the `POST` –
+  link previews and crawlers only fetch the page (no script, no fragment) and never use the link up. The POST routes
+  check the origin like the launcher sign-in (§29: `Sec-Fetch-Site`/`Origin`), the session cookie is SameSite=Strict.
+- **Bans** are checked when creating and when using a link. **Audit log:** `web.login_link` (actor `system`, target =
+  account) when a link is created, `web.login` with detail `login_link` when it is used.
+
+Data, migration 40: table `login_links (token_hash, uuid, created_at, expires_at, used_at)`, `ON DELETE CASCADE` on the
+account; expired rows are removed (at the latest one day after they expired). Idempotent. When merging: renumber if a parallel branch also added a
+migration 40.

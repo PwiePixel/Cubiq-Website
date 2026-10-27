@@ -41,17 +41,27 @@ export interface RouteResult {
 export async function callRoute(
   env: TestEnv,
   route: (e: H3Event) => unknown,
-  opts: { method?: string, url: string, params?: Record<string, string>, headers?: Record<string, string>, body?: Buffer | string },
+  opts: {
+    method?: string
+    url: string
+    params?: Record<string, string>
+    headers?: Record<string, string>
+    body?: Buffer | string
+    /** Adressen des Sockets (z. B. Loopback für interne Routen); ohne = unverbundener Socket. */
+    socket?: { remoteAddress?: string, localAddress?: string }
+  },
 ): Promise<RouteResult> {
   setContext(env.ctx)
   const body = opts.body === undefined ? Buffer.alloc(0) : Buffer.isBuffer(opts.body) ? opts.body : Buffer.from(opts.body)
   const req = Readable.from(body.length ? [body] : []) as unknown as IncomingMessage
+  const socket = new Socket()
+  for (const [k, v] of Object.entries(opts.socket ?? {})) Object.defineProperty(socket, k, { value: v })
   Object.assign(req, {
     method: opts.method ?? 'GET',
     url: opts.url,
     headers: Object.fromEntries(Object.entries({ ...(body.length ? { 'content-length': String(body.length) } : {}), ...opts.headers }).map(([k, v]) => [k.toLowerCase(), v])),
-    socket: new Socket(),
-    connection: new Socket(),
+    socket,
+    connection: socket,
   })
   const res = new ServerResponse(new IncomingMessage(new Socket()))
   const event = createEvent(req, res)

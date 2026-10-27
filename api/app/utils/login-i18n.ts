@@ -35,6 +35,24 @@ const en = {
     busy: 'Too many sign-ins right now. Please try again in a minute.',
     failed: 'The sign-in could not be started. Please try again.',
   } as Record<string, string>,
+  /** Einmal-Anmeldelink vom Server (§41, `cubiq-server.sh login`). */
+  link: {
+    kicker: 'One-time sign-in link',
+    title: 'Sign in as {name}?',
+    checking: 'Checking the link…',
+    lead: 'This link was created on the Cubiq server. It signs this browser in as {name} – once, and only within 10 minutes.',
+    warn: 'Only continue if you created the link yourself. Never use a link someone sent you.',
+    expires: 'Valid until {time}',
+    confirm: 'Sign in',
+    confirming: 'Signing in…',
+    cancel: 'Cancel',
+    done: 'Signed in – one moment…',
+    invalidTitle: 'This link does not work',
+    invalidText: 'It is unknown, expired (after 10 minutes) or was already used. Create a new one on the server with “cubiq-server.sh login”.',
+    banned: 'This Minecraft account is banned from the Cubiq online features.',
+    rateLimited: 'Too many attempts. Please wait a few minutes.',
+    failed: 'Something went wrong. Please try again.',
+  },
 }
 
 export type LoginTexts = typeof en
@@ -71,6 +89,23 @@ const de: LoginTexts = {
     busy: 'Gerade melden sich zu viele an. Bitte versuche es in einer Minute erneut.',
     failed: 'Die Anmeldung konnte nicht gestartet werden. Bitte versuche es erneut.',
   },
+  link: {
+    kicker: 'Einmal-Anmeldelink',
+    title: 'Als {name} anmelden?',
+    checking: 'Link wird geprüft …',
+    lead: 'Dieser Link wurde auf dem Cubiq-Server erzeugt. Er meldet diesen Browser als {name} an – einmal und nur innerhalb von 10 Minuten.',
+    warn: 'Mach nur weiter, wenn du den Link selbst erzeugt hast. Nutze nie einen Link, den dir jemand geschickt hat.',
+    expires: 'Gültig bis {time}',
+    confirm: 'Anmelden',
+    confirming: 'Wird angemeldet …',
+    cancel: 'Abbrechen',
+    done: 'Angemeldet – einen Moment …',
+    invalidTitle: 'Dieser Link funktioniert nicht',
+    invalidText: 'Er ist unbekannt, abgelaufen (nach 10 Minuten) oder wurde schon benutzt. Erzeuge auf dem Server mit „cubiq-server.sh login“ einen neuen.',
+    banned: 'Dieses Minecraft-Konto ist für die Online-Funktionen von Cubiq gesperrt.',
+    rateLimited: 'Zu viele Versuche. Bitte warte ein paar Minuten.',
+    failed: 'Da ist etwas schiefgegangen. Bitte versuch es noch einmal.',
+  },
 }
 
 const es: LoginTexts = {
@@ -104,6 +139,23 @@ const es: LoginTexts = {
     rate_limited: 'Demasiados intentos. Espera unos minutos.',
     busy: 'Hay demasiados inicios de sesión ahora mismo. Inténtalo de nuevo en un minuto.',
     failed: 'No se pudo iniciar el inicio de sesión. Inténtalo de nuevo.',
+  },
+  link: {
+    kicker: 'Enlace de acceso de un solo uso',
+    title: '¿Iniciar sesión como {name}?',
+    checking: 'Comprobando el enlace…',
+    lead: 'Este enlace se creó en el servidor de Cubiq. Inicia sesión en este navegador como {name}: una sola vez y solo durante 10 minutos.',
+    warn: 'Continúa solo si has creado tú el enlace. No uses nunca un enlace que te haya enviado otra persona.',
+    expires: 'Válido hasta las {time}',
+    confirm: 'Iniciar sesión',
+    confirming: 'Iniciando sesión…',
+    cancel: 'Cancelar',
+    done: 'Sesión iniciada: un momento…',
+    invalidTitle: 'Este enlace no funciona',
+    invalidText: 'Es desconocido, ha caducado (tras 10 minutos) o ya se ha usado. Crea uno nuevo en el servidor con «cubiq-server.sh login».',
+    banned: 'Esta cuenta de Minecraft está bloqueada para las funciones en línea de Cubiq.',
+    rateLimited: 'Demasiados intentos. Espera unos minutos.',
+    failed: 'Algo ha salido mal. Inténtalo de nuevo.',
   },
 }
 

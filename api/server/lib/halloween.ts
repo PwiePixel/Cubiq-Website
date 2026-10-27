@@ -294,16 +294,25 @@ export interface FindResult {
   found: string[]
   count: number
   complete: boolean
-  /** Nur bei dem Fund, der die Suche abschließt. */
-  reward?: { badge: BadgeId, cape: string }
+  /**
+   * Nur bei dem Fund, der die Suche abschließt. `cape` nur, solange es den Kürbisjäger-Umhang im Katalog gibt (seit
+   * Oktober 2026 ausgemustert – dann bleibt es beim Abzeichen und den Flügeln).
+   */
+  reward?: { badge: BadgeId, cape?: string }
 }
 
-/** Gibt Kürbisjäger-Abzeichen + Umhang (idempotent). `true` = etwas war neu. */
+/** Gibt es den Kürbisjäger-Umhang (eingespielt und nicht ausgemustert)? */
+function hunterCapeAvailable(ctx: AppContext): boolean {
+  return one(ctx.db, 'SELECT 1 AS x FROM capes WHERE id = ? AND retired = 0', HUNTER_CAPE.id) !== undefined
+}
+
+/**
+ * Gibt Kürbisjäger-Abzeichen + Umhang (idempotent). `true` = etwas war neu. Fehlt der Umhang oder ist er ausgemustert,
+ * gibt es nur das Abzeichen – kommt er zurück in den Katalog, reicht der nächste Start ihn nach.
+ */
 function grantHunter(ctx: AppContext, uuid: string): boolean {
   const badge = grantBadge(ctx, uuid, 'pumpkinhunter2026')
-  let cape = false
-  if (one(ctx.db, 'SELECT 1 AS x FROM capes WHERE id = ?', HUNTER_CAPE.id) !== undefined) cape = grantCape(ctx, uuid, HUNTER_CAPE.id, 'reward')
-  else console.warn(`[cubiq-api] halloween: cape ${HUNTER_CAPE.id} missing – granted once it exists (next start)`)
+  const cape = hunterCapeAvailable(ctx) && grantCape(ctx, uuid, HUNTER_CAPE.id, 'reward')
   return badge || cape
 }
 
@@ -330,7 +339,9 @@ export function findPumpkin(ctx: AppContext, uuid: string, id: string): FindResu
     found,
     count: found.length,
     complete,
-    ...(added && complete ? { reward: { badge: 'pumpkinhunter2026' as const, cape: HUNTER_CAPE.id } } : {}),
+    ...(added && complete
+      ? { reward: { badge: 'pumpkinhunter2026' as const, ...(hunterCapeAvailable(ctx) ? { cape: HUNTER_CAPE.id } : {}) } }
+      : {}),
   }
 }
 
@@ -448,10 +459,10 @@ export function setEffects(ctx: AppContext, uuid: string, input: { hits: boolean
 
 /**
  * Beim Start (nach dem Einspielen des Katalogs): wer alle 13 Kürbisse hat, aber den Kürbisjäger-Umhang noch nicht (weil
- * er beim Fund fehlte), bekommt ihn jetzt. Gibt die Zahl der Nachträge zurück.
+ * er beim Fund fehlte oder ausgemustert war), bekommt ihn jetzt. Gibt die Zahl der Nachträge zurück.
  */
 export function grantPendingHalloweenRewards(ctx: AppContext): number {
-  if (one(ctx.db, 'SELECT 1 AS x FROM capes WHERE id = ?', HUNTER_CAPE.id) === undefined) return 0
+  if (!hunterCapeAvailable(ctx)) return 0
   const rows = all<{ uuid: string }>(
     ctx.db,
     `SELECT p.uuid FROM halloween_pumpkins p

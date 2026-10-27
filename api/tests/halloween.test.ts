@@ -184,6 +184,24 @@ describe('pumpkin hunt', () => {
     expect(catalog(env.ctx, p.user.uuid).find((c) => c.id === HUNTER_CAPE.id)).toMatchObject({ owned: true, unlock: 'reward', rewardOf: 'halloween2026' })
   })
 
+  it('with the hunter cape retired, 13 finds give the badge only – the cape follows if it ever returns', async () => {
+    const env = eventEnv()
+    // Ausgemustert: der Katalog ohne die Belohnungs-Umhänge (wie seit Oktober 2026).
+    seedBuiltins(env.ctx, [{ id: 'kirschbluete', name: 'Kirschblüte', unlock: 'free', sort: 0, scale: 1, frames: 1, frameTimeMs: null, png: solidPng(64, 32) }])
+    expect(one(env.ctx.db, 'SELECT retired FROM capes WHERE id = ?', HUNTER_CAPE.id)).toEqual({ retired: 1 })
+    const p = await login(env, 'Late')
+    let last
+    for (const id of PUMPKINS) last = findPumpkin(env.ctx, p.user.uuid, id)
+    expect(last).toEqual({ found: [...PUMPKINS], count: 13, complete: true, reward: { badge: 'pumpkinhunter2026' } })
+    expect(badgesOf(env, p.user.uuid)).toContain('pumpkinhunter2026')
+    expect(one(env.ctx.db, 'SELECT 1 AS x FROM user_capes WHERE uuid = ?', p.user.uuid)).toBeUndefined()
+    expect(grantPendingHalloweenRewards(env.ctx)).toBe(0)
+    // Kommt der Umhang zurück in den Katalog, reicht der nächste Start ihn nach.
+    seedBuiltins(env.ctx, rewardCapes())
+    expect(grantPendingHalloweenRewards(env.ctx)).toBe(1)
+    expect(one(env.ctx.db, 'SELECT source FROM user_capes WHERE uuid = ? AND cape_id = ?', p.user.uuid, HUNTER_CAPE.id)).toEqual({ source: 'reward' })
+  })
+
   it('hands out a missing hunter cape on the next start', async () => {
     const env = makeEnv()
     env.clock.t = IN_EVENT
@@ -234,6 +252,20 @@ describe('trick or treat', () => {
     // Mit einer Farbe ist der Mondnacht-Umhang aus dem Topf.
     expect(unownedPool(env.ctx, p.user.uuid).map((x) => x.id)).not.toContain('mondnacht')
     expect(unownedPool(env.ctx, p.user.uuid)).toHaveLength(10)
+  })
+
+  it('without Mondnacht capes in the catalog (retired) the pool has 10 items and never gives a cape', async () => {
+    const env = eventEnv()
+    seedBuiltins(env.ctx, [{ id: 'kirschbluete', name: 'Kirschblüte', unlock: 'free', sort: 0, scale: 1, frames: 1, frameTimeMs: null, png: solidPng(64, 32) }])
+    const p = await login(env, 'Treats')
+    const pool = unownedPool(env.ctx, p.user.uuid)
+    expect(pool).toHaveLength(10)
+    expect(pool.some((x) => x.kind === 'cape')).toBe(false)
+    // Saures? nein (1) → erstes Teil des Topfs: ein Emote statt des Umhangs.
+    const seq = [1, 0]
+    const r = trickOrTreat(env.ctx, p.user.uuid, () => seq.shift()!)
+    expect(r).toMatchObject({ result: 'sweet', reward: { kind: 'emote', id: 'count_bow' } })
+    expect(one(env.ctx.db, 'SELECT 1 AS x FROM user_capes WHERE uuid = ?', p.user.uuid)).toBeUndefined()
   })
 
   it('is sour when all 16 items are owned, never gives an owned item, and needs the event', async () => {
@@ -384,14 +416,15 @@ describe('lookup: badges and fx', () => {
 
 describe('bundled halloween assets', () => {
   const ASSETS = join(__dirname, '..', 'assets')
-  it('catalog has the 7 reward capes (HD, animated) and they seed', async () => {
-    const list = await loadBuiltins(
-      async () => JSON.parse(readFileSync(join(ASSETS, 'capes', 'catalog.json'), 'utf8')),
-      async (n) => readFileSync(join(ASSETS, 'capes', n)),
-    )
-    const ours = list.filter((c) => c.reward === 'halloween2026')
-    expect(ours.map((c) => c.id).sort()).toEqual([...HALLOWEEN_CAPES.map((c) => c.id), HUNTER_CAPE.id].sort())
-    for (const c of ours) expect(c).toMatchObject({ unlock: 'admin', scale: 8, frames: 24, frameTimeMs: 250 })
+  it('the 7 reward capes are retired (October 2026): not in the catalog, but their files stay valid and seedable', async () => {
+    const catalogIds = (JSON.parse(readFileSync(join(ASSETS, 'capes', 'catalog.json'), 'utf8')) as { id: string }[]).map((c) => c.id)
+    const rewardIds = [...HALLOWEEN_CAPES.map((c) => c.id), HUNTER_CAPE.id]
+    for (const id of rewardIds) expect(catalogIds).not.toContain(id)
+    // studio.json bewahrt die Einträge auf – zurück in den Katalog geht es über generate-capes.mjs (RETIRED).
+    const studio = (JSON.parse(readFileSync(join(ASSETS, 'capes', 'studio.json'), 'utf8')) as { id: string }[]).filter((c) => rewardIds.includes(c.id))
+    const list = await loadBuiltins(async () => studio, async (n) => readFileSync(join(ASSETS, 'capes', n)))
+    expect(list.map((c) => c.id).sort()).toEqual([...rewardIds].sort())
+    for (const c of list) expect(c).toMatchObject({ unlock: 'admin', reward: 'halloween2026', scale: 8, frames: 24, frameTimeMs: 250 })
     const env = makeEnv()
     seedBuiltins(env.ctx, list)
     expect(one(env.ctx.db, "SELECT reward, unlock FROM capes WHERE id = 'halloween_blood_moon'")).toEqual({ reward: 'halloween2026', unlock: 'admin' })

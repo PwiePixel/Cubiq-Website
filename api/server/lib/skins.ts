@@ -52,6 +52,11 @@ interface Entry<T> {
   expires: number
 }
 
+export interface LookupOptions {
+  /** Anonyme Abfrage der Website (§14): zählt zusätzlich auf den Website-Topf `mojangWeb`. */
+  web?: boolean
+}
+
 const NAME_TTL_MS = 10 * 60_000
 const PROFILE_TTL_MS = 2 * 60_000
 const MISS_TTL_MS = 2 * 60_000
@@ -88,9 +93,15 @@ export class SkinService {
     m.set(key, { value, expires: this.now() + ttl })
   }
 
-  private async fetchOnce<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  private async fetchOnce<T>(key: string, fn: () => Promise<T>, opts: LookupOptions = {}): Promise<T> {
     const running = this.inflight.get(key)
     if (running) return running as Promise<T>
+    // Anonyme Website-Abfragen (Umhang-Vorschau) haben einen eigenen, kleineren Topf – so bleibt für Launcher und Client
+    // immer genug vom gemeinsamen Mojang-Budget übrig.
+    if (opts.web) {
+      const w = this.limiter.take('mojang:web', RULES.mojangWeb)
+      if (!w.ok) throw tooMany(w.retryAfter)
+    }
     const r = this.limiter.take('mojang:global', RULES.mojangGlobal)
     if (!r.ok) throw tooMany(r.retryAfter)
     const p = (async () => {
@@ -110,10 +121,10 @@ export class SkinService {
     return p
   }
 
-  async byUuid(uuid: string): Promise<SkinView> {
+  async byUuid(uuid: string, opts: LookupOptions = {}): Promise<SkinView> {
     let hit = this.cached(this.profiles, uuid)
     if (!hit) {
-      const value = await this.fetchOnce(`p:${uuid}`, () => this.mojang.skinProfile(uuid))
+      const value = await this.fetchOnce(`p:${uuid}`, () => this.mojang.skinProfile(uuid), opts)
       this.store(this.profiles, uuid, value, value ? PROFILE_TTL_MS : MISS_TTL_MS)
       if (value && this.onProfile) {
         try {
@@ -129,16 +140,16 @@ export class SkinService {
     return { uuid: p.uuid, name: p.name, model: p.model, textureUrl: p.skinUrl, capeUrl: p.capeUrl }
   }
 
-  async byName(name: string): Promise<SkinView> {
+  async byName(name: string, opts: LookupOptions = {}): Promise<SkinView> {
     const key = name.toLowerCase()
     let hit = this.cached(this.names, key)
     if (!hit) {
-      const value = await this.fetchOnce(`n:${key}`, () => this.mojang.profileByName(name))
+      const value = await this.fetchOnce(`n:${key}`, () => this.mojang.profileByName(name), opts)
       this.store(this.names, key, value, value ? NAME_TTL_MS : MISS_TTL_MS)
       hit = { value, expires: 0 }
     }
     if (!hit.value) throw notFound('player_not_found', 'No Minecraft account with this name')
-    return this.byUuid(hit.value.uuid)
+    return this.byUuid(hit.value.uuid, opts)
   }
 
   /** Nach `POST /v1/me/skin-changed`: nächste Abfrage geht wieder zu Mojang. */

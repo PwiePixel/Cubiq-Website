@@ -904,7 +904,49 @@ CREATE INDEX chat_report_notes_report ON chat_report_notes(report_id);
     version: 38,
     run: migrateMail,
   },
+  {
+    // Ausmusterung Oktober 2026: Alle Umhänge außer Kirschblüte (neu: die Logo-Umhänge „Cubiq Schwarz“/„Cubiq Weiß“),
+    // alle Kopf-Kosmetik und die Redstone-Partikel-Aura sind aus den Katalogen. Ausgemusterte Teile bleiben sonst für ihre
+    // Träger sichtbar – diese hier legen alle Spieler einmalig ab (Umhang + ausgerüstete Kosmetik). Besitz bleibt: kommen
+    // sie zurück in den Katalog, haben ihre Besitzer sie wieder. Feste Liste, idempotent.
+    // HINWEIS beim Mergen: Nummer ggf. an parallele Branches anpassen (nur anhängen).
+    version: 39,
+    run: migrateRetire202610,
+  },
+  {
+    // Einmal-Anmeldelinks für den Betreiber (§41, `cubiq-server.sh login`): nur der SHA-256 des Tokens, 10 Minuten
+    // gültig, genau einmal (`used_at`). Hängt per ON DELETE CASCADE am Konto. Idempotent.
+    // HINWEIS beim Mergen: Nummer ggf. an parallele Branches anpassen (nur anhängen).
+    version: 40,
+    sql: `
+CREATE TABLE IF NOT EXISTS login_links (
+  token_hash TEXT PRIMARY KEY,
+  uuid TEXT NOT NULL REFERENCES users(uuid) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS login_links_uuid ON login_links(uuid);
+`,
+  },
 ]
+
+/** Migration 39: ausgemusterte Umhänge (Oktober 2026) – fest, nie ändern (spätere Ausmusterungen = neue Migration). */
+export const RETIRED_CAPES_2026_10: readonly string[] = [
+  'redstone', 'lamp', 'deepslate', 'lapis', 'emerald', 'amethyst',
+  'phoenix', 'nether', 'ender', 'ozean', 'wald', 'frost', 'drache', 'sonne', 'halloween',
+  'halloween_night_violet', 'halloween_moon_silver', 'halloween_ghost_white', 'halloween_poison_green',
+  'halloween_blood_moon', 'halloween_pumpkin_glow', 'halloween_hunter_2026',
+]
+/** Migration 39: ausgemusterte Kosmetik (alle Kopf-Kosmetik + Redstone-Partikel-Aura). */
+export const RETIRED_COSMETICS_2026_10: readonly string[] = ['cubiq_cap', 'lamp_helmet', 'top_hat', 'witch_hat', 'pumpkin_head', 'redstone_aura']
+
+/** Migration 39 (siehe oben): ausgemusterte Teile bei allen Spielern ablegen. Exportiert für den Test. */
+export function migrateRetire202610(db: DatabaseSync): void {
+  const list = (ids: readonly string[]) => ids.map(() => '?').join(', ')
+  db.prepare(`UPDATE users SET active_cape_id = NULL WHERE active_cape_id IN (${list(RETIRED_CAPES_2026_10)})`).run(...RETIRED_CAPES_2026_10)
+  db.prepare(`DELETE FROM equipped_cosmetics WHERE cosmetic_id IN (${list(RETIRED_COSMETICS_2026_10)})`).run(...RETIRED_COSMETICS_2026_10)
+}
 
 /** Migration 38 (siehe oben): Mail + Newsletter. Exportiert für den Idempotenz-Test. */
 export function migrateMail(db: DatabaseSync): void {

@@ -165,6 +165,29 @@ curl -s http://127.0.0.1:3000/v1/health
 Website und API sind dann **nur** unter http://localhost:3000 des eigenen Rechners erreichbar, die Doku unter
 http://docs.localhost:3000. cloudflared startet nicht, weil er im Profil `tunnel` liegt.
 
+### Anmelden ohne Microsoft (Einmal-Link)
+
+Solange Microsoft die Azure-App noch nicht freigegeben hat (`/login?error=ms_not_approved`), kommt der Betreiber so in
+den Team-Bereich – auf dem Server:
+
+```bash
+sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh login            # erstes Konto aus ADMIN_UUIDS
+sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh login PixelCST   # oder ein bestimmtes Konto
+```
+
+Das Skript fragt im Container (`docker compose exec api node -e …`) die interne Route `POST /v1/internal/login-link` und
+gibt einen Link `https://deine-domain.de/login-link#…` aus: 10 Minuten gültig, nur einmal, ein neuer Link macht den alten
+ungültig. Im Browser öffnen, prüfen, welches Konto dort steht, und auf **Anmelden** klicken – danach gilt eine normale
+Website-Sitzung wie nach der Microsoft-Anmeldung (Sperren gelten, Eintrag im Audit-Log). Unbekannte Konten werden über
+Mojang nachgeschlagen und wie bei der ersten Anmeldung angelegt.
+
+Schutz: Die Route antwortet nur über die Loopback-Verbindung des Containers selbst (Adressen des Sockets, keine Header)
+und nur mit dem Geheimnis aus `/data/internal.secret` (beim ersten Start mit Rechten `0600` angelegt; zum Tauschen
+löschen und neu starten). Gespeichert wird nur der SHA-256 des Tokens; der Token steht hinter `#` und landet in keinem
+Log. Ohne Docker (z. B. `pnpm dev`) geht es genauso mit `curl` vom selben Rechner:
+`curl -X POST -H "X-Cubiq-Internal: $(cat "$DATA_DIR/internal.secret")" -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:3000/v1/internal/login-link`.
+Genaues in [API.md §41](API.md).
+
 ### Update
 
 ```bash
@@ -191,7 +214,15 @@ Format von `catalog.json`:
   - `code`: per Einlösecode
   - `admin`: nur per Admin-Zuteilung oder Code
 
-Beim Start spielt die API den Katalog in die DB ein und kopiert die PNGs nach `/data/capes`. Designs, die im Katalog fehlen, werden „ausgemustert": Nutzer, die sie schon tragen, behalten sie.
+Beim Start spielt die API den Katalog in die DB ein und kopiert die PNGs nach `/data/capes`. Designs, die im Katalog fehlen, werden „ausgemustert": nicht mehr wählbar, Besitz bleibt; wer sie schon trägt, behält sie – außer eine Migration legt sie ab (so Migration 39 für die Ausmusterung im Oktober 2026).
+
+Im Katalog stehen seit Oktober 2026 nur **Cubiq Schwarz** und **Cubiq Weiß** (das Cubiq-Logo aus `public/logo.png` in Ultra HD, Faktor 16 = 1024×512) und **Kirschblüte**. Neu erzeugen:
+
+```bash
+node scripts/generate-capes.mjs --private <ordner>   # oder: pnpm capes (privat: PRIVATE_ASSETS_DIR)
+```
+
+Das schreibt die Logo-Umhänge, `catalog.json` und Vorschauen nach `assets/previews/` (privat: die Code-/Team-Umhänge in den angegebenen Ordner). Alle anderen Umhänge stehen dort in der Liste `RETIRED`: ihre PNGs bleiben im Repository, kommen aber nicht in den Katalog. Zurückholen = ID aus `RETIRED` streichen und das Skript laufen lassen.
 
 ## Kosmetik und Emotes
 
@@ -219,17 +250,15 @@ Mitgeliefert:
 
 | Teil | Freischaltung |
 |---|---|
-| Redstone-Krone | Code |
-| Team-Krone | **nur Admin** |
-| Cubiq-Cap | frei |
-| Redstone-Lampen-Helm | frei |
-| Zylinder | frei |
-| Redstone-Flügel | Code |
 | Drachenflügel | frei |
 | Rucksack | frei |
-| Heiligenschein | Code |
-| Redstone-Partikel-Aura | frei |
 | Fußspuren | frei |
+| Fledermaus-Begleiter | Event `halloween` |
+| Halloween-Flügel (Fledermaus, Dämon, Rabe, Geist) | Belohnung Kürbis-Suche |
+| Redstone-Krone, Heiligenschein, Redstone-Flügel | Code (privat, `PRIVATE_ASSETS_DIR`) |
+| Team-Krone | **nur Admin** (privat) |
+
+Ausgemustert (Oktober 2026): alle öffentliche Kopf-Kosmetik (Cubiq-Cap, Redstone-Lampen-Helm, Zylinder, Hexenhut, Kürbiskopf) und die Redstone-Partikel-Aura. Ihre Dateien bleiben in `assets/cosmetics/`; Migration 39 hat sie einmalig bei allen abgelegt.
 
 Emotes:
 

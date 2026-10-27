@@ -5,7 +5,8 @@
 // - 6 Umhänge „Mondnacht“ + „Kürbisjäger 2026“ in HD (Faktor 8 = 512×256 je Bild), animiert als senkrechter Streifen.
 //   Die Motive sind 40×64 Pixel (Entwurf) und landen 2×2-fach auf der Außenseite (Vanilla-UV 1,1 · 10×16). Alle
 //   Bewegungen hängen an Winkeln aus Bild/Bilder·2π (ganze Vielfache) – das letzte Bild geht nahtlos ins erste über.
-//   Einträge kommen (mit unlock „reward“) in assets/capes/studio.json und catalog.json (vorhandene werden ersetzt).
+//   Einträge kommen (mit unlock „reward“) in assets/capes/studio.json; in catalog.json werden nur vorhandene ersetzt –
+//   ob ein Umhang angeboten wird, entscheidet generate-capes.mjs (Liste RETIRED, seit Oktober 2026 ausgemustert).
 // - 6 Chat-Sticker (12×12 ×8) nach assets/halloween/stickers/<id>.png
 // - 2 Abzeichen (×8) nach assets/halloween/badges/<id>.png
 // Deterministisch: jeder Lauf erzeugt dieselben Bytes.
@@ -391,8 +392,8 @@ HALLOWEEN_CAPES.forEach((c, i) => {
   entries.push({ id: HUNTER_CAPE.id, name: HUNTER_CAPE.name.de, png })
 }
 
-/** Katalog-Einträge ersetzen bzw. anhängen (Reihenfolge der übrigen bleibt). */
-function upsert(file) {
+/** Katalog-Einträge ersetzen bzw. anhängen (Reihenfolge der übrigen bleibt). `append: false` = nur vorhandene ersetzen. */
+function upsert(file, append = true) {
   const list = JSON.parse(readFileSync(file, 'utf8'))
   for (const e of entries) {
     const entry = {
@@ -407,11 +408,11 @@ function upsert(file) {
     }
     const at = list.findIndex((x) => x.id === e.id)
     if (at >= 0) list[at] = entry
-    else list.push(entry)
+    else if (append) list.push(entry)
   }
   writeFileSync(file, `${JSON.stringify(list, null, 2)}\n`)
 }
 upsert(join(CAPES, 'studio.json'))
-upsert(join(CAPES, 'catalog.json'))
+upsert(join(CAPES, 'catalog.json'), false)
 
 console.log(`${entries.length} capes (${FRAMES} frames, ${entries.map((e) => `${e.id} ${(e.png.length / 1024).toFixed(0)} KB`).join(', ')}), ${STICKERS.length} stickers, ${Object.keys(BADGES).length} badges`)
