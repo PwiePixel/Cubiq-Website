@@ -20,9 +20,10 @@ sudo bash cubiq-server.sh
 
 ([`deploy/cubiq-server.sh`](deploy/cubiq-server.sh); `<GITHUB_TOKEN>` braucht nur Lesezugriff auf dieses Repository,
 bei einem öffentlichen Repository den Header weglassen.) Das Skript installiert Docker, holt den Code nach
-`/opt/cubiq`, fragt Adresse, Impressum und optional das Microsoft-Client-Secret ab, erzeugt alle Schlüssel, legt mit
-einem Cloudflare-API-Token den Tunnel und die DNS-Einträge selbst an, startet die Website und richtet nächtliche
-Sicherungen und auf Wunsch tägliche Updates ein. Danach: `sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh
+`/opt/cubiq`, fragt Adresse, Impressum und optional das Microsoft-Client-Secret ab und erzeugt alle Schlüssel. Für
+Cloudflare öffnest du nur einen Link und klickst auf deine Domain – Tunnel und DNS-Einträge legt das Skript selbst an
+(vorher die Domain in Cloudflare hinzufügen und die Nameserver beim Domain-Anbieter umstellen). Dann startet es die
+Website und richtet nächtliche Sicherungen und auf Wunsch tägliche Updates ein. Danach: `sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh
 status | update | restart | backup | logs`.
 
 ## Von Hand

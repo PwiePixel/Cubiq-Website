@@ -15,8 +15,9 @@
 # 2. Den Code nach /opt/cubiq/Cubiq-Website holen (bei einem privaten Repository mit einem GitHub-Token).
 # 3. api/.env ausfüllen: Adresse der Website und der Doku, Impressum, Schlüssel (werden erzeugt),
 #    PixelCST als Admin, optional das Microsoft-Client-Secret.
-# 4. Cloudflare: mit einem API-Token legt das Skript den Tunnel, seine Weiterleitungen und die DNS-Einträge
-#    selbst an (oder du fügst einen Tunnel-Token aus dem Dashboard ein).
+# 4. Cloudflare: du öffnest einen Link und klickst auf deine Domain – Tunnel, DNS-Einträge und Weiterleitungen
+#    legt das Skript selbst an (oder du fügst einen Tunnel-Token aus dem Dashboard ein). Vorher nur die Domain in
+#    Cloudflare hinzufügen und die Nameserver beim Domain-Anbieter umstellen.
 # 5. Website bauen und starten, nächtliche Sicherung und auf Wunsch tägliche Updates einrichten.
 # Ports musst du keine öffnen: der Cloudflare-Tunnel verbindet sich von innen nach außen.
 
@@ -239,98 +240,109 @@ configure() {
 }
 
 # ---------------------------------------------------------------- Cloudflare
+#
+# Der Tunnel verbindet die Domain mit diesem Server, ohne dass ein Port offen sein muss. Eingerichtet wird er mit
+# cloudflared im Docker-Container: Du öffnest einen Link, meldest dich bei Cloudflare an und klickst auf deine
+# Domain – Tunnel, DNS-Einträge und Weiterleitungen legt das Skript danach selbst an. Die Zugangsdaten liegen in
+# /opt/cubiq/cloudflared; api/docker-compose.override.yml lässt cloudflared mit ihnen laufen.
 
-CF_TOKEN=''
+CF_DIR="$BASE/cloudflared"
+CF_IMAGE="cloudflare/cloudflared:latest"
+# Im Container läuft cloudflared als Benutzer „nonroot“ (UID 65532).
+CF_UID=65532
+OVERRIDE="$API/docker-compose.override.yml"
 
-# cf METHODE PFAD [JSON] – Cloudflare-API; gibt die Antwort aus oder scheitert mit der Fehlermeldung.
-cf() {
-  local out
-  out=$(curl -sS -X "$1" "https://api.cloudflare.com/client/v4$2" \
-    -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' ${3:+--data "$3"}) || return 1
-  if [ "$(jq -r '.success' <<<"$out" 2>/dev/null)" != "true" ]; then
-    warn "Cloudflare $1 $2: $(jq -c '.errors' <<<"$out" 2>/dev/null || printf '%s' "$out")"
-    return 1
-  fi
-  printf '%s' "$out"
-}
+cfd() { docker run --rm -v "$CF_DIR:/home/nonroot/.cloudflared" "$CF_IMAGE" "$@"; }
 
 cloudflare() {
-  local site docs token
+  local site docs zone choice token
   site=$(bare_host "$(env_get SITE_URL)")
   docs=$(bare_host "$(env_get WIKI_URL)")
+  zone=$(zone_for "$site")
   if [ -n "$(env_get TUNNEL_TOKEN)" ]; then
-    say "Cloudflare-Tunnel ist schon eingetragen."
+    say "Cloudflare-Tunnel (Token aus dem Dashboard) ist schon eingetragen."
+    return 0
+  fi
+  # Schon eingerichtet: nur Hostnamen und Weiterleitungen auf den aktuellen Stand bringen.
+  if [ -f "$CF_DIR/cert.pem" ] && [ -f "$CF_DIR/config.yml" ]; then
+    cf_tunnel "$site" "$docs"
     return 0
   fi
   echo
-  say "Cloudflare (Domain $(zone_for "$site") muss in deinem Cloudflare-Konto sein: dash.cloudflare.com → Add a domain)"
-  echo "    Am einfachsten: ein API-Token, dann lege ich Tunnel und DNS-Einträge selbst an."
-  echo "    dash.cloudflare.com → My Profile → API Tokens → Create Token → Custom token, Rechte:"
-  echo "      Account · Cloudflare Tunnel · Edit"
-  echo "      Zone · Zone · Read   und   Zone · DNS · Edit   (Zone Resources: $(zone_for "$site"))"
-  echo "      optional Zone · Zone Settings · Edit (dann erzwinge ich auch HTTPS)"
-  echo "    Der API-Token wird nicht gespeichert. Hast du den Tunnel schon im Dashboard angelegt, hier Enter"
-  echo "    drücken und danach den Tunnel-Token einfügen."
-  ask_secret token "    Cloudflare-API-Token"
-  if [ -z "$token" ]; then
+  say "Cloudflare: verbindet $site mit diesem Server."
+  echo "    Voraussetzung: $zone ist in deinem Cloudflare-Konto (dash.cloudflare.com → „Add a domain“)"
+  echo "    und die Nameserver beim Domain-Anbieter sind auf Cloudflare umgestellt."
+  echo "    1 = automatisch: du öffnest gleich einen Link und klickst auf $zone (empfohlen)"
+  echo "    2 = du hast im Dashboard schon einen Tunnel angelegt und fügst seinen Token ein"
+  ask choice "    Auswahl" "1"
+  if [ "$choice" = 2 ]; then
     ask_secret token "    Tunnel-Token (Networks → Tunnels → Docker-Anleitung: Text hinter --token)"
     [ -n "$token" ] || die "Ohne Cloudflare-Tunnel ist die Website nicht erreichbar."
     env_set TUNNEL_TOKEN "$token"
+    rm -f "$OVERRIDE"
     warn "Im Tunnel unter „Public Hostname“ eintragen: $site und $docs → Service HTTP → api:3000"
     return 0
   fi
-  CF_TOKEN=$token
-  cf_setup "$site" "$docs"
-  CF_TOKEN=''
+  cf_tunnel "$site" "$docs"
 }
 
-cf_setup() {
-  local site=$1 docs=$2 zone_name zone zid account status tid token host body rid
-  zone_name=$(zone_for "$site")
-  zone=$(cf GET "/zones?name=$zone_name") || die "Der API-Token darf die Domain nicht lesen (Zone · Zone · Read)."
-  zid=$(jq -r '.result[0].id // empty' <<<"$zone")
-  [ -n "$zid" ] || die "$zone_name ist nicht in deinem Cloudflare-Konto – dort zuerst „Add a domain“ → $zone_name."
-  account=$(jq -r '.result[0].account.id' <<<"$zone")
-  status=$(jq -r '.result[0].status' <<<"$zone")
-  if [ "$status" != "active" ]; then
-    warn "$zone_name ist bei Cloudflare noch nicht aktiv. Trag bei deinem Domain-Anbieter diese Nameserver ein:"
-    jq -r '.result[0].name_servers[]' <<<"$zone" | sed 's/^/        /' >&2
-    warn "Ich richte trotzdem alles ein – erreichbar ist die Website, sobald die Domain aktiv ist."
+cf_tunnel() {
+  local site=$1 docs=$2 zone id host
+  zone=$(zone_for "$site")
+  mkdir -p "$CF_DIR"
+  chown "$CF_UID:$CF_UID" "$CF_DIR"
+  chmod 700 "$CF_DIR"
+  docker pull -q "$CF_IMAGE" >/dev/null || die "Das cloudflared-Image ließ sich nicht laden (Internet?)."
+
+  if [ ! -f "$CF_DIR/cert.pem" ]; then
+    echo
+    say "Gleich erscheint ein Link. Öffne ihn am PC oder Handy, melde dich bei Cloudflare an,"
+    say "klick auf „$zone“ und dann auf „Authorize“. Danach geht es hier von selbst weiter."
+    echo
+    cfd tunnel login || die "Die Anmeldung bei Cloudflare hat nicht geklappt – Skript einfach erneut starten."
   fi
 
-  tid=$(cf GET "/accounts/$account/cfd_tunnel?name=cubiq&is_deleted=false" | jq -r '.result[0].id // empty') ||
-    die "Der API-Token darf keine Tunnel verwalten (Account · Cloudflare Tunnel · Edit)."
-  if [ -z "$tid" ]; then
-    tid=$(cf POST "/accounts/$account/cfd_tunnel" '{"name":"cubiq","config_src":"cloudflare"}' | jq -r '.result.id') ||
-      die "Der Tunnel konnte nicht angelegt werden."
+  id=$(cfd tunnel list --name cubiq --output json 2>/dev/null | jq -r '.[0].id // empty' 2>/dev/null || true)
+  if [ -z "$id" ]; then
+    cfd tunnel create cubiq >/dev/null || die "Der Tunnel konnte nicht angelegt werden."
+    id=$(cfd tunnel list --name cubiq --output json 2>/dev/null | jq -r '.[0].id // empty' 2>/dev/null || true)
+    [ -n "$id" ] || die "Der neue Tunnel „cubiq“ ist nicht auffindbar."
     say "Tunnel „cubiq“ angelegt."
-  else
-    say "Tunnel „cubiq“ gefunden – ich nutze ihn weiter."
   fi
-  token=$(cf GET "/accounts/$account/cfd_tunnel/$tid/token" | jq -r '.result') || die "Der Tunnel-Token ist nicht lesbar."
-
-  body=$(jq -nc --arg a "$site" --arg b "$docs" \
-    '{config: {ingress: [{hostname: $a, service: "http://api:3000"}, {hostname: $b, service: "http://api:3000"}, {service: "http_status:404"}]}}')
-  cf PUT "/accounts/$account/cfd_tunnel/$tid/configurations" "$body" >/dev/null || die "Die Weiterleitungen im Tunnel wurden nicht gespeichert."
+  # Zugangsdaten des Tunnels (fehlen z. B. auf einem neuen Server, wenn der Tunnel schon existiert).
+  if [ ! -f "$CF_DIR/$id.json" ]; then
+    cfd tunnel token --credentials-file "/home/nonroot/.cloudflared/$id.json" cubiq >/dev/null ||
+      die "Die Zugangsdaten des Tunnels sind nicht abrufbar."
+  fi
 
   for host in "$site" "$docs"; do
-    body=$(jq -nc --arg n "$host" --arg c "$tid.cfargotunnel.com" '{type: "CNAME", name: $n, content: $c, proxied: true}')
-    rid=$(cf GET "/zones/$zid/dns_records?name=$host" | jq -r '.result[0].id // empty') || die "DNS-Einträge nicht lesbar (Zone · DNS · Edit)."
-    if [ -n "$rid" ]; then
-      cf PUT "/zones/$zid/dns_records/$rid" "$body" >/dev/null || die "DNS-Eintrag für $host nicht geändert."
-    else
-      cf POST "/zones/$zid/dns_records" "$body" >/dev/null || die "DNS-Eintrag für $host nicht angelegt."
-    fi
+    cfd tunnel route dns --overwrite-dns cubiq "$host" >/dev/null 2>&1 ||
+      die "DNS-Eintrag für $host nicht gesetzt – ist $zone in dem Cloudflare-Konto, mit dem du dich angemeldet hast?"
     say "DNS: $host → Tunnel"
   done
 
-  if cf PATCH "/zones/$zid/settings/always_use_https" '{"value":"on"}' >/dev/null 2>&1; then
-    cf PATCH "/zones/$zid/settings/min_tls_version" '{"value":"1.2"}' >/dev/null 2>&1 || true
-    say "HTTPS wird erzwungen."
-  else
-    warn "Bitte im Cloudflare-Dashboard „Always Use HTTPS“ einschalten (SSL/TLS → Edge Certificates)."
-  fi
-  env_set TUNNEL_TOKEN "$token"
+  cat >"$CF_DIR/config.yml" <<YAML
+# Von deploy/cubiq-server.sh angelegt – beim nächsten Start des Skripts neu geschrieben.
+tunnel: $id
+credentials-file: /etc/cloudflared/$id.json
+ingress:
+  - hostname: $site
+    service: http://api:3000
+  - hostname: $docs
+    service: http://api:3000
+  - service: http_status:404
+YAML
+  cat >"$OVERRIDE" <<YAML
+# Von deploy/cubiq-server.sh angelegt: cloudflared mit Konfigurationsdatei statt Tunnel-Token.
+services:
+  cloudflared:
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      - $CF_DIR:/etc/cloudflared:ro
+YAML
+  chown "$CF_UID:$CF_UID" "$CF_DIR/config.yml"
+  chmod 600 "$CF_DIR/config.yml"
+  say "Cloudflare-Tunnel eingerichtet."
 }
 
 # ---------------------------------------------------------------- Betrieb
@@ -423,8 +435,9 @@ summary() {
   echo "       $site/auth/microsoft/callback"
   [ -n "$(env_get MS_CLIENT_SECRET)" ] ||
     echo "       und ein Client-Secret anlegen, dann dieses Skript erneut starten (es fragt danach)."
-  echo "    2. GitHub → Cubiq-launcher → Settings → Secrets and variables → Actions → Variables:"
-  echo "       CUBIQ_API_BASE = $site   (ab dem nächsten Release nutzt der Launcher deine Dienste)"
+  echo "    2. Dem Launcher die Adresse geben: GitHub → Cubiq-launcher → Settings → Secrets and variables →"
+  echo "       Actions → Variables → CUBIQ_API_BASE = $site (ab dem nächsten Release nutzt er deine Dienste)."
+  echo "    3. Optional in Cloudflare: SSL/TLS → Edge Certificates → „Always Use HTTPS“ einschalten."
 }
 
 install() {
