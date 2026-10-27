@@ -21,6 +21,7 @@ const more = computed(() => Math.max(0, shots.value.length - thumbCount.value))
         :title="title"
         :accent="post.banner?.accent"
         :motif="post.banner?.motif"
+        :anim="post.banner?.anim"
         :size="featured ? 'lg' : 'sm'"
         tag="h3"
       />

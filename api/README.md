@@ -108,7 +108,7 @@ eintragen – erst dann schaltet der Launcher Freunde, Chat, Umhänge usw. frei.
 |---|---|---|
 | `TUNNEL_TOKEN` | ja | Token des Cloudflare-Tunnels. Nur cloudflared bekommt ihn. |
 | `SECRET_KEY` | ja | ≥ 32 zufällige Zeichen (`openssl rand -base64 48`). Schlüssel für die Hashes der Einlösecodes. **Nach dem ersten Start nicht mehr ändern**, sonst werden offene Codes ungültig. |
-| `ADMIN_UUIDS` | nein | Admin-Konten (Minecraft-UUIDs, kommagetrennt) – mindestens deine eigene. Nachschlagen im Cubiq Launcher unter Konten oder auf mcuuid.net. |
+| `ADMIN_UUIDS` | nein | Admin-Konten (Owner, Minecraft-UUIDs, kommagetrennt). In `.env.example` steht schon das Konto **PixelCST** (`93861992-3545-4c98-8760-4ef71e46c2ed`) – es ist damit von Anfang an Admin. Weitere mit Komma anhängen; nachschlagen im Cubiq Launcher unter Konten oder auf mcuuid.net. |
 | `ADMIN_API_KEY` | nein | ≥ 32 Zeichen, für Skripte über den Header `X-Admin-Key`. Leer heißt: nur Admin-Sitzungen. |
 | `SITE_URL` | ja | Adresse der Website, z. B. `https://deine-domain.de`. Daraus ergeben sich alle anderen Adressen (API, Doku, Microsoft-Rückleitung, Mail-Absender und -Links, Sitemap). Gilt auch beim Bauen: die Doku ist statisch und bekommt ihre Links zur Website beim Bauen – Docker reicht den Wert automatisch durch, von Hand `SITE_URL=… pnpm build`. |
 | `NUXT_PUBLIC_OPERATOR_NAME`, `…_ADDRESS`, `…_EMAIL` | ja (Impressum) | Betreiber für Impressum (`/imprint`) und Datenschutzerklärung. Optional `NUXT_PUBLIC_OPERATOR_REPRESENTATIVE`, `…_PHONE`, `…_AUTHORITY` (zuständige Datenschutz-Aufsicht). Ohne diese Angaben sind Impressum und Datenschutzerklärung unvollständig. |

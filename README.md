@@ -40,6 +40,5 @@ Schnittstellen-Vertrag beschreibt [api/API.md](api/API.md).
 
 ## Lizenz
 
-GPL-3.0-only, siehe [LICENSE](LICENSE). Die Website beruht auf der Website des TRS Launchers von Ohev Tamerin
-(Theredstonee); Herkunft, Änderungen und Teile Dritter stehen in [NOTICE](NOTICE). „Minecraft“ ist eine Marke von
-Mojang Synergies AB; Cubiq ist kein offizielles Minecraft-Produkt.
+GPL-3.0-only, siehe [LICENSE](LICENSE). Copyright und Teile Dritter stehen in [NOTICE](NOTICE). „Minecraft“ ist eine
+Marke von Mojang Synergies AB; Cubiq ist kein offizielles Minecraft-Produkt.

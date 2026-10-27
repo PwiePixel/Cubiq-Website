@@ -2,6 +2,7 @@
 // Banner eines Updates – feste Vorlage für Launcher und Website (gleiche Datei in beiden Apps): dunkler Grund, weicher Schein in der Farbe des Updates,
 // feines Würfel-Raster wie im Logo, Schrift mit Version links und das Motiv rechts.
 // Je Update ändern sich nur Akzentfarbe und Motiv (Angabe im CHANGELOG.md); ohne eigenes Motiv das Cubiq-Logo.
+// Gibt es eine bewegte Fassung (animiertes PNG), läuft sie – bei „Bewegung reduzieren“ des Systems das ruhige Bild.
 const props = withDefaults(
   defineProps<{
     /** z. B. „v0.4.3 · 24. September 2026“ */
@@ -10,12 +11,14 @@ const props = withDefaults(
     accent?: string | null
     /** Bildadresse des Motivs, sonst das Cubiq-Logo. */
     motif?: string | null
+    /** Bewegte Fassung des Motivs (animiertes PNG), sonst `null`. */
+    anim?: string | null
     size?: 'sm' | 'md' | 'lg'
     tag?: 'h1' | 'h2' | 'h3' | 'p'
     /** Ohne Schrift (wenn der Titel schon daneben steht). */
     bare?: boolean
   }>(),
-  { accent: null, motif: null, size: 'md', tag: 'h3', bare: false },
+  { accent: null, motif: null, anim: null, size: 'md', tag: 'h3', bare: false },
 )
 
 const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#71a330' }))
@@ -25,7 +28,11 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   <div class="update-banner" :class="`ub-${size}`" :style="style">
     <div class="ub-glow" aria-hidden="true" />
     <div class="ub-grid" aria-hidden="true" />
-    <img :src="motif || '/logo.png'" alt="" class="ub-motif" loading="lazy" decoding="async" />
+    <picture v-if="motif && anim">
+      <source :srcset="motif" media="(prefers-reduced-motion: reduce)" />
+      <img :src="anim" alt="" class="ub-motif" loading="lazy" decoding="async" />
+    </picture>
+    <img v-else :src="motif || '/logo.png'" alt="" class="ub-motif" loading="lazy" decoding="async" />
     <div v-if="!bare" class="ub-text">
       <p class="ub-kicker">{{ kicker }}</p>
       <component :is="tag" class="ub-title">{{ title }}</component>

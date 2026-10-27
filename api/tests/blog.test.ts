@@ -23,7 +23,7 @@ How to write an entry: ein Kommentar, der nichts bedeutet.
 - Nächstes
 
 ## 0.6.5 – 2026-10-01 – The Clip Update | Das Clip-Update
-<!-- banner: accent=#ff7ab8 motif=/news/0.6.5/banner.png -->
+<!-- banner: accent=#ff7ab8 motif=/news/0.6.5/banner.png anim=/news/0.6.5/banner-anim.png -->
 <!-- shots:
 /news/0.6.5/gallery.png | The clip gallery | Die Clip-Galerie
 /news/0.6.5/trim.png
@@ -71,7 +71,8 @@ describe('Blog aus CHANGELOG.md', () => {
     expect(post!.gallery.de.map((s) => s.caption)).toEqual(['Die Clip-Galerie', ''])
     expect(post!.markdown.en).toBe('- **Clip gallery.** All clips as tiles.')
     expect(post!.markdown.de).toBe('- **Clip-Galerie.** Alle Clips als Kacheln.')
-    expect(post!.banner).toEqual({ accent: '#ff7ab8', motif: `${RAW}/news/0.6.5/banner.png` })
+    // Ruhiges Motiv und bewegte Fassung, beide von GitHub.
+    expect(post!.banner).toEqual({ accent: '#ff7ab8', motif: `${RAW}/news/0.6.5/banner.png`, anim: `${RAW}/news/0.6.5/banner-anim.png` })
     // Nie fremde Bildadressen.
     expect(JSON.stringify(post)).not.toContain('evil.example')
   })

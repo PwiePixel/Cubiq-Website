@@ -1,11 +1,6 @@
 Cubiq website, API and documentation (for Cubiq Launcher and the Cubiq Client)
 Copyright (C) 2026 PwiePixel
 
-Based on the TRS Launcher website, API and documentation by Ohev Tamerin (Theredstonee)
-Copyright (C) 2026 Ohev Tamerin (Theredstonee)
-https://github.com/theredstonee/TRS-Launcher (branch "website", commit
-d683b3f7c20b1a965176a135c1cbdf40df36788c)
-
 This program is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, version 3 of the License
 (see LICENSE).
@@ -14,26 +9,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License for more details.
 
-Modifications
--------------
-This is a modified version of the TRS Launcher website. On 2026-10-27 PwiePixel made these changes
-(the full list is in the Git history of this repository):
-- New name (Cubiq Launcher, Cubiq Client) and logo; texts rewritten for Cubiq, without statements
-  about the original author or project.
-- New design in the green of the Cubiq logo (as in Cubiq Launcher) instead of the redstone look:
-  colours, Inter font, background scene, mail look, update banners, social preview image.
-- Domains, operator data (imprint, privacy policy) and keys are no longer built in – they are set
-  per server in .env (SITE_URL, NUXT_PUBLIC_OPERATOR_*, …).
-- Removed: the personal music video on the creator dashboard, the redstone background scene,
-  infrastructure details of the original operator and screenshots that showed the original
-  product; the update signature key is replaced with Cubiq Launcher's own public key.
-- Wire formats changed to Cubiq (pack codes CBQ-…, tokens cubiq_…, deep links cubiq-launcher://).
-Files that carry the original copyright header keep it.
-
-This website is not affiliated with or endorsed by the TRS Launcher project or its author.
-
-Cosmetics that can only be obtained by code or that were granted by the original team are
-proprietary (all rights reserved) and are not part of this repository; the cosmetics in
+Cosmetics that can only be obtained by code are not part of this repository; the cosmetics in
 api/assets are covered by the GPL-3.0.
 
 Third-party parts
