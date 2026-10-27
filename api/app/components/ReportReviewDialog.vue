@@ -1,0 +1,535 @@
+<script setup lang="ts">
+// Prüf-Dialog für eine Chat-Meldung: Kontext (Nachrichten davor/danach), gemeldete Bilder,
+// Moderationsstand von Ziel und Melder, Notizen, Audit-Log und die Entscheidung.
+const props = defineProps<{ reportId: string }>()
+const emit = defineEmits<{ close: [], changed: [], open: [id: string] }>()
+
+const { m, fill, lang } = useLang()
+const { api } = useAdmin()
+const t = computed(() => m.value.admin.mod)
+
+const report = ref<ReportDetail | null>(null)
+const error = ref('')
+const busy = ref(false)
+
+async function load() {
+  error.value = ''
+  try {
+    report.value = (await api<{ report: ReportDetail }>(`/v1/admin/reports/${props.reportId}`)).report
+    if (!draft.value.reasonCode) draft.value.reasonCode = REPORT_TO_REASON[report.value.reason] ?? 'other'
+    // Geteilte Screenshots: naheliegende Strafe ist die Upload-Sperre.
+    if (UPLOAD_KINDS.has(report.value.kind) && draft.value.kind === 'chat_mute') draft.value.kind = 'upload_ban'
+  } catch (e) {
+    error.value = fill(m.value.admin.failed, { error: apiMessage(e) })
+  }
+}
+
+// --- Entscheidung ----------------------------------------------------------------------------
+const { a: at } = useAdminText()
+const { session, can } = useAdmin()
+const { t: tt } = useTeamText()
+const REPORT_TO_REASON: Record<string, string> = {
+  insult_hate: 'insult_hate', spam: 'spam', inappropriate: 'inappropriate_content', scam_phishing: 'scam_phishing', harassment: 'harassment', other: 'other',
+}
+const draft = ref(newSanctionDraft('chat_mute'))
+const sanctionForm = shallowRef<{ valid: boolean } | null>(null)
+const keepOpen = ref(false)
+const includeRelated = ref(false)
+const note = ref('')
+/** Meldungen über Hochgeladenes: naheliegende Strafe ist die Upload-Sperre. */
+const UPLOAD_KINDS = new Set(['share', 'circuit', 'pack'])
+/** Meldungen über Issues/Kommentare: naheliegende Strafe ist die Sozial-Sperre (blockiert Issues + Kommentare). */
+const ISSUE_KINDS = new Set(['issue', 'issue_comment'])
+const confirming = ref<null | 'sanction' | 'dismiss' | 'resolve' | 'delete_message' | 'delete_share' | 'hide_circuit' | 'delete_pack' | 'delete_issue'>(null)
+const limits = computed(() => session.value?.limits ?? { kinds: [], maxMinutes: 0, maxWarnMinutes: 0, permanent: false })
+
+function resetForm() {
+  draft.value = newSanctionDraft(report.value && UPLOAD_KINDS.has(report.value.kind) ? 'upload_ban' : report.value && ISSUE_KINDS.has(report.value.kind) ? 'social_ban' : 'chat_mute', report.value ? (REPORT_TO_REASON[report.value.reason] ?? 'other') : '')
+  keepOpen.value = false
+  includeRelated.value = false
+  note.value = ''
+  confirming.value = null
+}
+
+// Nach den Formular-Refs (sonst Zugriff vor der Initialisierung beim sofortigen Aufruf).
+watch(() => props.reportId, () => {
+  report.value = null
+  resetForm()
+  void load()
+}, { immediate: true })
+
+async function run(fn: () => Promise<{ report: ReportDetail }>) {
+  if (busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    report.value = (await fn()).report
+    emit('changed')
+  } catch (e) {
+    error.value = fill(m.value.admin.failed, { error: apiMessage(e) })
+  } finally {
+    busy.value = false
+  }
+}
+
+function act(action: 'sanction' | 'dismiss' | 'resolve' | 'delete_message' | 'delete_share' | 'hide_circuit' | 'delete_pack' | 'delete_issue') {
+  confirming.value = null
+  const body: Record<string, unknown> = { action }
+  if (action === 'sanction') Object.assign(body, draftBody(draft.value))
+  if (keepOpen.value && action !== 'dismiss' && action !== 'resolve') body.keepOpen = true
+  if (includeRelated.value) body.includeRelated = true
+  void run(() => api(`/v1/admin/reports/${props.reportId}/actions`, { method: 'POST', body })).then(() => {
+    if (!error.value) resetForm()
+  })
+}
+
+const sanctionSummary = computed(() => {
+  const d = draft.value
+  const dur = d.duration === 'custom' ? `${d.customValue} ${at.value.customUnit[d.customUnit]}` : at.value.durations[d.duration]
+  return fill(at.value.decision.confirmText, {
+    kind: at.value.kinds[d.kind] ?? d.kind,
+    name: name(report.value?.target),
+    duration: dur ?? '',
+    reason: at.value.reasons[d.reasonCode] ?? d.reasonCode,
+  })
+})
+
+function setStatus(status: 'open' | 'in_review') {
+  void run(() => api(`/v1/admin/reports/${props.reportId}/status`, { method: 'POST', body: { status } }))
+}
+
+function addNote() {
+  const text = note.value.trim().slice(0, 2000)
+  if (!text) return
+  void run(() => api(`/v1/admin/reports/${props.reportId}/notes`, { method: 'POST', body: { text } })).then(() => {
+    if (!error.value) note.value = ''
+  })
+}
+
+async function unmute() {
+  const target = report.value?.target
+  if (!target || busy.value) return
+  busy.value = true
+  try {
+    await api(`/v1/admin/moderation/users/${target.uuid}/mute`, { method: 'DELETE' })
+    emit('changed')
+    await load()
+  } catch (e) {
+    error.value = fill(m.value.admin.failed, { error: apiMessage(e) })
+  } finally {
+    busy.value = false
+  }
+}
+
+const resolved = computed(() => report.value?.status === 'resolved')
+
+/** Wegpunkt-Karte als eine Zeile (nur Text, kein HTML). */
+function waypointLine(w: NonNullable<EvidenceMessage['waypoint']>): string {
+  return fill(t.value.waypoint, {
+    name: w.name,
+    x: w.x,
+    y: w.y,
+    z: w.z,
+    dimension: w.dimension.replace(/^minecraft:/, ''),
+    where: w.world.type === 'server' ? w.world.address : t.value.singleplayer,
+  })
+}
+const systemLabel = (e: string | undefined) => (e && e in t.value.systemEvents ? t.value.systemEvents[e as keyof typeof t.value.systemEvents] : (e ?? ''))
+
+// Gemeldete Nachricht im Verlauf sichtbar machen (nur die Liste scrollen, nicht die Seite).
+const log = shallowRef<HTMLElement | null>(null)
+watch(report, () => void nextTick(() => {
+  const box = log.value
+  const focus = box?.querySelector<HTMLElement>('.chat-focus')
+  if (box && focus) box.scrollTop = focus.offsetTop - box.clientHeight / 2 + focus.clientHeight / 2
+}))
+const focusId = computed(() => report.value?.evidence?.focus ?? null)
+const name = (p: PlayerRef | null | undefined) => p?.name || t.value.unknown
+const when = (iso: string | null | undefined) => dateTime(iso, lang.value)
+const statusClass = computed(() => {
+  const r = report.value
+  if (!r) return ''
+  if (r.status === 'open') return 'bg-lamp-900 text-lamp-300'
+  if (r.status === 'in_review') return 'bg-base-700 text-base-100'
+  return r.outcome === 'actioned' ? 'bg-ok/15 text-ok' : 'bg-base-800 text-base-400'
+})
+
+// --- Dialog-Verhalten (wie der Umhang-Dialog) ----------------------------------------------------
+const panel = shallowRef<HTMLElement | null>(null)
+let returnFocus: HTMLElement | null = null
+function onKey(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || e.defaultPrevented) return
+  e.preventDefault()
+  if (document.querySelectorAll('[aria-modal="true"]').length > 1) return
+  emit('close')
+}
+function trapTab(e: KeyboardEvent) {
+  if (e.key !== 'Tab' || !panel.value) return
+  const items = [...panel.value.querySelectorAll<HTMLElement>(
+    'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+  )].filter((el) => el.offsetParent !== null)
+  if (!items.length) return
+  const first = items[0]!
+  const last = items[items.length - 1]!
+  if (e.shiftKey && (document.activeElement === first || document.activeElement === panel.value)) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+let overflow = ''
+onMounted(() => {
+  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  overflow = document.documentElement.style.overflow
+  document.documentElement.style.overflow = 'hidden'
+  window.addEventListener('keydown', onKey)
+  void nextTick(() => panel.value?.focus())
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  document.documentElement.style.overflow = overflow
+  if (returnFocus && document.contains(returnFocus)) returnFocus.focus()
+})
+</script>
+
+<template>
+  <Teleport to="body">
+    <div class="backdrop" @mousedown.self="emit('close')">
+      <div
+        ref="panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-review-title"
+        tabindex="-1"
+        class="review-panel card w-full max-w-6xl animate-pop p-4 sm:p-6"
+        @keydown="trapTab"
+      >
+        <header class="flex flex-wrap items-center gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-xs tracking-[0.18em] text-base-400 uppercase">{{ t.dialogTitle }} · {{ report ? t.kinds[report.kind] : '' }}</p>
+            <h2 id="report-review-title" class="display mt-1 truncate text-2xl text-base-50">
+              {{ report ? t.reasons[report.reason] : '…' }}
+            </h2>
+          </div>
+          <span v-if="report" class="badge" :class="statusClass">
+            {{ report.status === 'resolved' && report.outcome ? t.outcome[report.outcome] : t.status[report.status] }}
+          </span>
+          <button type="button" class="btn-icon" :aria-label="m.common.close" :title="`${m.common.close} (Esc)`" @click="emit('close')">
+            <SiteIcon name="close" class="size-4" />
+          </button>
+        </header>
+
+        <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+        <div v-if="!report && !error" class="skeleton mt-6 h-64 rounded-lg" />
+
+        <div v-if="report" class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+          <!-- Kontext -->
+          <section class="min-w-0 space-y-5">
+            <div v-if="!UPLOAD_KINDS.has(report.kind)">
+              <h3 class="section-title">{{ t.context }}</h3>
+              <p v-if="report.evidence?.conversation" class="mt-1 text-xs text-base-400">
+                {{ report.evidence.conversation.kind === 'group'
+                  ? fill(t.contextGroup, { name: report.evidence.conversation.name ?? '', n: report.evidence.conversation.members.length })
+                  : t.contextDm }}
+                · {{ when(report.evidence.capturedAt) }}
+              </p>
+              <p v-if="report.contentHidden" class="mt-3 flex items-center gap-2 rounded-md border border-base-800 bg-base-950 px-3 py-2 text-sm text-base-300"><SiteIcon name="key" class="size-4 text-base-400" />{{ tt.adm.redacted }}</p>
+              <p v-if="report.evidencePurged" class="mt-3 text-sm text-base-400">{{ t.purged }}</p>
+              <p v-else-if="!report.evidence?.messages.length" class="mt-3 text-sm text-base-400">{{ t.noContext }}</p>
+              <ol v-else ref="log" class="chat-log mt-3">
+                <li
+                  v-for="msg in report.evidence!.messages"
+                  :key="msg.id"
+                  class="chat-line"
+                  :class="{ 'chat-focus': msg.id === focusId, 'chat-target': msg.sender?.uuid === report.target?.uuid }"
+                >
+                  <div class="flex flex-wrap items-baseline gap-x-2 text-xs">
+                    <span class="font-semibold" :class="msg.sender?.uuid === report.target?.uuid ? 'text-redstone-300' : 'text-base-100'">
+                      {{ msg.sender ? name(msg.sender) : '–' }}
+                    </span>
+                    <span class="text-base-400">{{ when(msg.createdAt) }}</span>
+                    <span v-if="msg.editedAt" class="text-base-400">· {{ t.edited }}</span>
+                    <span v-if="msg.deleted" class="text-base-400">· {{ t.deleted }}</span>
+                  </div>
+                  <p v-if="msg.kind === 'system'" class="text-xs text-base-400 italic">{{ fill(t.system, { event: systemLabel(msg.system?.event) }) }}</p>
+                  <p v-if="msg.text" class="msg-text">{{ msg.text }}</p>
+                  <p v-else-if="msg.hidden" class="mt-1 flex gap-1.5" aria-hidden="true"><span class="redacted w-16" /><span class="redacted w-10" /><span class="redacted w-24" /></p>
+                  <p v-if="msg.invite" class="text-xs text-lamp-300">{{ fill(t.invite, { address: msg.invite.address }) }}</p>
+                  <p v-if="msg.world" class="text-xs text-lamp-300">{{ fill(t.world, { name: msg.world.name }) }}</p>
+                  <p v-if="msg.waypoint" class="text-xs text-lamp-300">{{ waypointLine(msg.waypoint) }}</p>
+                  <p v-if="msg.attachments.length" class="text-xs text-base-400">{{ fill(t.attachments, { n: msg.attachments.length }) }}</p>
+                </li>
+              </ol>
+            </div>
+
+            <div v-if="report.evidence?.circuit">
+              <h3 class="section-title">{{ m.admin.mod.kinds.circuit }}</h3>
+              <p class="mt-1 text-sm text-base-200">{{ fill(t.circuitInfo, { name: report.evidence.circuit.name, rev: report.evidence.circuit.rev, author: report.evidence.circuit.author?.name || t.circuitTeam }) }}</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <a :href="`/circuits/${report.evidence.circuit.id}`" target="_blank" rel="noopener" class="btn btn-ghost text-xs"><SiteIcon name="external" class="size-3.5" />/circuits/{{ report.evidence.circuit.id }}</a>
+                <NuxtLink v-if="can('circuits.manage')" :to="`/admin/circuits/${report.evidence.circuit.id}`" class="btn btn-ghost text-xs"><SiteIcon name="blocks" class="size-3.5" />{{ t.openCircuit }}</NuxtLink>
+              </div>
+            </div>
+
+            <div v-if="report.evidence?.pack">
+              <h3 class="section-title">{{ m.admin.mod.kinds.pack }}</h3>
+              <p class="mt-1 text-sm text-base-200">
+                {{ fill(t.packInfo, {
+                  name: report.evidence.pack.name,
+                  code: report.evidence.pack.code,
+                  mc: report.evidence.pack.mcVersion,
+                  loader: report.evidence.pack.loader,
+                  rev: report.evidence.pack.revision,
+                  owner: report.evidence.pack.owner.name,
+                }) }}
+              </p>
+              <p v-if="report.evidence.pack.summary" class="mt-1 text-sm text-base-300">{{ report.evidence.pack.summary }}</p>
+              <p v-if="report.evidence.pack.ownJars" class="mt-1 text-xs text-lamp-300">{{ fill(t.packOwnJars, { n: report.evidence.pack.ownJars }) }}</p>
+              <p class="mt-1 break-all font-mono text-[11px] text-base-400">SHA-256 {{ report.evidence.pack.sha256 }}</p>
+              <div class="mt-2">
+                <a :href="`/p/${report.evidence.pack.code}`" target="_blank" rel="noopener" class="btn btn-ghost text-xs"><SiteIcon name="external" class="size-3.5" />/p/{{ report.evidence.pack.code }}</a>
+              </div>
+            </div>
+
+            <div v-if="report.evidence?.issue">
+              <h3 class="section-title">{{ m.admin.mod.kinds.issue }}</h3>
+              <p class="mt-1 text-sm text-base-200">{{ fill(t.issueInfo, { n: report.evidence.issue.number, title: report.evidence.issue.title, author: report.evidence.issue.author?.name || t.unknown }) }}</p>
+              <p v-if="report.evidence.issue.description" class="msg-text mt-2 max-h-48 overflow-auto rounded-md bg-base-950 p-3 text-sm whitespace-pre-wrap text-base-300">{{ report.evidence.issue.description }}</p>
+              <div class="mt-2">
+                <a :href="`/issues/${report.evidence.issue.number}`" target="_blank" rel="noopener" class="btn btn-ghost text-xs"><SiteIcon name="external" class="size-3.5" />/issues/{{ report.evidence.issue.number }}</a>
+              </div>
+            </div>
+
+            <div v-if="report.evidence?.issueComment">
+              <h3 class="section-title">{{ m.admin.mod.kinds.issue_comment }}</h3>
+              <p class="mt-1 text-sm text-base-200">{{ fill(t.issueCommentInfo, { n: report.evidence.issueComment.issueNumber, title: report.evidence.issueComment.issueTitle, author: report.evidence.issueComment.author?.name || t.unknown }) }}</p>
+              <p v-if="report.evidence.issueComment.body" class="msg-text mt-2 max-h-48 overflow-auto rounded-md bg-base-950 p-3 text-sm whitespace-pre-wrap text-base-300">{{ report.evidence.issueComment.body }}</p>
+              <div class="mt-2">
+                <a :href="`/issues/${report.evidence.issueComment.issueNumber}#c${report.evidence.issueComment.id}`" target="_blank" rel="noopener" class="btn btn-ghost text-xs"><SiteIcon name="external" class="size-3.5" />/issues/{{ report.evidence.issueComment.issueNumber }}#c{{ report.evidence.issueComment.id }}</a>
+              </div>
+            </div>
+
+            <div v-if="report.evidence?.share || report.evidence?.images.length">
+              <h3 class="section-title">{{ t.reportedImages }}</h3>
+              <p v-if="report.evidence?.share" class="mt-1 text-xs text-base-400">
+                {{ fill(t.shareInfo, { created: when(report.evidence.share.createdAt), expires: when(report.evidence.share.expiresAt) }) }}
+              </p>
+              <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <a v-for="img in report.evidence.images" :key="img.id" :href="img.path" target="_blank" rel="noopener" class="evidence-img">
+                  <img :src="img.path" :width="img.width" :height="img.height" alt="" loading="lazy" />
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="section-title">{{ t.note }}</h3>
+              <p class="mt-2 text-sm whitespace-pre-wrap" :class="report.note ? 'text-base-100' : 'text-base-400'">{{ report.note || t.noNote }}</p>
+            </div>
+
+            <div>
+              <h3 class="section-title">{{ t.notes }}</h3>
+              <ul class="mt-2 space-y-2">
+                <li v-for="n in report.notes" :key="n.id" class="rounded-md bg-base-950 px-3 py-2 text-sm">
+                  <p class="text-xs text-base-400">{{ n.actorName || n.actor }} · {{ when(n.at) }}</p>
+                  <p class="mt-1 whitespace-pre-wrap text-base-100">{{ n.text }}</p>
+                </li>
+              </ul>
+              <form v-if="can('reports.handle')" class="mt-3 flex gap-2" @submit.prevent="addNote">
+                <input v-model="note" class="field flex-1" maxlength="2000" :placeholder="t.notePlaceholder" />
+                <button type="submit" class="btn btn-ghost" :disabled="busy || !note.trim()">{{ t.addNote }}</button>
+              </form>
+            </div>
+
+            <div v-if="report.audit.length">
+              <h3 class="section-title">{{ t.audit }}</h3>
+              <ul class="mt-2 space-y-1 text-xs text-base-400">
+                <li v-for="(a, i) in report.audit" :key="i">
+                  {{ when(a.at) }} · <span class="text-base-200">{{ a.actorName || a.actor }}</span> · <span class="font-mono">{{ a.action }}</span>
+                  <span v-if="a.detail"> · {{ a.detail }}</span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Personen + Entscheidung -->
+          <aside class="space-y-5">
+            <div class="rounded-lg border border-base-800 p-4">
+              <p class="text-xs text-base-400">{{ t.target }}</p>
+              <p class="mt-1 font-semibold text-base-50">
+                <NuxtLink v-if="report.target" :to="`/admin/players/${report.target.uuid}`" class="hover:underline">{{ name(report.target) }}</NuxtLink>
+                <template v-else>{{ name(report.target) }}</template>
+              </p>
+              <p v-if="report.target" class="font-mono text-[11px] text-base-400">{{ report.target.uuid }}</p>
+              <template v-if="report.targetModeration">
+                <p class="mt-2 text-xs text-base-300">{{ fill(t.targetStats, report.targetModeration.reports) }}</p>
+                <p v-if="report.targetModeration.mute" class="mt-2 flex flex-wrap items-center gap-2 text-xs text-lamp-300">
+                  {{ report.targetModeration.mute.expiresAt ? fill(t.mutedUntil, { date: when(report.targetModeration.mute.expiresAt) }) : t.mutedReview }}
+                  <button v-if="can('sanctions.lift')" type="button" class="btn btn-ghost px-2 py-0.5 text-xs" :disabled="busy" @click="unmute">{{ t.unmute }}</button>
+                </p>
+                <details v-if="report.targetModeration.sanctions.length" class="mt-2 text-xs">
+                  <summary class="cursor-pointer text-base-300">{{ t.history }}</summary>
+                  <ul class="mt-1 space-y-1 text-base-400">
+                    <li v-for="s in report.targetModeration.sanctions" :key="s.id">
+                      {{ when(s.createdAt) }} · {{ t.sanction[s.kind] }}<span v-if="s.auto"> ({{ t.auto }})</span>
+                      <span v-if="s.reason"> · {{ s.reason }}</span><span v-if="s.liftedAt"> · {{ t.lifted }}</span>
+                    </li>
+                  </ul>
+                </details>
+              </template>
+            </div>
+
+            <div class="rounded-lg border border-base-800 p-4">
+              <p class="text-xs text-base-400">{{ t.reporter }}</p>
+              <p class="mt-1 flex flex-wrap items-center gap-2 font-semibold text-base-50">
+                <NuxtLink v-if="report.reporter" :to="`/admin/players/${report.reporter.uuid}`" class="hover:underline">{{ name(report.reporter) }}</NuxtLink>
+                <template v-else>{{ report.anonymous ? t.anonymous : name(report.reporter) }}</template>
+                <span v-if="report.lowTrust" class="badge bg-lamp-900 text-lamp-300">{{ t.lowTrust }}</span>
+              </p>
+              <p v-if="report.reporterStats" class="mt-1 text-xs text-base-300">{{ fill(t.reporterStats, { actioned: report.reporterStats.actioned, dismissed: report.reporterStats.dismissed, open: report.reporterStats.open }) }}</p>
+              <p class="mt-1 text-xs text-base-400">{{ when(report.createdAt) }}</p>
+            </div>
+
+            <div v-if="can('reports.handle')" class="rounded-lg border border-base-800 p-4">
+              <h3 class="section-title">{{ t.decision }}</h3>
+              <div v-if="!resolved" class="mt-3 flex flex-wrap gap-2">
+                <button v-if="report.status === 'open'" type="button" class="btn btn-ghost text-xs" :disabled="busy" @click="setStatus('in_review')">{{ t.claim }}</button>
+                <button v-else type="button" class="btn btn-ghost text-xs" :disabled="busy" @click="setStatus('open')">{{ t.reopen }}</button>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <button v-if="report.messageId" type="button" class="btn btn-danger col-span-2 text-sm" :disabled="busy" @click="confirming = 'delete_message'">
+                  <SiteIcon name="trash" class="size-4" />{{ t.deleteMessage }}
+                </button>
+                <button v-if="report.shareId" type="button" class="btn btn-danger col-span-2 text-sm" :disabled="busy" @click="confirming = 'delete_share'">
+                  <SiteIcon name="trash" class="size-4" />{{ t.deleteShare }}
+                </button>
+                <button v-if="report.packId" type="button" class="btn btn-danger col-span-2 text-sm" :disabled="busy" @click="confirming = 'delete_pack'">
+                  <SiteIcon name="trash" class="size-4" />{{ t.deletePack }}
+                </button>
+                <button v-if="(report.issueNumber || report.issueCommentId) && can('issues.moderate')" type="button" class="btn btn-danger col-span-2 text-sm" :disabled="busy" @click="confirming = 'delete_issue'">
+                  <SiteIcon name="trash" class="size-4" />{{ report.kind === 'issue_comment' ? t.deleteIssueComment : t.deleteIssue }}
+                </button>
+                <button v-if="report.circuitId && can('circuits.manage')" type="button" class="btn btn-danger col-span-2 text-sm" :disabled="busy" @click="confirming = 'hide_circuit'">
+                  <SiteIcon name="blocks" class="size-4" />{{ t.hideCircuit }}
+                </button>
+                <button type="button" class="btn btn-ghost text-sm" :disabled="busy || resolved" @click="confirming = 'dismiss'">{{ t.dismiss }}</button>
+                <button type="button" class="btn btn-primary text-sm" :disabled="busy || resolved" @click="confirming = 'resolve'">
+                  <SiteIcon name="check" class="size-4" />{{ t.resolve }}
+                </button>
+              </div>
+              <label class="mt-3 flex items-start gap-2 text-xs text-base-300">
+                <input v-model="includeRelated" type="checkbox" class="mt-0.5" />{{ t.includeRelated }}
+              </label>
+            </div>
+
+            <div v-if="report.target && can('reports.handle') && limits.kinds.length" class="rounded-lg border border-base-800 p-4">
+              <h3 class="section-title flex items-center gap-2"><SiteIcon name="gavel" class="size-4 text-base-400" />{{ at.decision.sanction }}</h3>
+              <div class="mt-3">
+                <SanctionForm ref="sanctionForm" v-model="draft" :limits="limits" />
+              </div>
+              <label class="mt-3 flex items-start gap-2 text-xs text-base-300">
+                <input v-model="keepOpen" type="checkbox" class="mt-0.5" />{{ at.decision.keepOpen }}
+              </label>
+              <button type="button" class="btn btn-danger mt-3 w-full" :disabled="busy || !sanctionForm?.valid" @click="confirming = 'sanction'">
+                <SiteIcon name="gavel" class="size-4" />{{ at.decision.apply }}
+              </button>
+            </div>
+            <AdminConfirm
+              v-if="confirming"
+              :title="confirming === 'sanction' ? at.decision.confirmTitle : confirming === 'dismiss' ? t.dismiss : confirming === 'resolve' ? t.resolve : confirming === 'delete_share' ? t.deleteShare : confirming === 'hide_circuit' ? t.hideCircuit : confirming === 'delete_pack' ? t.deletePack : confirming === 'delete_issue' ? (report.kind === 'issue_comment' ? t.deleteIssueComment : t.deleteIssue) : t.deleteMessage"
+              :text="confirming === 'sanction' ? sanctionSummary : ''"
+              :confirm-label="confirming === 'sanction' ? at.decision.apply : at.common.confirm"
+              :danger="confirming !== 'dismiss' && confirming !== 'resolve'"
+              :busy="busy"
+              @cancel="confirming = null"
+              @confirm="act(confirming!)"
+            />
+
+            <div v-if="report.related.length" class="rounded-lg border border-base-800 p-4">
+              <h3 class="section-title">{{ t.related }}</h3>
+              <ul class="mt-2 space-y-1.5 text-xs">
+                <li v-for="r in report.related" :key="r.id">
+                  <button type="button" class="text-left text-base-200 hover:text-base-50" @click="emit('open', r.id)">
+                    {{ when(r.createdAt) }} · {{ t.reasons[r.reason] }} · {{ t.status[r.status] }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+</template>
+
+<style scoped>
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(3px);
+}
+@media (min-width: 640px) {
+  .backdrop {
+    padding: 2rem 1.5rem;
+  }
+}
+.review-panel:focus,
+.review-panel:focus-visible {
+  outline: none;
+}
+.chat-log {
+  position: relative;
+  max-height: 32rem;
+  overflow-y: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-base-800);
+  background: var(--color-base-950);
+  padding: 0.5rem;
+}
+.chat-line {
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+}
+.chat-target {
+  background: color-mix(in srgb, var(--color-redstone-900) 45%, transparent);
+}
+.chat-focus {
+  box-shadow: inset 3px 0 0 var(--color-lamp-400);
+  background: color-mix(in srgb, var(--color-lamp-900) 55%, transparent);
+}
+.msg-text {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--color-base-50);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.redacted {
+  display: inline-block;
+  height: 0.7rem;
+  border-radius: 0.2rem;
+  background: var(--color-base-700);
+}
+.evidence-img {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-base-800);
+  background: var(--color-base-950);
+}
+.evidence-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+</style>

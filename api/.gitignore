@@ -1,0 +1,16 @@
+node_modules
+.nuxt
+.output
+.nitro
+.cache
+.data
+data/
+coverage
+
+# Secrets – nie committen
+.env
+.env.*
+!.env.example
+
+# Erzeugte Vorschauen (node scripts/generate-cosmetics.mjs)
+assets/cosmetic-previews
