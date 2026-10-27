@@ -41,7 +41,7 @@ function done(next: AdminSanction) {
     <div class="flex w-full flex-wrap gap-x-4 gap-y-1 text-xs text-base-400">
       <span>{{ when(s.createdAt) }} · {{ fill(a.common.by, { name: actor(s.createdBy) }) }}<span v-if="s.createdRole !== 'system'"> ({{ a.role[s.createdRole] }})</span></span>
       <span :class="s.status === 'active' ? 'text-base-200' : ''">{{ endText }}</span>
-      <NuxtLink v-if="s.reportId" :to="`/admin/reports/${s.reportId}`" class="text-redstone-300 hover:underline">{{ a.sanctions.reportLink }} {{ s.reportId }}</NuxtLink>
+      <NuxtLink v-if="s.reportId" :to="`/admin/reports/${s.reportId}`" class="text-primary-300 hover:underline">{{ a.sanctions.reportLink }} {{ s.reportId }}</NuxtLink>
     </div>
     <p v-if="s.note" class="adm-note w-full rounded-md bg-base-950 px-3 py-2 text-xs text-base-200"><SiteIcon name="note" class="mr-1 inline size-3.5 align-[-2px] text-base-400" />{{ s.note }}</p>
     <p v-if="s.status === 'lifted' && s.liftReason" class="text-xs text-base-400">{{ a.status.lifted }}: {{ s.liftReason === 'replaced' ? a.sanctions.replaced : s.liftReason }} · {{ actor(s.liftedBy) }}</p>

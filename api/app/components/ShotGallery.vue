@@ -11,7 +11,7 @@ const index = ref(0)
 const zoomed = ref(false)
 const closeButton = ref<HTMLButtonElement | null>(null)
 const current = computed(() => props.shots[Math.min(index.value, props.shots.length - 1)] ?? null)
-const style = computed(() => ({ '--shot-accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : 'var(--color-redstone-500)' }))
+const style = computed(() => ({ '--shot-accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : 'var(--color-primary-500)' }))
 let lastFocus: HTMLElement | null = null
 
 watch(() => props.shots, () => {

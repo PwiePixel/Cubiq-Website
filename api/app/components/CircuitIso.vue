@@ -132,6 +132,6 @@ const layers = computed(() => g.value?.y ?? 1)
 
 <style scoped>
 .iso-range {
-  accent-color: var(--color-redstone-500);
+  accent-color: var(--color-primary-500);
 }
 </style>

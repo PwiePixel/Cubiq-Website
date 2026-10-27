@@ -39,7 +39,7 @@ export const landingDe: LandingTexts = {
             'Java wird für jede Minecraft-Version automatisch geladen',
             'Jede Instanz hat Reiter für Inhalte, Dateien, Welten, Screenshots, Verlauf und Logs',
           ],
-          shot: { file: '0.2.1/library.png', alt: 'Die Instanz-Bibliothek des Cubiq Launchers mit Minecraft-Instanzen in eigenen Gruppen', caption: 'Die Bibliothek mit eigenen Gruppen' },
+          shot: { file: '/shots/landing/instances-library.png', alt: 'Die Instanz-Bibliothek des Cubiq Launchers mit Minecraft-Instanzen in eigenen Gruppen', caption: 'Die Bibliothek mit eigenen Gruppen' },
         },
         {
           id: 'accounts',
@@ -64,7 +64,7 @@ export const landingDe: LandingTexts = {
             'Drück im Spiel F9, um die letzten Momente als Video-Clip zu speichern, oder F10, um eine ganze Runde aufzunehmen. Aufgenommen wird nur das Spielfenster, und Clips bleiben auf deinem PC; in der Clip-Galerie spielst du sie ab, schneidest sie zu und teilst sie. Clips gibt es unter Windows.',
             'Mit den freiwilligen Cubiq-Online-Funktionen bekommst du eine Freundesliste, Direktnachrichten und Gruppen-Chats – im Launcher und im Spiel. Hoste deine Einzelspielerwelt für bis zu 10 Freunde ohne Portfreigabe: Sie sehen sie unter Sozial → Welten und treten mit einem Klick oder per Beitrittscode bei.',
           ],
-          shot: { file: '0.8.0/worlds.png', alt: 'Sozial → Welten im Cubiq Launcher mit der offenen Minecraft-Welt eines Freundes zum Beitreten', caption: 'Welten von Freunden direkt aus dem Launcher beitreten' },
+          shot: { file: '/shots/landing/clips-gallery.png', alt: 'Die Clip-Galerie des Cubiq Launchers mit aufgenommenen Minecraft-Momenten aus mehreren Instanzen', caption: 'Deine besten Momente als Clips' },
         },
         {
           id: 'crash-helper',
@@ -73,7 +73,7 @@ export const landingDe: LandingTexts = {
             'Stürzt Minecraft ab, liest der Launcher den Absturzbericht und das Log und erklärt in klaren Worten, was passiert ist: welche Mods sich streiten, welche Abhängigkeit fehlt oder ob Arbeitsspeicher, Java-Version oder Grafiktreiber das Problem sind. Knöpfe wie „Mod deaktivieren“, „Abhängigkeit installieren“ oder „RAM erhöhen“ beheben es mit einem Klick, und jede Änderung wird vorher bestätigt.',
             'Die Auswertung läuft nur auf deinem PC. Der Logs-Reiter hat Suche, Filter und aufklappbare Stacktraces, und wenn du Hilfe brauchst, teilst du ein Log als Link.',
           ],
-          shot: { file: '0.10.0/crash-helper.png', alt: 'Der Absturz-Helfer des Cubiq Launchers erklärt einen Minecraft-Absturz und bietet einen Knopf zum Beheben', caption: 'Die Ursache in klaren Worten und ein Knopf zum Beheben' },
+          shot: { file: '/shots/landing/crash-helper.png', alt: 'Der Absturz-Helfer des Cubiq Launchers erklärt einen Minecraft-Absturz und bietet einen Knopf zum Beheben', caption: 'Die Ursache in klaren Worten und ein Knopf zum Beheben' },
         },
         {
           id: 'extras',
@@ -82,7 +82,7 @@ export const landingDe: LandingTexts = {
             'Erfolge belohnen Spielzeit, das Ausprobieren von Launcher-Funktionen und die Community; manche bringen einen Umhang oder ein Emote. Neue Launcher-Versionen laden im Hintergrund, während du spielst, und installieren sich mit einem Klick, und der Cubiq Client bekommt Fehlerbehebungen über einen eigenen Update-Kanal.',
             'Der Launcher spricht Englisch, Deutsch und Spanisch, dazu Französisch, Polnisch, Portugiesisch (Brasilien), Türkisch und Niederländisch als Beta.',
           ],
-          shot: { file: '0.14.0/achievements.png', alt: 'Erfolge im Cubiq Launcher mit Punkten, Seltenheit und Belohnungen', caption: 'Erfolge mit Punkten, Seltenheit und Belohnungen' },
+          shot: { file: '/shots/landing/update-news.png', alt: 'Die Neuigkeiten im Cubiq Launcher nach einem automatischen Update mit den Hinweisen zum Release', caption: 'Nach jedem Update: was neu ist' },
         },
         {
           id: 'privacy',
@@ -131,7 +131,7 @@ export const landingDe: LandingTexts = {
             'Die Entdecken-Seite durchsucht Mods, Modpacks, Ressourcenpakete, Shader und Datenpakete auf Modrinth und CurseForge – ein Schalter wechselt die Plattform, die Filter bleiben gleich. Jedes Projekt hat eine eigene Seite mit Beschreibung, Galerie, Versionen und Abhängigkeiten.',
             'Installierst du eine Mod, kommen ihre nötigen Abhängigkeiten mit. Updates werden für Inhalte beider Plattformen gefunden, und du kannst eine Mod auf eine andere Version umstellen, während der Verlauf der Instanz zeigt, was sich geändert hat. Erlaubt ein Autor Downloads nur auf CurseForge selbst, zeigt der Launcher die Dateien mit einem Knopf zu ihrer Seite und holt sie aus deinem Download-Ordner.',
           ],
-          shot: { file: '0.2.0/content.png', alt: 'Mods, Ressourcenpakete und Shader einer Minecraft-Instanz in einer Inhaltsliste im Cubiq Launcher', caption: 'Alles, was eine Instanz enthält, in einer Liste' },
+          shot: { file: '/shots/landing/discover.png', alt: 'Die Entdecken-Seite des Cubiq Launchers mit Minecraft-Mods von Modrinth und CurseForge und Filtern für Version und Loader', caption: 'Modrinth und CurseForge in einer Suche' },
         },
         {
           id: 'install',
@@ -140,7 +140,7 @@ export const landingDe: LandingTexts = {
             'Modpacks von Modrinth und CurseForge – aus „Entdecken“ oder als heruntergeladene .mrpack- oder .zip-Datei – werden zu einer neuen Instanz. Große Packs laden große Dateien zuerst und mehrere gleichzeitig, und die neue Instanz zeigt ihren Fortschritt, bis alles da ist.',
             'Beim Installieren entscheidest du einmal, ob der Cubiq Client dazukommt. Bringt das Pack schon Mods mit, die sich mit ihm überschneiden, etwa eine eigene Minimap oder ein eigenes HUD, sagt dir der Launcher welche und wählt „Ohne Cubiq Client“ vor. Deine Wahl wird gespeichert und lässt sich in den Instanz-Einstellungen ändern.',
           ],
-          shot: { file: '0.10.0/modpack-choice.png', alt: 'Ein Minecraft-Modpack im Cubiq Launcher mit oder ohne Cubiq Client installieren', caption: 'Modpack mit oder ohne Cubiq Client installieren' },
+          shot: { file: '/shots/landing/modpack-install.png', alt: 'Ein Minecraft-Modpack im Cubiq Launcher mit oder ohne Cubiq Client installieren', caption: 'Modpack mit oder ohne Cubiq Client installieren' },
         },
         {
           id: 'compat',
@@ -153,6 +153,7 @@ export const landingDe: LandingTexts = {
             'Instanzen mit einem bekannten unverträglichen Paar bekommen einen „Beheben“-Knopf',
             'Eigene Presets: eine Auswahl aus Mods, Ressourcenpaketen und Shadern für jede Instanz',
           ],
+          shot: { file: '/shots/landing/content-list.png', alt: 'Die Inhaltsliste einer Minecraft-Instanz im Cubiq Launcher mit Updates, Presets und der Suche nach dem schuldigen Mod', caption: 'Updates, Presets und die Suche nach dem schuldigen Mod' },
         },
         {
           id: 'share',
@@ -161,7 +162,6 @@ export const landingDe: LandingTexts = {
             'Das perfekte Pack gebaut? Teile es aus der Instanz: Der Launcher lädt deine Mod-Liste und die Einstellungen hoch, die du auswählst, und gibt dir einen Code (CBQ-XXXX-XXXX) und einen Link – oder schickt das Pack direkt an Freunde. Du bestimmst, ob der Code 1, 7 oder 30 Tage gilt oder gar nicht abläuft. Andere installieren es mit „Modpack per Code“, und die Link-Seite zeigt vor dem Installieren, was drin ist.',
             'Lade eine neue Version hoch und behalte den Code: Alle, die das Pack installiert haben, sehen „Update“, und Dateien, die sie selbst geändert haben, bleiben, wie sie sind. Mod-Dateien, die nicht von Modrinth stammen, brauchen beim Teilen eine Bestätigung und zeigen beim Installieren eine Warnung.',
           ],
-          shot: { file: '0.12.0/share-result.png', alt: 'Ein Minecraft-Modpack im Cubiq Launcher per Code, Link oder direkt an Freunde teilen', caption: 'Modpack teilen: Code, Link oder direkt an Freunde' },
         },
         {
           id: 'export',
@@ -169,7 +169,6 @@ export const landingDe: LandingTexts = {
           text: [
             'Exportiere jede Instanz als .mrpack-Modpack, sichere eine Welt als ZIP oder wähle einzelne Dateien – alles im Teilen-Reiter der Instanz. Exportierte Packs lassen den Cubiq Client selbst und seine privaten Dateien weg.',
           ],
-          shot: { file: '0.12.0/pack-update.png', alt: 'Ein geteiltes Minecraft-Modpack im Cubiq Launcher aktualisieren, eigene Änderungen bleiben', caption: 'Neue Version? Ein Klick, eigene Änderungen bleiben' },
         },
       ],
       faq: [
@@ -201,7 +200,7 @@ export const landingDe: LandingTexts = {
             'Der Launcher legt den Cubiq Client automatisch in deine Instanzen: Forge ab 1.7.10, Fabric und Quilt ab 1.14.4 und NeoForge, jeweils bis zur neuesten Version. Ob du 1.8.9-PvP spielst oder die neueste Version – du bekommst dasselbe Menü (Rechts-Shift), dieselben Module und denselben HUD-Editor. Für jede Instanz lässt er sich abschalten.',
             'Modul-Pakete richten den Client mit einem Klick für deinen Spielstil ein – PvP, Redstone, Komfort oder Minimal –, und mit den Cubiq-Diensten folgen dir Module, HUD-Layouts und Tasten auf jeden PC.',
           ],
-          shot: { file: '0.3.0/hud-editor.png', alt: 'HUD-Elemente in Minecraft mit dem HUD-Editor des Cubiq Client verschieben', caption: 'Jedes HUD-Element dahin, wo du es willst' },
+          shot: { file: '/shots/landing/change-version.png', alt: 'Minecraft-Version und Mod-Loader einer Instanz im Cubiq Launcher wählen', caption: 'Version und Loader wählen – der Cubiq Client kommt mit' },
         },
         {
           id: 'fps',
@@ -223,7 +222,7 @@ export const landingDe: LandingTexts = {
             'Für PvP zeigt der Cubiq Client, was im Kampf zählt: Keystrokes, einen CPS-Zähler, Reichweiten-, Combo- und Tempo-Anzeige, einen Item-Zähler für Pfeile, Totems, Tränke, goldene Äpfel und Enderperlen sowie Treffer-Feedback mit Hitmarker. Dazu ein eigenes Fadenkreuz, Trefferfarbe, 1.7-Animationen, niedriges Feuer und eine Schild-Position, die dir die Sicht frei hält.',
             'Der Chat bekommt Zeitstempel, gestapelte Wiederholungen und Erwähnungen, die Ping-Anzeige zeigt deinen echten Ping mit Jitter, und der Streamer-Modus versteckt Namen und Serveradressen.',
           ],
-          shot: { file: '0.9.0/pvp-hud.png', alt: 'Das PvP-HUD des Cubiq Client mit Item-Zähler, Hitmarker und Warnungen', caption: 'Zähler-HUD, Hitmarker und Warnungen' },
+          shot: { file: '/shots/zoom.png', alt: 'Das PvP-HUD des Cubiq Client in Minecraft mit Tastenanzeige, CPS, Rüstungs- und Item-Zählern', caption: 'Tastenanzeige, CPS und Zähler' },
         },
         {
           id: 'fair-play',
@@ -239,7 +238,6 @@ export const landingDe: LandingTexts = {
           text: [
             'Weicher Zoom (V), Freelook (linke Alt-Taste) sowie Dauer-Sprinten und -Schleichen sind eingebaut. Die Minimap gleitet flüssig, nimmt ihre Farben aus deinem Ressourcenpaket, zeigt Mob-Köpfe und setzt ferne Wegpunkte an ihren Rand; drinnen schaut sie in Gebäude, statt das Dach zu zeigen. Mit M öffnest du die Weltkarte im Vollbild mit stufenlosem Zoom, Wegpunkt-Liste, anderen Dimensionen und PNG-Export.',
           ],
-          shot: { file: '0.13.0/minimap.png', alt: 'Die Minimap des Cubiq Client mit Wegpunkten am Rand und echten Mob-Köpfen', caption: 'Minimap mit Wegpunkten am Rand und echten Mob-Köpfen' },
         },
         {
           id: 'extras',
@@ -247,7 +245,7 @@ export const landingDe: LandingTexts = {
           text: [
             'Öffne das Emote-Rad und winke, tanze oder juble – andere Cubiq-Spieler sehen es. Cubiq-Umhänge schwingen mit Umhang-Physik wie Stoff; viele sind kostenlos, manche animiert oder in HD. Nach F2 kannst du deinen Screenshot in einer kleinen Vorschau bearbeiten, kopieren oder verschicken, und der Screenshot-Editor schneidet zu, zeichnet Pfeile und Text und verpixelt Namen. Jede Welt und jeder Server bekommt außerdem ein eigenes Notizbuch mit Checklisten und anklickbaren Koordinaten.',
           ],
-          shot: { file: '0.5.0/emote-wheel.png', alt: 'Das Emote-Rad des Cubiq Client in Minecraft', caption: 'Das Emote-Rad' },
+          shot: { file: '/shots/landing/screenshots.png', alt: 'Alle Screenshots deiner Minecraft-Instanzen in einer Galerie im Cubiq Launcher', caption: 'Screenshots aus allen Instanzen an einem Ort' },
           link: { to: '/cosmetics', label: 'Alle Cubiq-Umhänge ansehen' },
         },
       ],

@@ -47,7 +47,7 @@ const diskLow = computed(() => {
       </div>
       <button type="button" class="btn btn-ghost" @click="load"><SiteIcon name="refresh" class="size-4" />{{ a.common.refresh }}</button>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <div v-if="!data && !error" class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <div v-for="i in 8" :key="i" class="skeleton h-28 rounded-xl" />
@@ -79,7 +79,7 @@ const diskLow = computed(() => {
           <p class="mt-1 flex flex-wrap gap-x-2 text-xs text-base-400">
             <span>{{ fill(a.dashboard.capes, { n: data.uploads.capesPending }) }}</span>
             <span>{{ fill(a.dashboard.cosmetics, { n: data.uploads.cosmeticsPending }) }}</span>
-            <span v-if="data.uploads.capesReported + data.uploads.cosmeticsReported" class="text-lamp-300">{{ fill(a.dashboard.reported, { n: data.uploads.capesReported + data.uploads.cosmeticsReported }) }}</span>
+            <span v-if="data.uploads.capesReported + data.uploads.cosmeticsReported" class="text-caution-300">{{ fill(a.dashboard.reported, { n: data.uploads.capesReported + data.uploads.cosmeticsReported }) }}</span>
           </p>
         </NuxtLink>
         <NuxtLink v-if="data.applications" to="/admin/applications" class="card card-hover adm-stat" :class="{ warn: data.applications.new > 0 }">
@@ -122,7 +122,7 @@ const diskLow = computed(() => {
             <div><dt class="adm-stat-label">{{ a.dashboard.newUsers }} · {{ a.dashboard.d7 }}</dt><dd class="display text-2xl text-base-50 tabular-nums">{{ num(data.users.new7d) }}</dd></div>
             <div><dt class="adm-stat-label">{{ a.dashboard.active }} · {{ a.dashboard.h24 }}</dt><dd class="display text-2xl text-base-50 tabular-nums">{{ num(data.users.active24h) }}</dd></div>
             <div><dt class="adm-stat-label">{{ a.dashboard.active }} · {{ a.dashboard.d7 }}</dt><dd class="display text-2xl text-base-50 tabular-nums">{{ num(data.users.active7d) }}</dd></div>
-            <div><dt class="adm-stat-label">{{ a.dashboard.online }}</dt><dd class="display flex items-center gap-2 text-2xl text-base-50 tabular-nums"><span class="size-2 animate-lamp bg-ok" />{{ num(data.users.online) }}</dd></div>
+            <div><dt class="adm-stat-label">{{ a.dashboard.online }}</dt><dd class="display flex items-center gap-2 text-2xl text-base-50 tabular-nums"><span class="size-2 animate-live bg-ok" />{{ num(data.users.online) }}</dd></div>
             <div><dt class="adm-stat-label">{{ a.dashboard.messages }}</dt><dd class="display text-2xl text-base-50 tabular-nums">{{ num(data.chat?.messages24h ?? 0) }}</dd></div>
             <div v-if="data.hosting" class="col-span-2">
               <dt class="adm-stat-label">{{ a.dashboard.worlds }}</dt>
@@ -143,7 +143,7 @@ const diskLow = computed(() => {
             <dt>{{ a.dashboard.uptime }}</dt><dd>{{ humanDuration(data.server.uptimeSec) }}</dd>
             <dt>{{ a.dashboard.db }}</dt><dd>{{ humanBytes(data.server.dbBytes, lang) }}</dd>
             <dt>{{ a.dashboard.disk }}</dt>
-            <dd :class="diskLow ? 'text-redstone-300' : ''">
+            <dd :class="diskLow ? 'text-primary-300' : ''">
               <template v-if="data.server.disk">{{ fill(a.dashboard.diskOf, { free: humanBytes(data.server.disk.freeBytes, lang), total: humanBytes(data.server.disk.totalBytes, lang) }) }}</template>
               <template v-else>–</template>
             </dd>
@@ -152,7 +152,7 @@ const diskLow = computed(() => {
         <div v-if="can('audit.view')" class="card p-5">
           <div class="flex items-center gap-2">
             <h2 class="section-title flex-1">{{ a.dashboard.recent }}</h2>
-            <NuxtLink to="/admin/audit" class="text-xs text-redstone-300 hover:underline">{{ a.dashboard.allAudit }}</NuxtLink>
+            <NuxtLink to="/admin/audit" class="text-xs text-primary-300 hover:underline">{{ a.dashboard.allAudit }}</NuxtLink>
           </div>
           <p v-if="!data.recentAudit.length" class="mt-3 text-sm text-base-400">{{ a.common.empty }}</p>
           <ul v-else class="mt-3 divide-y divide-base-800 text-sm">

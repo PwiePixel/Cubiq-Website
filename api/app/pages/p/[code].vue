@@ -160,7 +160,7 @@ async function sendReport() {
           <ul class="mt-3 space-y-1.5 text-sm text-base-300">
             <li class="flex items-center gap-2"><SiteIcon name="blocks" class="size-4 text-base-400" />{{ fill(m.pack.mods, { n: pack.modrinthFiles }) }}</li>
             <li v-if="pack.otherFiles" class="flex items-center gap-2"><SiteIcon name="note" class="size-4 text-base-400" />{{ fill(m.pack.files, { n: pack.otherFiles }) }}</li>
-            <li v-if="pack.ownJars" class="flex items-center gap-2 text-lamp-300"><SiteIcon name="warn" class="size-4" />{{ fill(m.pack.own, { n: pack.ownJars }) }}</li>
+            <li v-if="pack.ownJars" class="flex items-center gap-2 text-caution-300"><SiteIcon name="warn" class="size-4" />{{ fill(m.pack.own, { n: pack.ownJars }) }}</li>
           </ul>
           <p v-if="pack.ownJars" class="mt-3 rounded-md border border-base-800 bg-base-950 px-3 py-2 text-xs text-base-300">{{ m.pack.ownWarn }}</p>
           <div class="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-base-400">
@@ -266,7 +266,7 @@ async function sendReport() {
         <select id="pack-reason" v-model="reason" class="field mt-1 w-full">
           <option v-for="r in REASONS" :key="r" :value="r">{{ m.share.reasons[r] }}</option>
         </select>
-        <p v-if="reportErr" role="alert" class="mt-3 text-sm text-redstone-300">{{ reportErr }}</p>
+        <p v-if="reportErr" role="alert" class="mt-3 text-sm text-danger-300">{{ reportErr }}</p>
         <div class="mt-4 flex gap-2">
           <button type="submit" class="btn btn-danger text-sm" :disabled="reportBusy">{{ m.pack.send }}</button>
           <button type="button" class="btn btn-ghost text-sm" @click="reporting = false">{{ m.pack.cancel }}</button>
@@ -303,7 +303,7 @@ async function sendReport() {
   background: var(--color-base-900);
 }
 .search:focus-within {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
 }
 .search input {
   min-width: 0;
@@ -335,7 +335,7 @@ async function sendReport() {
 .tabs button[aria-selected='true'] {
   color: var(--color-base-50);
   background: var(--color-base-850);
-  box-shadow: inset 0 0 0 1px var(--color-base-700), inset 0 -2px 0 var(--color-redstone-500);
+  box-shadow: inset 0 0 0 1px var(--color-base-700), inset 0 -2px 0 var(--color-primary-500);
 }
 .count {
   padding: 0 0.4rem;
@@ -387,7 +387,7 @@ async function sendReport() {
   outline: none;
 }
 .crow.link:focus-visible {
-  box-shadow: inset 3px 0 0 var(--color-redstone-500);
+  box-shadow: inset 3px 0 0 var(--color-primary-500);
 }
 .col-name {
   display: flex;
@@ -426,8 +426,8 @@ async function sendReport() {
   color: var(--color-base-400);
 }
 .cicon.own {
-  color: var(--color-lamp-300);
-  background: color-mix(in srgb, var(--color-lamp-400) 12%, var(--color-base-900));
+  color: var(--color-caution-300);
+  background: color-mix(in srgb, var(--color-caution-400) 12%, var(--color-base-900));
 }
 .own-note {
   display: block;
@@ -435,7 +435,7 @@ async function sendReport() {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.72rem;
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 @media (max-width: 520px) {
   .crow {

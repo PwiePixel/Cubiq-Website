@@ -45,7 +45,8 @@ const mobileFirst = computed(() => os.value === 'android' || os.value === 'ios')
 const source = computed(() => mobile.value?.ios?.altstore ?? ALTSTORE_SOURCE)
 const altstoreLink = computed(() => `altstore://source?url=${encodeURIComponent(source.value)}`)
 const sidestoreLink = computed(() => `sidestore://source?url=${encodeURIComponent(source.value)}`)
-const guide = (page: 'android' | 'iphone-ipad') => `${docsUrl(lang.value)}/getting-started/${page}`
+const wikiUrl = useWikiUrl()
+const guide = (page: 'android' | 'iphone-ipad') => `${docsUrl(lang.value, wikiUrl)}/getting-started/${page}`
 const sourceCopied = ref(false)
 async function copySource() {
   try {
@@ -78,11 +79,11 @@ async function copyAur() {
       <h1 class="display text-5xl leading-tight text-base-50">{{ m.download.title }}</h1>
       <p class="mt-3 text-lg text-base-400">{{ m.download.lead }}</p>
       <p v-if="release" class="mt-4 flex flex-wrap items-center gap-2 text-sm">
-        <span class="badge bg-redstone-900 px-2.5 py-1 text-xs text-redstone-300">{{ fill(m.download.version, { version: release.version }) }}</span>
+        <span class="badge bg-primary-900 px-2.5 py-1 text-xs text-primary-300">{{ fill(m.download.version, { version: release.version }) }}</span>
         <span v-if="release.publishedAt" class="text-base-400">{{ fill(m.download.published, { date: date(release.publishedAt) }) }}</span>
-        <NuxtLink :to="`/blog/${release.version}`" class="text-redstone-300 hover:underline">{{ m.blog.read }}</NuxtLink>
+        <NuxtLink :to="`/blog/${release.version}`" class="text-primary-300 hover:underline">{{ m.blog.read }}</NuxtLink>
       </p>
-      <p v-else class="mt-4 text-sm text-lamp-300">{{ m.download.unavailable }}</p>
+      <p v-else class="mt-4 text-sm text-caution-300">{{ m.download.unavailable }}</p>
     </header>
 
     <div class="mt-10 flex flex-col gap-14">
@@ -102,7 +103,7 @@ async function copyAur() {
           <a v-else :href="RELEASES_URL" class="btn btn-ghost h-12 px-6" rel="noopener">GitHub Releases</a>
         </div>
         <div class="note">
-          <h3 class="text-sm font-semibold text-lamp-300">{{ m.download.smartTitle }}</h3>
+          <h3 class="text-sm font-semibold text-primary-300">{{ m.download.smartTitle }}</h3>
           <p class="mt-1 text-sm text-base-400">{{ m.download.smartText }}</p>
         </div>
       </section>
@@ -150,10 +151,10 @@ async function copyAur() {
         <h2 id="mobile-title" class="heading text-3xl">{{ mm.title }}</h2>
         <p class="mt-2 text-base-400">{{ mm.lead }}</p>
         <p v-if="mobile" class="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span class="badge bg-redstone-900 px-2.5 py-1 text-xs text-redstone-300">{{ fill(m.download.version, { version: mobile.version }) }}</span>
+          <span class="badge bg-primary-900 px-2.5 py-1 text-xs text-primary-300">{{ fill(m.download.version, { version: mobile.version }) }}</span>
           <span v-if="mobile.publishedAt" class="text-base-400">{{ fill(m.download.published, { date: date(mobile.publishedAt) }) }}</span>
         </p>
-        <p v-else class="mt-3 text-sm text-lamp-300">{{ mm.unavailable }}</p>
+        <p v-else class="mt-3 text-sm text-caution-300">{{ mm.unavailable }}</p>
       </div>
 
       <div class="mt-6 grid gap-5 lg:grid-cols-2" data-fx="stagger">
@@ -166,7 +167,7 @@ async function copyAur() {
           <p class="mt-4 text-base-400">{{ mm.androidText }}</p>
           <ul class="mt-4 grid gap-2">
             <li v-for="p in mm.androidPoints" :key="p" class="flex items-start gap-2.5 text-sm text-base-200">
-              <span class="mt-1.5 size-1.5 shrink-0 bg-redstone-400" />{{ p }}
+              <span class="mt-1.5 size-1.5 shrink-0 bg-primary-400" />{{ p }}
             </li>
           </ul>
           <div class="mt-6 mb-6 flex flex-wrap gap-3">
@@ -182,7 +183,7 @@ async function copyAur() {
             </a>
           </div>
           <div class="note">
-            <h4 class="text-sm font-semibold text-lamp-300">{{ mm.certTitle }}</h4>
+            <h4 class="text-sm font-semibold text-caution-300">{{ mm.certTitle }}</h4>
             <p class="mt-1 text-sm text-base-400">{{ mm.certText }}</p>
             <code class="hash mt-2">{{ APK_CERT_SHA256 }}</code>
             <template v-if="mobile?.android">
@@ -224,12 +225,12 @@ async function copyAur() {
             </a>
           </div>
           <div class="note">
-            <h4 class="text-sm font-semibold text-lamp-300">{{ mm.jitTitle }}</h4>
+            <h4 class="text-sm font-semibold text-caution-300">{{ mm.jitTitle }}</h4>
             <p class="mt-1 text-sm text-base-400">{{ mm.jitText }}</p>
           </div>
         </section>
       </div>
-      <a :href="MOBILE_RELEASE_PAGE" class="mt-5 inline-flex items-center gap-2 text-sm text-redstone-300 hover:underline" rel="noopener" target="_blank">
+      <a :href="MOBILE_RELEASE_PAGE" class="mt-5 inline-flex items-center gap-2 text-sm text-primary-300 hover:underline" rel="noopener" target="_blank">
         <SiteIcon name="github" class="size-4" />{{ mm.releasePage }}
         <SiteIcon name="external" class="size-3.5 opacity-60" />
       </a>
@@ -253,7 +254,7 @@ async function copyAur() {
         <h2 id="req-title" class="heading text-2xl">{{ m.download.requirementsTitle }}</h2>
         <ul class="mt-4 grid gap-2 sm:grid-cols-2">
           <li v-for="r in m.download.requirements" :key="r" class="flex items-start gap-2.5 text-base-200">
-            <span class="mt-2 size-1.5 shrink-0 bg-redstone-400" />{{ r }}
+            <span class="mt-2 size-1.5 shrink-0 bg-primary-400" />{{ r }}
           </li>
         </ul>
       </section>
@@ -275,7 +276,7 @@ async function copyAur() {
   height: 3rem;
   color: var(--color-base-50);
   background: var(--color-base-800);
-  box-shadow: inset 0 -3px 0 var(--color-redstone-600);
+  box-shadow: inset 0 -3px 0 var(--color-primary-600);
 }
 .note {
   padding-top: 1.5rem;
@@ -301,7 +302,7 @@ async function copyAur() {
   padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
   background: var(--color-base-950);
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
   border: 1px solid var(--color-base-800);
   overflow-x: auto;
   white-space: nowrap;

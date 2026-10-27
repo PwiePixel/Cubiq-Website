@@ -340,16 +340,16 @@ const icon = (p: FeaturedPack) => sameOriginImage(p.iconUrl)
   text-transform: uppercase;
 }
 .fp-badge-recommended {
-  color: #1a1408;
-  background: var(--color-lamp-400);
+  color: var(--color-on-primary);
+  background: var(--color-primary-400);
 }
 .fp-badge-new {
   color: #052e1a;
   background: #4ade80;
 }
 .fp-badge-event {
-  color: #fff;
-  background: var(--color-redstone-500);
+  color: var(--color-on-primary);
+  background: var(--color-primary-500);
 }
 .fp-ghost {
   color: #f4f2f7;
@@ -391,10 +391,10 @@ const icon = (p: FeaturedPack) => sameOriginImage(p.iconUrl)
 }
 .fp-dot.is-on::before {
   width: 1.25rem;
-  background: var(--color-lamp-400);
+  background: var(--color-primary-400);
 }
 .fp-dot:focus-visible {
-  outline: 2px solid var(--color-lamp-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 1px;
   border-radius: 999px;
 }

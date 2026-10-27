@@ -237,7 +237,7 @@ export function completePackUpload(ctx: AppContext, uuid: string, uploadId: stri
   }
   const dest = assembledPath(ctx, s.id)
   let written = 0
-  let digest = ''
+  let digest: string
   try {
     const out = openSync(dest, 'w', 0o640)
     const total = createHash('sha256')
@@ -315,7 +315,7 @@ export function openCompletedUpload(ctx: AppContext, uuid: string, token: string
   }
   if (s.expires_at <= ctx.now()) throw new ApiError(410, 'upload_expired', 'This upload has expired')
   const path = assembledPath(ctx, s.id)
-  let size = -1
+  let size: number
   try {
     size = statSync(path).size
   } catch {

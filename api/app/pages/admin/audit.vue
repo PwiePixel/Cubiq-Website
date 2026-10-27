@@ -69,7 +69,7 @@ const { active } = useListKeys(entries)
       <input v-model="f.from" type="date" class="field adm-select" :aria-label="a.common.from" />
       <input v-model="f.to" type="date" class="field adm-select" :aria-label="a.common.to" />
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading && !entries.length" class="skeleton mt-6 h-64 rounded-xl" />
     <div v-else-if="!entries.length" class="adm-empty mt-6"><SiteIcon name="list" class="size-6" />{{ a.audit.empty }}</div>
     <div v-else class="card mt-6 overflow-x-auto">
@@ -96,7 +96,7 @@ const { active } = useListKeys(entries)
             </td>
             <td class="max-w-md px-4 py-2 text-xs text-base-400">
               <span class="break-words">{{ e.detail }}</span>
-              <NuxtLink v-if="refLink(e.ref)" :to="refLink(e.ref)!" class="ml-1 text-redstone-300 hover:underline">{{ e.ref }}</NuxtLink>
+              <NuxtLink v-if="refLink(e.ref)" :to="refLink(e.ref)!" class="ml-1 text-primary-300 hover:underline">{{ e.ref }}</NuxtLink>
               <span v-else-if="e.ref" class="adm-mono ml-1">{{ e.ref }}</span>
             </td>
           </tr>

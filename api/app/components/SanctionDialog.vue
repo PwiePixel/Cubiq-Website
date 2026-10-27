@@ -72,7 +72,7 @@ async function submit() {
         <input id="sd-target" v-model="lookup" class="field" maxlength="36" autofocus />
         <button type="submit" class="btn btn-ghost">{{ a.common.searchShort }}</button>
       </form>
-      <p v-if="lookupError" class="mt-1 text-xs text-redstone-300">{{ lookupError }}</p>
+      <p v-if="lookupError" class="mt-1 text-xs text-danger-300">{{ lookupError }}</p>
     </div>
     <div v-else class="mb-5 flex items-center gap-3 rounded-lg border border-base-800 p-3">
       <PlayerHead :uuid="target.uuid" :name="target.name" :size="36" />
@@ -84,7 +84,7 @@ async function submit() {
     </div>
 
     <SanctionForm ref="form" v-model="draft" :limits="limits" />
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <template #footer>
       <button type="button" class="btn btn-ghost" @click="emit('close')">{{ a.common.cancel }}</button>

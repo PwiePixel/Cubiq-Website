@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { WAIT_SONG_UUID } from '#shared/wait-song'
 // Creator-Dashboard auf der Website (§35.3 + §35.11) mit der Website-Sitzung: Übersicht/Statistik, öffentliches Profil
 // (Beschreibung + Links, Prüfung durch das Team), Codes, Fan-Symbol und Fan-Umhang, Creator-Packs, Stufe und Helfer.
 // Helfer wählen oben den Creator, für den sie handeln (`?as=`). Team-Mitglieder mit `creators.manage` öffnen jedes
@@ -9,25 +8,7 @@ const { m, fill, date, lang } = useLang()
 const lp = useLocalePath()
 const { account, loaded, load, api, loginUrl } = useAccount()
 
-// Persönliche Wartezeit (Wunsch des Owners): Lencraft151 sieht das Dashboard erst ab Freitag, 23.10.2026, 18:00 Uhr (MESZ).
-// Dazu ein Musikvideo (WaitSongOverlay). Owner/Admins können es mit `?waitsong` ansehen (`&t=<s>` Start, `&still` Standbild).
-const WAIT_UUID = WAIT_SONG_UUID
-const WAIT_UNTIL = Date.parse('2026-10-23T18:00:00+02:00')
-const now = ref(Date.now())
-let waitTimer: ReturnType<typeof setInterval> | undefined
-onMounted(() => { waitTimer = setInterval(() => (now.value = Date.now()), 15_000) })
-onBeforeUnmount(() => clearInterval(waitTimer))
-const waiting = computed(() => account.value?.uuid.replace(/-/g, '').toLowerCase() === WAIT_UUID && now.value < WAIT_UNTIL)
-const WAIT_MESSAGE = "Mein Lieber, da du so oft gefragt hast, kommt's für dich erst am Freitag um 18 Uhr."
-const songOpen = ref(true)
 const route = useRoute()
-const songPreview = computed(() => {
-  const team = account.value?.team
-  if (route.query.waitsong === undefined || !team || !(team.owner || team.roles.some((r) => r.id === 'admin'))) return null
-  const at = Number(route.query.t)
-  return { at: Number.isFinite(at) && at > 0 ? at : undefined, still: route.query.still !== undefined }
-})
-const previewOpen = ref(true)
 const d = computed(() => m.value.creatorDash)
 const ct = computed(() => m.value.creators)
 
@@ -456,18 +437,9 @@ async function withdrawWish(id: number) {
 
 <template>
   <div class="mx-auto max-w-5xl px-4 pt-14 sm:px-6">
-    <WaitSongOverlay
-      v-if="songPreview && previewOpen && !waiting"
-      :name="account!.name"
-      :skin="account!.skin"
-      :message="WAIT_MESSAGE"
-      until="Freitag, 23.10.2026, 18:00 Uhr"
-      :preview="songPreview"
-      @close="previewOpen = false"
-    />
     <header class="flex flex-wrap items-end gap-4">
       <div class="min-w-0 flex-1">
-        <p class="text-xs font-semibold tracking-[0.2em] text-redstone-400 uppercase">{{ ct.eyebrow }}</p>
+        <p class="text-xs font-semibold tracking-[0.2em] text-primary-400 uppercase">{{ ct.eyebrow }}</p>
         <h1 class="display mt-2 text-5xl leading-tight text-base-50">{{ d.title }}</h1>
         <p class="mt-3 text-lg text-base-400">{{ d.lead }}</p>
       </div>
@@ -481,23 +453,15 @@ async function withdrawWish(id: number) {
       <a :href="loginUrl('/creator')" class="btn btn-primary mt-4"><SiteIcon name="user" class="size-4" />{{ d.signInButton }}</a>
     </div>
 
-    <div v-else-if="waiting" class="card mt-8 p-6">
-      <WaitSongOverlay v-if="songOpen" :name="account!.name" :skin="account!.skin" :message="WAIT_MESSAGE" until="Freitag, 23.10.2026, 18:00 Uhr" @close="songOpen = false" />
-      <template v-else>
-        <p class="text-lg font-semibold text-base-50">{{ WAIT_MESSAGE }}</p>
-        <p class="mt-2 text-sm text-base-400">Freischaltung: Freitag, 23.10.2026, 18:00 Uhr</p>
-        <button type="button" class="btn btn-ghost mt-4" @click="songOpen = true"><SiteIcon name="play" class="size-4" />Lied nochmal ansehen</button>
-      </template>
-    </div>
 
     <template v-else>
-      <p v-if="error" role="alert" class="mt-6 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-6 text-sm text-danger-300">{{ error }}</p>
       <p v-if="notice" role="status" class="mt-6 text-sm text-ok">{{ notice }}</p>
 
       <!-- Kein (aktiver) Creator und kein Helfer -->
       <div v-if="!dash" class="card mt-8 p-6">
         <h2 class="heading text-2xl text-base-50">{{ d.notCreatorTitle }}</h2>
-        <p v-if="my?.creator && my.creator.state !== 'active'" class="mt-2 text-redstone-300">{{ fill(d.inactive, { reason: my.creator.reason ?? '' }) }}</p>
+        <p v-if="my?.creator && my.creator.state !== 'active'" class="mt-2 text-caution-300">{{ fill(d.inactive, { reason: my.creator.reason ?? '' }) }}</p>
         <p class="mt-2 text-base-400">{{ d.notCreator }}</p>
         <p v-if="my?.application" class="mt-2 text-sm text-base-300">{{ fill(d.application, { status: my.application.status }) }}</p>
         <NuxtLink :to="lp('/team/creator')" class="btn btn-primary mt-5"><SiteIcon name="star" class="size-4" />{{ d.apply }}</NuxtLink>
@@ -537,7 +501,7 @@ async function withdrawWish(id: number) {
           <CreatorAvatar :uuid="dash.uuid" :name="dash.name" :skin="dash.skin ?? null" :tier="dash.tier" :size="64" />
           <div class="min-w-0 flex-1">
             <p class="text-2xl font-bold text-base-50">{{ dash.name }}</p>
-            <p class="text-xs font-bold tracking-[0.16em] text-redstone-400 uppercase">{{ ct.tier[dash.tier] }}</p>
+            <p class="text-xs font-bold tracking-[0.16em] text-primary-400 uppercase">{{ ct.tier[dash.tier] }}</p>
             <p class="mt-1 text-xs text-base-400">
               {{ fill(ct.since, { date: date(dash.since) }) }}
               <template v-if="dash.milestone"> · {{ fill(d.milestone, { name: ct.milestones[dash.milestone] ?? dash.milestone }) }}</template>
@@ -605,7 +569,7 @@ async function withdrawWish(id: number) {
             <textarea id="pf-desc" v-model="profileForm.description" class="field" rows="9" :maxlength="PROFILE_DESCRIPTION_MAX + 200" :aria-describedby="'pf-desc-hint'" />
             <p id="pf-desc-hint" class="mt-1 flex gap-3 text-xs text-base-400">
               <span class="flex-1">{{ d.profile.descriptionHint }}</span>
-              <span :class="descLength > PROFILE_DESCRIPTION_MAX ? 'text-redstone-300' : ''" class="tabular-nums">{{ fill(d.profile.counter, { n: descLength, max: PROFILE_DESCRIPTION_MAX }) }}</span>
+              <span :class="descLength > PROFILE_DESCRIPTION_MAX ? 'text-primary-300' : ''" class="tabular-nums">{{ fill(d.profile.counter, { n: descLength, max: PROFILE_DESCRIPTION_MAX }) }}</span>
             </p>
 
             <h3 class="mt-5 text-sm font-semibold text-base-200">{{ d.profile.links }} <span class="font-normal text-base-400">({{ profileForm.links.length }}/{{ PROFILE_MAX_LINKS }})</span></h3>
@@ -617,7 +581,7 @@ async function withdrawWish(id: number) {
                 <input v-model="l.url" class="field" type="url" inputmode="url" maxlength="300" :placeholder="d.profile.url" :aria-label="d.profile.url" :aria-invalid="!!linkProblems[i]" spellcheck="false" />
                 <button type="button" class="btn btn-ghost" @click="profileForm.links.splice(i, 1)">{{ d.profile.remove }}</button>
               </div>
-              <p v-if="linkProblems[i] && l.url.trim()" class="mt-1 text-xs text-redstone-300">{{ linkProblems[i] }}</p>
+              <p v-if="linkProblems[i] && l.url.trim()" class="mt-1 text-xs text-danger-300">{{ linkProblems[i] }}</p>
             </div>
             <button v-if="profileForm.links.length < PROFILE_MAX_LINKS" type="button" class="btn btn-ghost mt-2" @click="addLink"><SiteIcon name="plus" class="size-4" />{{ d.profile.addLink }}</button>
 
@@ -651,7 +615,7 @@ async function withdrawWish(id: number) {
               <li v-for="c in dash.codes" :key="c.code" class="code-row" :data-off="!c.active || expired(c)">
                 <div class="min-w-0 flex-1">
                   <p class="flex flex-wrap items-center gap-2">
-                    <code class="text-lg font-bold text-lamp-300">{{ c.code }}</code>
+                    <code class="text-lg font-bold text-primary-300">{{ c.code }}</code>
                     <span class="text-xs text-base-400">{{ c.kind === 'main' ? d.codes.main : d.codes.extra }}</span>
                     <span v-if="expired(c)" class="pill">{{ d.codes.expired }}</span>
                     <span v-else-if="!c.active" class="pill">{{ d.codes.off }}</span>
@@ -801,7 +765,7 @@ async function withdrawWish(id: number) {
                   <li v-for="c in petState.codes" :key="c.id" class="code-row" :data-off="petCodeState(c) !== 'ok'">
                     <div class="min-w-0 flex-1">
                       <p class="flex flex-wrap items-center gap-2">
-                        <code class="text-base font-bold text-lamp-300">…{{ c.hint }}</code>
+                        <code class="text-base font-bold text-primary-300">…{{ c.hint }}</code>
                         <span v-if="petCodeState(c) === 'revoked'" class="pill">{{ d.pet.revoked }}</span>
                         <span v-else-if="petCodeState(c) === 'expired'" class="pill">{{ d.pet.expired }}</span>
                         <span v-if="c.note" class="truncate text-xs text-base-300">{{ c.note }}</span>
@@ -830,7 +794,7 @@ async function withdrawWish(id: number) {
                       </p>
                       <p class="mt-1 text-sm whitespace-pre-line text-base-300 [overflow-wrap:anywhere]">{{ r.description }}</p>
                       <p v-if="r.colors" class="mt-0.5 text-xs text-base-400">{{ d.pet.colorsShort }}: {{ r.colors }}</p>
-                      <p v-if="r.reply" class="mt-1 text-xs text-lamp-300">{{ fill(d.pet.reply, { text: r.reply }) }}</p>
+                      <p v-if="r.reply" class="mt-1 text-xs text-caution-300">{{ fill(d.pet.reply, { text: r.reply }) }}</p>
                       <div v-if="r.status === 'open'" class="mt-2 flex flex-wrap gap-3 text-xs">
                         <label class="cursor-pointer underline">
                           {{ d.pet.imageAdd }}
@@ -861,10 +825,10 @@ async function withdrawWish(id: number) {
                 <input id="pc-exp" v-model="petForm.expiresAt" class="field" type="date" />
                 <label class="label mt-3" for="pc-note">{{ d.pet.note }}</label>
                 <input id="pc-note" v-model="petForm.note" class="field" maxlength="100" />
-                <p v-if="petOver" class="mt-2 text-xs text-redstone-300">{{ fill(d.pet.overLimit, { n: petState.quota.remaining }) }}</p>
+                <p v-if="petOver" class="mt-2 text-xs text-primary-300">{{ fill(d.pet.overLimit, { n: petState.quota.remaining }) }}</p>
                 <button type="submit" class="btn btn-primary mt-4 w-full" :disabled="busy === 'pet-codes' || petOver || !petState.pet.available">{{ d.pet.create }}</button>
                 <div v-if="petCreated.length" class="mt-4">
-                  <p class="text-xs text-lamp-300">{{ d.pet.createdTitle }}</p>
+                  <p class="text-xs text-caution-300">{{ d.pet.createdTitle }}</p>
                   <pre class="codes-out mt-2 select-all">{{ petCreated.join('\n') }}</pre>
                   <button type="button" class="btn btn-ghost mt-2 w-full" @click="copyPetCodes"><SiteIcon :name="petCopied ? 'check' : 'copy'" class="size-4" />{{ petCopied ? d.pet.copied : d.pet.copyAll }}</button>
                 </div>
@@ -881,7 +845,7 @@ async function withdrawWish(id: number) {
                 <input id="pw-colors" v-model="wishForm.colors" class="field" maxlength="200" />
                 <label class="label mt-3" for="pw-image">{{ d.pet.image }}</label>
                 <input id="pw-image" class="field" type="file" accept="image/png,image/jpeg" @change="pickWishFile" />
-                <p v-if="wishFileError" class="mt-1 text-xs text-redstone-300">{{ wishFileError }}</p>
+                <p v-if="wishFileError" class="mt-1 text-xs text-danger-300">{{ wishFileError }}</p>
                 <button type="submit" class="btn btn-primary mt-4 w-full" :disabled="busy === 'pet-wish' || !wishForm.species.trim() || !wishForm.description.trim()">{{ d.pet.send }}</button>
               </form>
               <p v-else-if="!helper && !petState.pet" class="card p-5 text-sm text-base-300"><SiteIcon name="clock" class="mr-1 inline size-4 align-[-3px]" />{{ d.pet.hasOpen }}</p>
@@ -953,9 +917,9 @@ async function withdrawWish(id: number) {
   padding: 0.7rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-lamp-300);
-  background: color-mix(in srgb, var(--color-lamp-900) 70%, var(--color-base-900));
-  border: 1px solid color-mix(in srgb, var(--color-lamp-400) 45%, transparent);
+  color: var(--color-caution-300);
+  background: color-mix(in srgb, var(--color-caution-900) 70%, var(--color-base-900));
+  border: 1px solid color-mix(in srgb, var(--color-caution-400) 45%, transparent);
 }
 .team-hits {
   position: absolute;
@@ -967,7 +931,7 @@ async function withdrawWish(id: number) {
   padding: 0.25rem 0;
 }
 .team-changes {
-  border-left: 3px solid var(--color-lamp-400);
+  border-left: 3px solid var(--color-caution-400);
 }
 .dash-tabs {
   display: flex;
@@ -1004,10 +968,10 @@ async function withdrawWish(id: number) {
   color: var(--color-ok);
 }
 .state-warn {
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .state-danger {
-  color: var(--color-redstone-300);
+  color: var(--color-danger-300);
 }
 .code-row {
   display: flex;
@@ -1077,8 +1041,8 @@ async function withdrawWish(id: number) {
   color: var(--color-base-200);
 }
 .chip.bad {
-  border-color: var(--color-redstone-600);
-  color: var(--color-redstone-300);
+  border-color: var(--color-danger-600);
+  color: var(--color-danger-300);
 }
 .pet-hero {
   display: flex;
@@ -1086,7 +1050,7 @@ async function withdrawWish(id: number) {
   gap: 1rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-base-800);
-  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--color-lamp-400) 10%, transparent), var(--color-base-950) 60%);
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--color-primary-400) 10%, transparent), var(--color-base-950) 60%);
   padding: 0.9rem;
 }
 .pet-card {
@@ -1104,7 +1068,7 @@ async function withdrawWish(id: number) {
   background: var(--color-base-800);
 }
 .pet-dot[data-on='true'] {
-  background: var(--color-lamp-400);
+  background: var(--color-primary-400);
 }
 .quota-bar {
   height: 0.45rem;
@@ -1116,7 +1080,7 @@ async function withdrawWish(id: number) {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--color-redstone-500);
+  background: var(--color-primary-500);
 }
 .wish {
   display: flex;
@@ -1140,11 +1104,11 @@ async function withdrawWish(id: number) {
   border-radius: 0.375rem;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
   background: var(--color-base-950);
 }
 :deep(.adm-chart rect.bar) {
-  fill: color-mix(in srgb, var(--color-redstone-500) 80%, transparent);
+  fill: color-mix(in srgb, var(--color-primary-500) 80%, transparent);
 }
 :deep(.adm-chart line.grid) {
   stroke: var(--color-base-800);

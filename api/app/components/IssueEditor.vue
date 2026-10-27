@@ -92,7 +92,7 @@ defineExpose({ busy: computed(() => uploading.value > 0) })
         <button type="button" role="tab" class="tab-btn" :aria-selected="tab === 'write'" @click="tab = 'write'">{{ it.editor.write }}</button>
         <button type="button" role="tab" class="tab-btn" :aria-selected="tab === 'preview'" @click="tab = 'preview'">{{ it.editor.preview }}</button>
       </div>
-      <span class="pb-1 text-xs tabular-nums" :class="length > max ? 'text-redstone-300' : 'text-base-400'">{{ fill(it.editor.chars, { n: length, max }) }}</span>
+      <span class="pb-1 text-xs tabular-nums" :class="length > max ? 'text-primary-300' : 'text-base-400'">{{ fill(it.editor.chars, { n: length, max }) }}</span>
     </div>
     <textarea
       v-show="tab === 'write'"
@@ -120,7 +120,7 @@ defineExpose({ busy: computed(() => uploading.value > 0) })
           </button>
         </li>
       </ul>
-      <span v-if="uploading" class="text-xs text-lamp-300" role="status">{{ it.editor.uploading }}</span>
+      <span v-if="uploading" class="text-xs text-caution-300" role="status">{{ it.editor.uploading }}</span>
       <button
         v-if="images.length + uploading < maxImages"
         type="button"
@@ -132,7 +132,7 @@ defineExpose({ busy: computed(() => uploading.value > 0) })
       </button>
       <input ref="fileInput" type="file" class="hidden" accept="image/png,image/jpeg,image/webp" multiple @change="onPick" />
       <p class="w-full text-[11px] leading-4 text-base-400">{{ fill(it.editor.dropHint, { n: maxImages }) }} {{ it.editor.markdown }}</p>
-      <p v-if="error" role="alert" class="w-full text-xs text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="w-full text-xs text-danger-300">{{ error }}</p>
     </div>
   </div>
 </template>
@@ -145,11 +145,11 @@ defineExpose({ busy: computed(() => uploading.value > 0) })
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .editor:focus-within {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
 }
 .editor.dragging {
-  border-color: var(--color-lamp-400);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-lamp-400) 20%, transparent);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-400) 20%, transparent);
 }
 .tab-btn {
   padding: 0.35rem 0.7rem;
@@ -159,7 +159,7 @@ defineExpose({ busy: computed(() => uploading.value > 0) })
 }
 .tab-btn[aria-selected='true'] {
   color: var(--color-base-50);
-  border-bottom-color: var(--color-redstone-500);
+  border-bottom-color: var(--color-primary-500);
 }
 .thumb {
   position: relative;

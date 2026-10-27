@@ -15,7 +15,7 @@ const { a } = useAdminText()
   <AdminDialog :title="title" size="sm" @close="emit('cancel')">
     <p v-if="text" class="text-sm text-base-200">{{ text }}</p>
     <slot />
-    <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
     <template #footer>
       <button type="button" class="btn btn-ghost" @click="emit('cancel')">{{ a.common.cancel }}</button>
       <button type="button" class="btn" :class="danger ? 'btn-danger' : 'btn-primary'" :disabled="busy" autofocus @click="emit('confirm')">

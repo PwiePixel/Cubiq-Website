@@ -99,7 +99,7 @@ async function sendReport() {
         <select id="share-reason" v-model="reason" class="field mt-1 w-full">
           <option v-for="r in REASONS" :key="r" :value="r">{{ m.share.reasons[r] }}</option>
         </select>
-        <p v-if="state === 'failed'" role="alert" class="mt-3 text-sm text-redstone-300">{{ m.share.failed }}</p>
+        <p v-if="state === 'failed'" role="alert" class="mt-3 text-sm text-danger-300">{{ m.share.failed }}</p>
         <div class="mt-4 flex gap-2">
           <button type="submit" class="btn btn-danger text-sm" :disabled="state === 'sending'">{{ m.share.send }}</button>
           <button type="button" class="btn btn-ghost text-sm" @click="reporting = false">{{ m.share.cancel }}</button>

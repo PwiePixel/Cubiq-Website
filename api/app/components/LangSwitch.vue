@@ -45,7 +45,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
         <button type="button" class="menu-item" role="option" :aria-selected="l.code === lang" @click="pick(l.code)">
           <img :src="l.flag" alt="" class="h-3.5 w-5 rounded-[2px] object-cover" />
           <span class="flex-1">{{ l.name }}</span>
-          <SiteIcon v-if="l.code === lang" name="check" class="size-4 text-redstone-300" />
+          <SiteIcon v-if="l.code === lang" name="check" class="size-4 text-primary-300" />
         </button>
       </li>
     </ul>

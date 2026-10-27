@@ -7,6 +7,7 @@ const { c } = useCircuitText()
 const { it } = useIssueText()
 const { n: nl } = useNewsletterText()
 const lp = useLocalePath()
+const wikiUrl = useWikiUrl()
 const route = useRoute()
 const menuOpen = ref(false)
 const menuButton = shallowRef<HTMLButtonElement | null>(null)
@@ -17,8 +18,8 @@ const links = computed<{ to: string, label: string, icon: string, external?: boo
   { to: lp('/features'), label: m.value.nav.features, icon: 'bolt' },
   { to: lp('/download'), label: m.value.nav.download, icon: 'download' },
   { to: lp('/servers'), label: m.value.nav.servers, icon: 'server' },
-  // Doku: eigene Domain (docs.cubiq-launcher.invalid) – normaler Seitenwechsel statt Router.
-  { to: docsUrl(lang.value), label: m.value.nav.docs, icon: 'docs', external: true },
+  // Doku: eigene Domain (WIKI_URL) – normaler Seitenwechsel statt Router.
+  { to: docsUrl(lang.value, wikiUrl), label: m.value.nav.docs, icon: 'docs', external: true },
   { to: lp('/blog'), label: m.value.nav.blog, icon: 'book' },
   { to: lp('/cosmetics'), label: m.value.nav.cosmetics, icon: 'cape' },
   { to: lp('/circuits'), label: c.value.nav, icon: 'blocks' },
@@ -100,7 +101,7 @@ onMounted(() => hw.loadPrefs())
         </button>
 
         <NuxtLink :to="lp('/')" class="flex min-w-0 items-center gap-2.5 text-base-50" aria-label="Cubiq Launcher">
-          <img src="/icon.png" alt="" width="32" height="32" class="size-8 shrink-0 [image-rendering:pixelated]" />
+          <img src="/icon.png" alt="" width="32" height="32" class="size-8 shrink-0" />
           <HalloweenPumpkin />
           <span class="display hidden text-xl leading-none min-[400px]:inline">Cubiq Launcher</span>
         </NuxtLink>
@@ -159,7 +160,7 @@ onMounted(() => hw.loadPrefs())
       <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <div class="flex items-center gap-2.5 text-base-50">
-            <img src="/icon.png" alt="" width="28" height="28" class="size-7 [image-rendering:pixelated]" />
+            <img src="/icon.png" alt="" width="28" height="28" class="size-7" />
             <HalloweenPumpkin />
             <span class="display text-lg">Cubiq Launcher</span>
           </div>
@@ -171,7 +172,7 @@ onMounted(() => hw.loadPrefs())
           <NuxtLink :to="lp('/features')" class="footer-link">{{ m.nav.features }}</NuxtLink>
           <NuxtLink :to="lp('/download')" class="footer-link">{{ m.nav.download }}</NuxtLink>
           <NuxtLink :to="lp('/servers')" class="footer-link">{{ m.nav.servers }}</NuxtLink>
-          <a :href="docsUrl(lang)" class="footer-link">{{ m.footer.docs }}</a>
+          <a :href="docsUrl(lang, wikiUrl)" class="footer-link">{{ m.footer.docs }}</a>
           <NuxtLink :to="lp('/blog')" class="footer-link">{{ m.nav.blog }}</NuxtLink>
           <NuxtLink :to="lp('/cosmetics')" class="footer-link">{{ m.nav.cosmetics }}</NuxtLink>
           <NuxtLink :to="lp('/circuits')" class="footer-link">{{ c.nav }}</NuxtLink>
@@ -291,11 +292,11 @@ onMounted(() => hw.loadPrefs())
 }
 .menu-link[aria-current="page"] {
   color: var(--color-base-50);
-  background: color-mix(in srgb, var(--color-redstone-600) 18%, var(--color-base-900));
-  box-shadow: inset 3px 0 0 var(--color-redstone-500);
+  background: color-mix(in srgb, var(--color-primary-600) 18%, var(--color-base-900));
+  box-shadow: inset 3px 0 0 var(--color-primary-500);
 }
 .menu-link[aria-current="page"] svg {
-  color: var(--color-redstone-400);
+  color: var(--color-primary-400);
 }
 .menu-enter-active,
 .menu-leave-active {
@@ -314,8 +315,8 @@ onMounted(() => hw.loadPrefs())
 }
 .site-footer {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 .footer-link {
   color: var(--color-base-400);
@@ -328,8 +329,8 @@ onMounted(() => hw.loadPrefs())
 .dust-line {
   height: 4px;
   background:
-    radial-gradient(circle, var(--color-redstone-400) 0 1.5px, transparent 2.5px) 0 50% / 24px 4px repeat-x,
-    linear-gradient(var(--color-redstone-600), var(--color-redstone-600)) 0 50% / 100% 2px no-repeat;
-  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--color-redstone-500) 80%, transparent);
+    radial-gradient(circle, var(--color-primary-400) 0 1.5px, transparent 2.5px) 0 50% / 24px 4px repeat-x,
+    linear-gradient(var(--color-primary-600), var(--color-primary-600)) 0 50% / 100% 2px no-repeat;
+  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--color-primary-500) 80%, transparent);
 }
 </style>

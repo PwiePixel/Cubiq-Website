@@ -126,7 +126,7 @@ function pick(f: number) {
         <SiteIcon name="fit" class="size-4" />{{ m.admin.review.fit }}
       </button>
       <label class="ml-auto flex items-center gap-2 text-xs text-base-400">
-        <input v-model="outline" type="checkbox" class="accent-redstone-500" />{{ m.admin.review.outline }}
+        <input v-model="outline" type="checkbox" class="accent-primary-500" />{{ m.admin.review.outline }}
       </label>
     </div>
 
@@ -192,7 +192,7 @@ function pick(f: number) {
   position: absolute;
   left: 0;
   top: 0;
-  outline: 1px dashed var(--color-lamp-400);
+  outline: 1px dashed var(--color-primary-400);
   pointer-events: none;
 }
 .frame-btn {
@@ -206,10 +206,10 @@ function pick(f: number) {
   border-color: var(--color-base-600);
 }
 .frame-btn-on {
-  border-color: var(--color-redstone-500);
-  box-shadow: 0 0 0 1px var(--color-redstone-500);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 1px var(--color-primary-500);
 }
 .zoom-range {
-  accent-color: var(--color-redstone-500);
+  accent-color: var(--color-primary-500);
 }
 </style>

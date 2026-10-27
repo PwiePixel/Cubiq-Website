@@ -490,7 +490,7 @@ async function restoreIssue() {
                 <input v-model="editTitle" class="field min-w-0 flex-1" :maxlength="ISSUE_LIMITS.titleMax" :aria-label="it.new.titleLabel" />
               </div>
               <IssueEditor id="edit-body" v-model="editBody" :max="ISSUE_LIMITS.descriptionMax" :max-images="0" :rows="10" :label="it.new.description" />
-              <p v-if="editError" role="alert" class="text-sm text-redstone-300">{{ editError }}</p>
+              <p v-if="editError" role="alert" class="text-sm text-danger-300">{{ editError }}</p>
               <div class="flex gap-2">
                 <button type="submit" class="btn btn-primary" :disabled="editBusy">{{ it.common.save }}</button>
                 <button type="button" class="btn btn-ghost" @click="editing = false">{{ it.common.cancel }}</button>
@@ -501,7 +501,7 @@ async function restoreIssue() {
           <!-- Aktivität: Kommentare + Verlauf nach Zeit -->
           <section class="mt-8" :aria-label="it.detail.activity">
             <h2 class="act-title">{{ it.detail.activity }}</h2>
-            <p v-if="actionError" role="alert" class="mt-2 text-sm text-redstone-300">{{ actionError }}</p>
+            <p v-if="actionError" role="alert" class="mt-2 text-sm text-danger-300">{{ actionError }}</p>
             <p v-if="reportMsg" role="status" class="mt-2 text-sm text-emerald-300">{{ reportMsg }}</p>
             <p v-if="!timeline.length" class="indent mt-3 text-sm text-base-400">{{ it.detail.noComments }}</p>
             <ol class="timeline mt-3">
@@ -566,7 +566,7 @@ async function restoreIssue() {
               <select id="issue-report-reason" v-model="reportReason" class="field mt-1 w-full">
                 <option v-for="r in REASONS" :key="r" :value="r">{{ m.share.reasons[r] }}</option>
               </select>
-              <p v-if="reportErr" role="alert" class="mt-3 text-sm text-redstone-300">{{ reportErr }}</p>
+              <p v-if="reportErr" role="alert" class="mt-3 text-sm text-danger-300">{{ reportErr }}</p>
               <div class="mt-4 flex gap-2">
                 <button type="submit" class="btn btn-danger text-sm" :disabled="reportBusy">{{ it.detail.reportSend }}</button>
                 <button type="button" class="btn btn-ghost text-sm" @click="reportTarget = null">{{ it.common.cancel }}</button>
@@ -586,7 +586,7 @@ async function restoreIssue() {
                 <form class="min-w-0 space-y-2" @submit.prevent="sendComment">
                   <label for="new-comment" class="sr-only">{{ it.detail.write }}</label>
                   <IssueEditor id="new-comment" v-model="commentText" v-model:images="commentImages" :placeholder="it.detail.placeholder" :max="ISSUE_LIMITS.commentMax" :max-images="ISSUE_LIMITS.uploadsPerComment" :rows="4" />
-                  <p v-if="commentError" role="alert" class="text-sm text-redstone-300">{{ commentError }}</p>
+                  <p v-if="commentError" role="alert" class="text-sm text-danger-300">{{ commentError }}</p>
                   <div class="flex justify-end">
                     <button type="submit" class="btn btn-primary" :disabled="commentBusy || !commentText.trim()" data-testid="send-comment">
                       <SiteIcon name="chat" class="size-4" />{{ it.detail.send }}
@@ -661,7 +661,7 @@ async function restoreIssue() {
 
           <!-- Team -->
           <section v-if="canManage || canModerate" class="card team-panel p-4" data-testid="team-panel">
-            <h2 class="flex items-center gap-2 text-sm font-semibold text-base-50"><SiteIcon name="shield" class="size-4 text-redstone-400" />{{ it.team.title }}</h2>
+            <h2 class="flex items-center gap-2 text-sm font-semibold text-base-50"><SiteIcon name="shield" class="size-4 text-primary-400" />{{ it.team.title }}</h2>
             <form v-if="canManage" class="mt-3 space-y-2.5" @submit.prevent="saveTeam">
               <label class="block"><span class="label">{{ it.team.status }}</span>
                 <select v-model="tf.status" class="field">
@@ -700,7 +700,7 @@ async function restoreIssue() {
               <button type="submit" class="btn btn-primary w-full" :disabled="teamBusy || !fixedValid">{{ it.team.apply }}</button>
             </form>
             <p v-if="teamMsg" role="status" class="mt-2 text-xs text-emerald-300">{{ teamMsg }}</p>
-            <p v-if="teamErr" role="alert" class="mt-2 text-xs text-redstone-300">{{ teamErr }}</p>
+            <p v-if="teamErr" role="alert" class="mt-2 text-xs text-danger-300">{{ teamErr }}</p>
 
             <div class="mt-4 flex flex-wrap gap-2 border-t border-base-800 pt-3">
               <button type="button" class="btn btn-ghost text-xs" :disabled="teamBusy || !!issue.deleted" @click="teamPatch({ locked: !issue.locked })">
@@ -808,14 +808,14 @@ async function restoreIssue() {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-redstone-300);
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-redstone-500) 40%, transparent);
+  color: var(--color-primary-300);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 40%, transparent);
 }
 .type-badge[data-t='feature'] {
-  color: var(--color-lamp-300);
-  background: color-mix(in srgb, var(--color-lamp-400) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-lamp-400) 38%, transparent);
+  color: var(--color-caution-300);
+  background: color-mix(in srgb, var(--color-caution-400) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-caution-400) 38%, transparent);
 }
 .banner {
   display: flex;
@@ -830,8 +830,8 @@ async function restoreIssue() {
   color: var(--color-base-200);
 }
 .banner.danger {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 50%, transparent);
-  background: color-mix(in srgb, var(--color-redstone-900) 60%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger-500) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger-900) 60%, transparent);
 }
 
 /* Beiträge: Kopf links neben der Karte (wie ein Forum), Kopfzeile der Karte mit Trennlinie. */
@@ -886,13 +886,13 @@ form.post-card::before {
   display: none;
 }
 .post-card.team {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 45%, var(--color-base-800));
+  border-color: color-mix(in srgb, var(--color-primary-500) 45%, var(--color-base-800));
 }
 .post-card.team::before {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 45%, var(--color-base-800));
+  border-color: color-mix(in srgb, var(--color-primary-500) 45%, var(--color-base-800));
 }
 .post-card.team .post-head {
-  background: color-mix(in srgb, var(--color-redstone-500) 9%, var(--color-base-850));
+  background: color-mix(in srgb, var(--color-primary-500) 9%, var(--color-base-850));
 }
 .post-card.deleted {
   background: transparent;
@@ -927,8 +927,8 @@ form.post-card::before {
   box-shadow: inset 0 0 0 1px var(--color-base-700);
 }
 .badge.team {
-  background: color-mix(in srgb, var(--color-redstone-500) 20%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+  color: var(--color-primary-300);
 }
 .badge.fixed-in {
   background: color-mix(in srgb, var(--color-ok) 14%, transparent);
@@ -949,7 +949,7 @@ form.post-card::before {
   transition: border-color 0.12s;
 }
 .shots a:hover img {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
 }
 .tech {
   padding: 0.75rem 1rem;
@@ -1024,10 +1024,10 @@ form.post-card::before {
   box-shadow: 0 0 0 4px var(--color-base-950), inset 0 0 0 1px color-mix(in srgb, var(--c) 38%, transparent);
 }
 .event-icon[data-k='blue'] { --c: #7cc4ff; }
-.event-icon[data-k='amber'] { --c: var(--color-lamp-400); }
+.event-icon[data-k='amber'] { --c: var(--color-caution-400); }
 .event-icon[data-k='violet'] { --c: #c4a5ff; }
 .event-icon[data-k='ok'] { --c: var(--color-ok); }
-.event-icon[data-k='red'] { --c: var(--color-redstone-400); }
+.event-icon[data-k='red'] { --c: var(--color-primary-400); }
 .event-icon[data-k='grey'] { --c: var(--color-base-400); }
 .mini {
   display: grid;
@@ -1101,17 +1101,17 @@ form.post-card::before {
   color: var(--color-base-400);
 }
 .prio[data-p='critical'] {
-  color: var(--color-redstone-300);
+  color: var(--color-danger-300);
   font-weight: 600;
 }
 .prio[data-p='high'] {
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .prio[data-p='none'] {
   color: var(--color-base-400);
 }
 .team-panel {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 35%, var(--color-base-800));
+  border-color: color-mix(in srgb, var(--color-primary-500) 35%, var(--color-base-800));
 }
 .note {
   padding: 0.45rem 0.6rem;

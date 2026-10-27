@@ -32,7 +32,7 @@ const unlockClass = (c: SiteHat) =>
     ? 'badge-hw'
     : c.achievement
       ? 'bg-[#2a1f4a] text-[#c4a5ff]'
-      : c.unlock === 'free' ? 'bg-ok/15 text-ok' : c.unlock === 'code' ? 'bg-lamp-900 text-lamp-300' : 'bg-redstone-900 text-redstone-300'
+      : c.unlock === 'free' ? 'bg-ok/15 text-ok' : c.unlock === 'code' ? 'bg-caution-900 text-caution-300' : 'bg-primary-900 text-primary-300'
 
 const pickedId = ref<string | null>(null)
 const hoverId = ref<string | null>(null)
@@ -88,7 +88,7 @@ function pick(h: SiteHat) {
     <h2 :id="`${id}-title`" class="display text-3xl text-base-50">{{ title }}</h2>
     <p class="mt-2 max-w-2xl text-base-400">{{ lead }}</p>
 
-    <p v-if="error" class="mt-8 text-lamp-300">{{ m.common.error }}</p>
+    <p v-if="error" class="mt-8 text-caution-300">{{ m.common.error }}</p>
     <p v-else-if="!items.length" class="mt-8 text-base-400">{{ empty }}</p>
     <div v-else class="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
       <ul class="grid grid-cols-2 content-start gap-3 sm:grid-cols-3" @pointerleave="hover(null)">
@@ -109,8 +109,8 @@ function pick(h: SiteHat) {
             <span class="mt-3 block truncate text-sm font-semibold text-base-50">{{ h.name }}</span>
             <span class="mt-1.5 flex flex-wrap justify-center gap-1">
               <span class="badge" :class="unlockClass(h)">{{ unlockLabel(h) }}</span>
-              <span v-if="h.glowFrames > 0" class="badge bg-redstone-900 text-redstone-300">{{ m.cosmetics.glowing }}</span>
-              <span v-if="h.animated" class="badge bg-lamp-900 text-lamp-300">{{ m.cosmetics.animated }}</span>
+              <span v-if="h.glowFrames > 0" class="badge bg-primary-900 text-primary-300">{{ m.cosmetics.glowing }}</span>
+              <span v-if="h.animated" class="badge bg-primary-900 text-primary-300">{{ m.cosmetics.animated }}</span>
             </span>
           </button>
         </li>
@@ -181,8 +181,8 @@ function pick(h: SiteHat) {
   border-color: var(--color-base-700);
 }
 .cos-card-on {
-  border-color: var(--color-lamp-400);
-  box-shadow: 0 0 22px -8px var(--color-lamp-400);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 22px -8px var(--color-primary-400);
 }
 .hat-img {
   position: relative;
@@ -209,8 +209,8 @@ function pick(h: SiteHat) {
 }
 .stage {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
   transition: background-color 0.3s;
 }
 .stage-night {
@@ -242,8 +242,8 @@ function pick(h: SiteHat) {
   border-radius: 0.5rem;
 }
 .tog[aria-pressed='true'] {
-  color: var(--color-lamp-300);
-  border-color: var(--color-lamp-400);
+  color: var(--color-primary-300);
+  border-color: var(--color-primary-400);
 }
 .opt-dot {
   width: 0.55rem;
@@ -258,7 +258,7 @@ function pick(h: SiteHat) {
   width: 14px;
   height: 14px;
   border: 2px solid var(--color-base-700);
-  border-top-color: var(--color-lamp-400);
+  border-top-color: var(--color-primary-400);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

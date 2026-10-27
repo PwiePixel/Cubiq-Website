@@ -47,7 +47,7 @@ const MAX_WINDOW_MS = 2 * 366 * 24 * 60 * 60 * 1000
 const MODRINTH_API = 'https://api.modrinth.com/v2'
 const MODRINTH_API_V3 = 'https://api.modrinth.com/v3'
 const CURSEFORGE_API = 'https://api.curseforge.com/v1'
-const UA = 'PwiePixel/Cubiq-launcher (cubiq-launcher.invalid)'
+const UA = 'PwiePixel/Cubiq-launcher (github.com/PwiePixel/Cubiq-launcher)'
 /** CurseForge: Spiel Minecraft und Klasse „Modpacks“. */
 const CF_GAME = 432
 const CF_MODPACK_CLASS = 4471

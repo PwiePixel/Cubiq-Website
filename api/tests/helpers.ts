@@ -13,7 +13,7 @@ import { openDb } from '../server/lib/db'
 import type { MojangClient, MojangProfile, SkinProfile } from '../server/lib/mojang'
 import { parseTemplates, type TemplateSet } from '../server/lib/templates'
 
-export const ADMIN = '75c1a6f3112240abbdb57b9d21c64232'
+export const ADMIN = '0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b'
 
 /** Mojang-Attrappe: `join(name, uuid, serverId)` merkt sich einen Beitritt wie der echte Session-Server. */
 export class FakeMojang implements MojangClient {

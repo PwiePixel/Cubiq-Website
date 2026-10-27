@@ -99,8 +99,8 @@ const label = (dir: -1 | 1) => {
   transform: scale(0.92);
 }
 .arrow[aria-pressed='true'] {
-  color: var(--color-redstone-400);
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-redstone-500) 70%, transparent));
+  color: var(--color-primary-400);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary-500) 70%, transparent));
 }
 .arrow.down[aria-pressed='true'] {
   color: #7cc4ff;
@@ -117,7 +117,7 @@ const label = (dir: -1 | 1) => {
   color: var(--color-base-50);
 }
 .score[data-v='1'] {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 .score[data-v='-1'] {
   color: #9fd4ff;

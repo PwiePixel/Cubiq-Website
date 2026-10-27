@@ -94,7 +94,7 @@ const issues = computed<IssueView[]>(() => data.value?.issues ?? [])
         </select>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <div v-if="loading && !issues.length" class="mt-6 space-y-2">
       <div v-for="i in 6" :key="i" class="skeleton h-14 rounded-xl" />
@@ -103,7 +103,7 @@ const issues = computed<IssueView[]>(() => data.value?.issues ?? [])
     <ul v-else class="mt-5 space-y-2">
       <li v-for="i in issues" :key="i.number">
         <NuxtLink :to="`/issues/${i.number}`" class="adm-row" :title="it.adm.open">
-          <SiteIcon :name="i.type === 'bug' ? 'bug' : 'bolt'" class="size-5 shrink-0" :class="i.type === 'bug' ? 'text-redstone-300' : 'text-lamp-300'" />
+          <SiteIcon :name="i.type === 'bug' ? 'bug' : 'bolt'" class="size-5 shrink-0" :class="i.type === 'bug' ? 'text-danger-300' : 'text-caution-300'" />
           <span class="min-w-0 flex-1">
             <span class="block truncate font-semibold text-base-50">{{ i.title }} <span class="font-normal text-base-400">#{{ i.number }}</span></span>
             <span class="mt-1 flex flex-wrap items-center gap-1.5 text-xs">

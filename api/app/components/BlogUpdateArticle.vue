@@ -124,7 +124,7 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
 }
 .thanks-name:hover,
 .thanks-name:focus-visible {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-50);
 }
 </style>

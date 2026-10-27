@@ -31,13 +31,13 @@ const { it } = useIssueText()
   background: var(--c);
 }
 .prio[data-p='critical'] {
-  --c: var(--color-redstone-400);
+  --c: var(--color-danger-400);
 }
 .prio[data-p='critical'] .dot {
-  box-shadow: 0 0 6px var(--color-redstone-500);
+  box-shadow: 0 0 6px var(--color-danger-500);
 }
 .prio[data-p='high'] {
-  --c: var(--color-lamp-400);
+  --c: var(--color-caution-400);
 }
 .prio[data-p='medium'] {
   --c: #7cc4ff;

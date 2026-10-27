@@ -78,7 +78,7 @@ async function reject() {
       <p class="text-xs tracking-[0.14em] text-base-400 uppercase">{{ c.adm.reviewTitle }}</p>
       <h1 class="adm-title">{{ sub?.name ?? '…' }}</h1>
     </header>
-    <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
     <p v-if="notice" role="status" class="mt-3 text-sm text-ok">{{ notice }}</p>
     <div v-if="!sub && !error" class="skeleton mt-6 h-96 rounded-xl" />
 

@@ -1,15 +1,14 @@
 <script setup lang="ts">
-// Banner eines Updates – feste Vorlage für Launcher und Website (gleiche Datei in beiden Apps):
-// Deepslate-Grund, leuchtende Redstone-Leitung oben und unten, Pixel-Schrift mit Version darüber.
-// Je Update ändern sich nur die Akzentfarbe (Glühen, Unterstrich) und das Motiv rechts
-// (HD-Pixel-Art aus Cubiq Studio, Vorlage „Update-Banner“; Angabe im CHANGELOG.md).
+// Banner eines Updates – feste Vorlage für Launcher und Website (gleiche Datei in beiden Apps): dunkler Grund, weicher Schein in der Farbe des Updates,
+// feines Würfel-Raster wie im Logo, Schrift mit Version links und das Motiv rechts.
+// Je Update ändern sich nur Akzentfarbe und Motiv (Angabe im CHANGELOG.md); ohne eigenes Motiv das Cubiq-Logo.
 const props = withDefaults(
   defineProps<{
     /** z. B. „v0.4.3 · 24. September 2026“ */
     kicker: string
     title: string
     accent?: string | null
-    /** Bildadresse des Motivs, sonst nur Rahmen und Glühen. */
+    /** Bildadresse des Motivs, sonst das Cubiq-Logo. */
     motif?: string | null
     size?: 'sm' | 'md' | 'lg'
     tag?: 'h1' | 'h2' | 'h3' | 'p'
@@ -19,15 +18,14 @@ const props = withDefaults(
   { accent: null, motif: null, size: 'md', tag: 'h3', bare: false },
 )
 
-const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#ff5a4d' }))
+const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.test(props.accent) ? props.accent : '#71a330' }))
 </script>
 
 <template>
   <div class="update-banner" :class="`ub-${size}`" :style="style">
     <div class="ub-glow" aria-hidden="true" />
-    <span class="ub-wire ub-wire-top" aria-hidden="true" />
-    <span class="ub-wire ub-wire-bottom" aria-hidden="true" />
-    <img v-if="motif" :src="motif" alt="" class="ub-motif" loading="lazy" decoding="async" />
+    <div class="ub-grid" aria-hidden="true" />
+    <img :src="motif || '/logo.png'" alt="" class="ub-motif" loading="lazy" decoding="async" />
     <div v-if="!bare" class="ub-text">
       <p class="ub-kicker">{{ kicker }}</p>
       <component :is="tag" class="ub-title">{{ title }}</component>
@@ -44,75 +42,48 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   overflow: hidden;
   height: 100%;
   min-height: 8rem;
-  background-color: #111116;
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background: linear-gradient(135deg, #111613 0%, #0c100e 100%);
 }
-/* Leuchten in der Farbe des Updates hinter dem Motiv, links dunkel für die Schrift. */
+/* Schein in der Farbe des Updates hinter dem Motiv, links dunkel für die Schrift. */
 .ub-glow {
   position: absolute;
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(60% 90% at 78% 50%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 70%),
-    linear-gradient(90deg, rgb(12 11 14 / 0.92) 0%, rgb(12 11 14 / 0.55) 45%, rgb(12 11 14 / 0.1) 75%);
+    radial-gradient(60% 95% at 78% 50%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
+    linear-gradient(90deg, rgb(10 13 11 / 0.9) 0%, rgb(10 13 11 / 0.5) 45%, rgb(10 13 11 / 0.05) 75%);
 }
-/* Redstone-Leitung: dunkle Spur, glühende Staubpunkte, Knoten an den Enden. */
-.ub-wire {
+/* Feines isometrisches Raster, nach links ausgeblendet. */
+.ub-grid {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background:
-    radial-gradient(circle, #ff5a4d 0 1.5px, transparent 2.5px) 0 50% / 22px 6px repeat-x,
-    linear-gradient(#b31a12, #b31a12) 0 50% / 100% 2px no-repeat;
-  filter: drop-shadow(0 0 5px rgb(255 60 40 / 0.75));
-}
-.ub-wire::before,
-.ub-wire::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  width: 10px;
-  height: 10px;
-  background: #ff5a4d;
-  box-shadow: 0 0 10px #ff5a4d;
-}
-.ub-wire::before {
-  left: 14px;
-}
-.ub-wire::after {
-  right: 14px;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
-}
-.ub-wire-top {
-  top: 8px;
-}
-.ub-wire-bottom {
-  bottom: 8px;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(30deg, color-mix(in srgb, var(--accent) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(150deg, color-mix(in srgb, var(--accent) 16%, transparent) 1px, transparent 1px);
+  background-size: 34px 20px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 20%, #000 75%);
+  mask-image: linear-gradient(90deg, transparent 20%, #000 75%);
 }
 .ub-motif {
   position: absolute;
-  right: 4%;
+  right: 5%;
   top: 50%;
-  height: 100%;
+  height: 84%;
   aspect-ratio: 1;
   translate: 0 -50%;
   object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 6px 0 rgb(0 0 0 / 0.45)) drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent));
-  animation: ub-float 5s ease-in-out infinite;
+  filter: drop-shadow(0 10px 24px rgb(0 0 0 / 0.5)) drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 35%, transparent));
+  animation: ub-float 6s ease-in-out infinite;
 }
 @keyframes ub-float {
   50% {
     transform: translateY(-4px);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .ub-motif {
-    animation: none;
-  }
+:root[data-reduced-motion] .ub-motif {
+  animation: none;
 }
 .ub-text {
   position: absolute;
@@ -123,25 +94,26 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
 .ub-kicker {
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #ffd48a;
+  color: color-mix(in srgb, var(--accent) 55%, #ffffff);
 }
 .ub-title {
   margin-top: 0.3rem;
   font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.05;
-  color: #f3f3f8;
+  color: #f3f6f4;
   text-wrap: balance;
-  text-shadow: 0 2px 0 rgb(12 11 14 / 0.8);
 }
 .ub-bar {
   display: block;
-  margin-top: 0.6rem;
-  width: 3.5rem;
-  height: 4px;
+  margin-top: 0.7rem;
+  width: 3rem;
+  height: 3px;
+  border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
 }
 .ub-sm .ub-title {
   font-size: 1.5rem;
@@ -152,12 +124,12 @@ const style = computed(() => ({ '--accent': props.accent && /^#[0-9a-f]{6}$/i.te
   right: 44%;
 }
 .ub-sm .ub-motif {
-  height: 74%;
+  height: 70%;
   right: 3%;
 }
 .ub-sm .ub-kicker {
   font-size: 0.64rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 .ub-md .ub-title {
   font-size: 2.25rem;

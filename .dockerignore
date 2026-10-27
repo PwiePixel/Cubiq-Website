@@ -1,0 +1,18 @@
+# Build-Kontext für api/Dockerfile ist der Repo-Ordner – nur Quellen, keine Abhängigkeiten oder Ausgaben.
+**/node_modules
+**/.output
+**/.nuxt
+**/.nitro
+**/.cache
+**/.data
+**/coverage
+.git
+.github
+api/data
+api/tests
+api/.env
+api/.env.*
+!api/.env.example
+api/assets/previews
+api/assets/cosmetic-previews
+docs-site/.output

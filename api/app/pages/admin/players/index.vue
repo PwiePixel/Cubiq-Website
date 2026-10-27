@@ -68,7 +68,7 @@ const { active } = useListKeys(items, { open })
         <option value="created">{{ a.players.sortCreated }}</option>
       </select>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <div v-if="loading && !items.length" class="mt-6 space-y-2">
       <div v-for="i in 6" :key="i" class="skeleton h-14 rounded-xl" />

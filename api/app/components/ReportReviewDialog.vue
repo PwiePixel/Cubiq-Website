@@ -149,7 +149,7 @@ const when = (iso: string | null | undefined) => dateTime(iso, lang.value)
 const statusClass = computed(() => {
   const r = report.value
   if (!r) return ''
-  if (r.status === 'open') return 'bg-lamp-900 text-lamp-300'
+  if (r.status === 'open') return 'bg-caution-900 text-caution-300'
   if (r.status === 'in_review') return 'bg-base-700 text-base-100'
   return r.outcome === 'actioned' ? 'bg-ok/15 text-ok' : 'bg-base-800 text-base-400'
 })
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
           </button>
         </header>
 
-        <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+        <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
         <div v-if="!report && !error" class="skeleton mt-6 h-64 rounded-lg" />
 
         <div v-if="report" class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
@@ -246,7 +246,7 @@ onBeforeUnmount(() => {
                   :class="{ 'chat-focus': msg.id === focusId, 'chat-target': msg.sender?.uuid === report.target?.uuid }"
                 >
                   <div class="flex flex-wrap items-baseline gap-x-2 text-xs">
-                    <span class="font-semibold" :class="msg.sender?.uuid === report.target?.uuid ? 'text-redstone-300' : 'text-base-100'">
+                    <span class="font-semibold" :class="msg.sender?.uuid === report.target?.uuid ? 'text-primary-300' : 'text-base-100'">
                       {{ msg.sender ? name(msg.sender) : '–' }}
                     </span>
                     <span class="text-base-400">{{ when(msg.createdAt) }}</span>
@@ -256,9 +256,9 @@ onBeforeUnmount(() => {
                   <p v-if="msg.kind === 'system'" class="text-xs text-base-400 italic">{{ fill(t.system, { event: systemLabel(msg.system?.event) }) }}</p>
                   <p v-if="msg.text" class="msg-text">{{ msg.text }}</p>
                   <p v-else-if="msg.hidden" class="mt-1 flex gap-1.5" aria-hidden="true"><span class="redacted w-16" /><span class="redacted w-10" /><span class="redacted w-24" /></p>
-                  <p v-if="msg.invite" class="text-xs text-lamp-300">{{ fill(t.invite, { address: msg.invite.address }) }}</p>
-                  <p v-if="msg.world" class="text-xs text-lamp-300">{{ fill(t.world, { name: msg.world.name }) }}</p>
-                  <p v-if="msg.waypoint" class="text-xs text-lamp-300">{{ waypointLine(msg.waypoint) }}</p>
+                  <p v-if="msg.invite" class="text-xs text-caution-300">{{ fill(t.invite, { address: msg.invite.address }) }}</p>
+                  <p v-if="msg.world" class="text-xs text-caution-300">{{ fill(t.world, { name: msg.world.name }) }}</p>
+                  <p v-if="msg.waypoint" class="text-xs text-caution-300">{{ waypointLine(msg.waypoint) }}</p>
                   <p v-if="msg.attachments.length" class="text-xs text-base-400">{{ fill(t.attachments, { n: msg.attachments.length }) }}</p>
                 </li>
               </ol>
@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
                 }) }}
               </p>
               <p v-if="report.evidence.pack.summary" class="mt-1 text-sm text-base-300">{{ report.evidence.pack.summary }}</p>
-              <p v-if="report.evidence.pack.ownJars" class="mt-1 text-xs text-lamp-300">{{ fill(t.packOwnJars, { n: report.evidence.pack.ownJars }) }}</p>
+              <p v-if="report.evidence.pack.ownJars" class="mt-1 text-xs text-caution-300">{{ fill(t.packOwnJars, { n: report.evidence.pack.ownJars }) }}</p>
               <p class="mt-1 break-all font-mono text-[11px] text-base-400">SHA-256 {{ report.evidence.pack.sha256 }}</p>
               <div class="mt-2">
                 <a :href="`/p/${report.evidence.pack.code}`" target="_blank" rel="noopener" class="btn btn-ghost text-xs"><SiteIcon name="external" class="size-3.5" />/p/{{ report.evidence.pack.code }}</a>
@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
               <p v-if="report.target" class="font-mono text-[11px] text-base-400">{{ report.target.uuid }}</p>
               <template v-if="report.targetModeration">
                 <p class="mt-2 text-xs text-base-300">{{ fill(t.targetStats, report.targetModeration.reports) }}</p>
-                <p v-if="report.targetModeration.mute" class="mt-2 flex flex-wrap items-center gap-2 text-xs text-lamp-300">
+                <p v-if="report.targetModeration.mute" class="mt-2 flex flex-wrap items-center gap-2 text-xs text-caution-300">
                   {{ report.targetModeration.mute.expiresAt ? fill(t.mutedUntil, { date: when(report.targetModeration.mute.expiresAt) }) : t.mutedReview }}
                   <button v-if="can('sanctions.lift')" type="button" class="btn btn-ghost px-2 py-0.5 text-xs" :disabled="busy" @click="unmute">{{ t.unmute }}</button>
                 </p>
@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
               <p class="mt-1 flex flex-wrap items-center gap-2 font-semibold text-base-50">
                 <NuxtLink v-if="report.reporter" :to="`/admin/players/${report.reporter.uuid}`" class="hover:underline">{{ name(report.reporter) }}</NuxtLink>
                 <template v-else>{{ report.anonymous ? t.anonymous : name(report.reporter) }}</template>
-                <span v-if="report.lowTrust" class="badge bg-lamp-900 text-lamp-300">{{ t.lowTrust }}</span>
+                <span v-if="report.lowTrust" class="badge bg-caution-900 text-caution-300">{{ t.lowTrust }}</span>
               </p>
               <p v-if="report.reporterStats" class="mt-1 text-xs text-base-300">{{ fill(t.reporterStats, { actioned: report.reporterStats.actioned, dismissed: report.reporterStats.dismissed, open: report.reporterStats.open }) }}</p>
               <p class="mt-1 text-xs text-base-400">{{ when(report.createdAt) }}</p>
@@ -499,11 +499,11 @@ onBeforeUnmount(() => {
   border-radius: 0.375rem;
 }
 .chat-target {
-  background: color-mix(in srgb, var(--color-redstone-900) 45%, transparent);
+  background: color-mix(in srgb, var(--color-primary-900) 45%, transparent);
 }
 .chat-focus {
-  box-shadow: inset 3px 0 0 var(--color-lamp-400);
-  background: color-mix(in srgb, var(--color-lamp-900) 55%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-caution-400);
+  background: color-mix(in srgb, var(--color-caution-900) 55%, transparent);
 }
 .msg-text {
   margin-top: 0.125rem;

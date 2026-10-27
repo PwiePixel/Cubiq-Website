@@ -39,7 +39,7 @@ export const landingEn: LandingTexts = {
             'Java is downloaded automatically for each Minecraft version',
             'Every instance has tabs for content, files, worlds, screenshots, history and logs',
           ],
-          shot: { file: '0.2.1/library.png', alt: 'The instance library of Cubiq Launcher with Minecraft instances sorted into groups', caption: 'The library with your own groups' },
+          shot: { file: '/shots/landing/instances-library.png', alt: 'The instance library of Cubiq Launcher with Minecraft instances sorted into groups', caption: 'The library with your own groups' },
         },
         {
           id: 'accounts',
@@ -64,7 +64,7 @@ export const landingEn: LandingTexts = {
             'Press F9 in the game to save the last moments as a video clip, or F10 to record a whole session. Only the game window is recorded, and clips stay on your PC; play, trim and share them in the clip gallery. Clips are available on Windows.',
             'With the optional Cubiq online features you get a friends list, direct messages and group chats – in the launcher and in the game. Host your singleplayer world for up to 10 friends without port forwarding: they see it under Social → Worlds and join with one click or a join code.',
           ],
-          shot: { file: '0.8.0/worlds.png', alt: 'Social → Worlds in Cubiq Launcher with a friend’s open Minecraft world to join', caption: 'Join your friends’ worlds right from the launcher' },
+          shot: { file: '/shots/landing/clips-gallery.png', alt: 'The clips gallery of Cubiq Launcher with recorded Minecraft moments from several instances', caption: 'Your best moments as clips' },
         },
         {
           id: 'crash-helper',
@@ -73,7 +73,7 @@ export const landingEn: LandingTexts = {
             'When Minecraft crashes, the launcher reads the crash report and the log and explains in plain words what happened: which mods clash, which dependency is missing, or whether memory, the Java version or the graphics driver is the problem. Buttons like “Disable mod”, “Install dependency” or “Increase RAM” fix it with one click, and every change is confirmed first.',
             'The analysis runs only on your PC. The Logs tab adds search, filters and collapsible stack traces, and you can share a log as a link when you ask for help.',
           ],
-          shot: { file: '0.10.0/crash-helper.png', alt: 'The crash helper of Cubiq Launcher explaining a Minecraft crash with a button to fix it', caption: 'The cause in plain words and a button to fix it' },
+          shot: { file: '/shots/landing/crash-helper.png', alt: 'The crash helper of Cubiq Launcher explaining a Minecraft crash with a button to fix it', caption: 'The cause in plain words and a button to fix it' },
         },
         {
           id: 'extras',
@@ -82,7 +82,7 @@ export const landingEn: LandingTexts = {
             'Achievements reward playtime, trying out launcher features and being part of the community; some come with a cape or an emote. New launcher versions download in the background while you play and install with one click, and the Cubiq Client gets fixes through its own update channel.',
             'The launcher speaks English, German and Spanish, plus French, Polish, Portuguese (Brazil), Turkish and Dutch as beta.',
           ],
-          shot: { file: '0.14.0/achievements.png', alt: 'Achievements in Cubiq Launcher with points, rarities and rewards', caption: 'Achievements with points, rarities and rewards' },
+          shot: { file: '/shots/landing/update-news.png', alt: 'What’s new in Cubiq Launcher after an automatic update, with the notes of the release', caption: 'After every update: what’s new' },
         },
         {
           id: 'privacy',
@@ -131,7 +131,7 @@ export const landingEn: LandingTexts = {
             'The Discover page searches mods, modpacks, resource packs, shaders and data packs on Modrinth and CurseForge – one switch changes the platform, the filters stay the same. Every project has its own page with description, gallery, versions and dependencies.',
             'Install a mod and its required dependencies come along. Updates are found for content from both platforms, and you can switch a mod to another version while the instance history shows what changed. If an author only allows downloads on CurseForge itself, the launcher shows the files with a button to their page and picks them up from your downloads folder.',
           ],
-          shot: { file: '0.2.0/content.png', alt: 'Mods, resource packs and shaders of a Minecraft instance in one content list in Cubiq Launcher', caption: 'Everything an instance contains in one list' },
+          shot: { file: '/shots/landing/discover.png', alt: 'The Discover page of Cubiq Launcher with Minecraft mods from Modrinth and CurseForge and filters for version and loader', caption: 'Modrinth and CurseForge in one search' },
         },
         {
           id: 'install',
@@ -140,7 +140,7 @@ export const landingEn: LandingTexts = {
             'Modpacks from Modrinth and CurseForge – from Discover or as a downloaded .mrpack or .zip file – become a new instance. Big packs download large files first and several at a time, and the new instance shows its progress until everything is there.',
             'When you install a pack you choose once whether the Cubiq Client is added. If the pack already brings mods that overlap with it, such as its own minimap or HUD, the launcher tells you which ones and preselects “Without Cubiq Client”. Your choice is saved and can be changed in the instance settings.',
           ],
-          shot: { file: '0.10.0/modpack-choice.png', alt: 'Installing a Minecraft modpack with or without the Cubiq Client in Cubiq Launcher', caption: 'Install a modpack with or without the Cubiq Client' },
+          shot: { file: '/shots/landing/modpack-install.png', alt: 'Installing a Minecraft modpack with or without the Cubiq Client in Cubiq Launcher', caption: 'Install a modpack with or without the Cubiq Client' },
         },
         {
           id: 'compat',
@@ -153,6 +153,7 @@ export const landingEn: LandingTexts = {
             'Instances with a known clashing pair get a “Fix” button',
             'Your own presets: a set of mods, resource packs and shaders you can apply to any instance',
           ],
+          shot: { file: '/shots/landing/content-list.png', alt: 'The content list of a Minecraft instance in Cubiq Launcher with updates, presets and the search for the culprit mod', caption: 'Updates, presets and a search for the culprit mod' },
         },
         {
           id: 'share',
@@ -161,7 +162,6 @@ export const landingEn: LandingTexts = {
             'Made the perfect pack? Share it from the instance: the launcher uploads your mod list and the settings you pick and gives you a code (CBQ-XXXX-XXXX) and a link – or sends the pack straight to friends. You decide whether the code works for 1, 7 or 30 days or has no expiry. Others install it with “Modpack by code”, and the link page shows what is inside before anything is installed.',
             'Upload a new version and keep the same code: everyone who installed the pack sees “Update”, and files they changed themselves stay as they are. Mod files that are not on Modrinth need a confirmation when sharing and show a warning when installing.',
           ],
-          shot: { file: '0.12.0/share-result.png', alt: 'Sharing a Minecraft modpack in Cubiq Launcher with a code, a link or directly with friends', caption: 'Share a modpack: code, link or straight to friends' },
         },
         {
           id: 'export',
@@ -169,7 +169,6 @@ export const landingEn: LandingTexts = {
           text: [
             'Export any instance as a .mrpack modpack, back up a world as a ZIP or pick single files – all from the Share tab of the instance. Exported packs leave out the Cubiq Client itself and its private files.',
           ],
-          shot: { file: '0.12.0/pack-update.png', alt: 'Updating a shared Minecraft modpack in Cubiq Launcher while your own changes stay', caption: 'New version? Update with one click, your own changes stay' },
         },
       ],
       faq: [
@@ -201,7 +200,7 @@ export const landingEn: LandingTexts = {
             'The launcher adds the Cubiq Client to your instances automatically: Forge from 1.7.10, Fabric and Quilt from 1.14.4 and NeoForge, up to the newest version. Whether you play 1.8.9 PvP or the latest release, you get the same menu (Right Shift), the same modules and the same HUD editor. You can switch it off for any instance.',
             'Module packs set the client up for your play style with one click – PvP, Redstone, Comfort or Minimal – and with the Cubiq services your modules, HUD layouts and keys follow you to every PC.',
           ],
-          shot: { file: '0.3.0/hud-editor.png', alt: 'Moving HUD elements in Minecraft with the HUD editor of the Cubiq Client', caption: 'Place every HUD element where you want it' },
+          shot: { file: '/shots/landing/change-version.png', alt: 'Choosing the Minecraft version and mod loader of an instance in Cubiq Launcher', caption: 'Pick a version and loader – the Cubiq Client comes along' },
         },
         {
           id: 'fps',
@@ -223,7 +222,7 @@ export const landingEn: LandingTexts = {
             'For PvP the Cubiq Client shows what matters in a fight: keystrokes, a CPS counter, reach, combo and speed display, an item counter for arrows, totems, potions, golden apples and ender pearls, and hit feedback with a hit marker. Add a custom crosshair, hit colour, 1.7 animations, low fire and a shield position that keeps your view clear.',
             'The chat gets timestamps, stacked repeated messages and mentions, the ping display shows your real ping with jitter, and streamer mode hides names and server addresses.',
           ],
-          shot: { file: '0.9.0/pvp-hud.png', alt: 'The PvP HUD of the Cubiq Client with item counter, hit marker and warnings', caption: 'Counter HUD, hit marker and warnings' },
+          shot: { file: '/shots/zoom.png', alt: 'The PvP HUD of the Cubiq Client in Minecraft with keystrokes, CPS, armor and item counters', caption: 'Keystrokes, CPS and counters' },
         },
         {
           id: 'fair-play',
@@ -239,7 +238,6 @@ export const landingEn: LandingTexts = {
           text: [
             'Smooth zoom (V), freelook (Left Alt) and toggle sprint and sneak are built in. The minimap glides smoothly, takes its colours from your resource pack, shows mob heads and puts far-away waypoints on its edge; indoors it looks inside buildings instead of showing the roof. Press M for a fullscreen world map with smooth zoom, a waypoint list, other dimensions and PNG export.',
           ],
-          shot: { file: '0.13.0/minimap.png', alt: 'The Cubiq Client minimap with waypoints on the edge and real mob heads', caption: 'Minimap with waypoints on the edge and real mob heads' },
         },
         {
           id: 'extras',
@@ -247,7 +245,7 @@ export const landingEn: LandingTexts = {
           text: [
             'Open the emote wheel and wave, dance or cheer – other Cubiq players see it. Cubiq capes swing like cloth with cape physics; many are free, some are animated or in HD. After F2 a small preview lets you edit, copy or send your screenshot, and the screenshot editor crops, draws arrows and text and pixelates names. Every world and server also gets its own notebook with checklists and clickable coordinates.',
           ],
-          shot: { file: '0.5.0/emote-wheel.png', alt: 'The emote wheel of the Cubiq Client in Minecraft', caption: 'The emote wheel' },
+          shot: { file: '/shots/landing/screenshots.png', alt: 'All screenshots of your Minecraft instances in one gallery in Cubiq Launcher', caption: 'Screenshots from every instance in one place' },
           link: { to: '/cosmetics', label: 'See all Cubiq capes' },
         },
       ],

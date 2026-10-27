@@ -80,7 +80,7 @@ const { active } = useListKeys(items, { open: (x) => void router.push(`/admin/ap
       </select>
       <input v-model="f.q" class="field w-44" maxlength="16" :placeholder="t.adm.apps.search" :aria-label="t.adm.apps.search" />
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <div v-if="loading && !items.length" class="mt-4 space-y-2"><div v-for="i in 4" :key="i" class="skeleton h-16 rounded-lg" /></div>
     <div v-else-if="!items.length" class="adm-empty mt-6"><SiteIcon name="inbox" class="size-6" />{{ t.adm.apps.empty }}</div>
@@ -102,7 +102,7 @@ const { active } = useListKeys(items, { open: (x) => void router.push(`/admin/ap
           </div>
           <div class="flex items-center gap-3 text-sm tabular-nums" :aria-label="t.adm.apps.votes">
             <span class="flex items-center gap-1" :class="x.votes.mine === 1 ? 'text-ok' : 'text-base-300'"><SiteIcon name="thumbUp" class="size-4" />{{ x.votes.up }}</span>
-            <span class="flex items-center gap-1" :class="x.votes.mine === -1 ? 'text-redstone-300' : 'text-base-300'"><SiteIcon name="thumbDown" class="size-4" />{{ x.votes.down }}</span>
+            <span class="flex items-center gap-1" :class="x.votes.mine === -1 ? 'text-primary-300' : 'text-base-300'"><SiteIcon name="thumbDown" class="size-4" />{{ x.votes.down }}</span>
           </div>
         </NuxtLink>
       </li>

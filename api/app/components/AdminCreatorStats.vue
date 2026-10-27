@@ -77,7 +77,7 @@ const stateTone = (s: StatState) => (s === 'active' ? 'tone-ok' : s === 'banned'
       </select>
       <span v-if="data" class="ml-auto text-xs text-base-400">{{ fill(t.generated, { time: when(data.generatedAt) }) }}</span>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <ul v-if="tiles.length" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
       <li v-for="x in tiles" :key="x.label" class="card p-4">
@@ -187,13 +187,13 @@ const stateTone = (s: StatState) => (s === 'active' ? 'tone-ok' : s === 'banned'
   color: var(--color-base-50);
 }
 .sort-btn:focus-visible {
-  outline: 2px solid var(--color-redstone-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
 }
 .arrow {
   display: inline-block;
   width: 0.7rem;
   font-size: 0.6rem;
-  color: var(--color-redstone-400);
+  color: var(--color-primary-400);
 }
 </style>

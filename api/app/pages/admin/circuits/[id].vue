@@ -209,9 +209,9 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
       <button v-else type="button" class="btn btn-ghost" :disabled="busy || !valid" @click="save('published')">{{ c.adm.publish }}</button>
     </div>
 
-    <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
     <p v-if="notice" role="status" class="mt-3 text-sm text-ok">{{ notice }}</p>
-    <p v-if="stale" role="alert" class="mt-3 flex items-center gap-3 text-sm text-lamp-300">
+    <p v-if="stale" role="alert" class="mt-3 flex items-center gap-3 text-sm text-caution-300">
       {{ c.adm.stale }} <button type="button" class="btn btn-ghost text-xs" @click="load">{{ c.adm.reload }}</button>
     </p>
 

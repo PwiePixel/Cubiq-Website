@@ -125,14 +125,14 @@ function onBlock(e: MouseEvent) {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-redstone-300);
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-redstone-500) 40%, transparent);
+  color: var(--color-primary-300);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 40%, transparent);
 }
 .type-badge[data-t='feature'] {
-  color: var(--color-lamp-300);
-  background: color-mix(in srgb, var(--color-lamp-400) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-lamp-400) 38%, transparent);
+  color: var(--color-caution-300);
+  background: color-mix(in srgb, var(--color-caution-400) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-caution-400) 38%, transparent);
 }
 .fixed-in {
   display: inline-flex;
@@ -167,8 +167,8 @@ function onBlock(e: MouseEvent) {
   padding: 0 0.35rem;
   border-radius: 999px;
   font-size: 0.65rem;
-  color: var(--color-redstone-300);
-  background: color-mix(in srgb, var(--color-redstone-500) 20%, transparent);
+  color: var(--color-primary-300);
+  background: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
 }
 .tag {
   font-size: 0.72rem;

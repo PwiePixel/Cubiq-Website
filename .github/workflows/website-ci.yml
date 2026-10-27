@@ -1,15 +1,16 @@
 name: Website CI
 
-# Prüfungen für den website-Branch (Website/API in api/, Doku in docs-site/).
-# Pflicht-Check fürs Ruleset: nur `website-ok` – der sammelt alle Jobs ein (übersprungen zählt als bestanden).
+# Prüfungen für Website/API (api/) und Doku (docs-site/) – bei jedem Push auf main und jedem Pull Request.
+# Pflicht-Check für Branch-Schutz/Ruleset: nur `website-ok` – der sammelt alle Jobs ein (übersprungen zählt als bestanden).
 #
 # Sicherheit: `pull_request` (nicht `_target`) – Code aus Forks läuft ohne Secrets und nur mit Lese-Token.
 # Nichts braucht echte Daten: DATA_DIR ist ein leeres Temp-Verzeichnis, SECRET_KEY wird je Lauf zufällig erzeugt.
 on:
   pull_request:
-    branches: [website]
+    branches: [main]
   push:
-    branches: [website]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -97,10 +98,8 @@ jobs:
       - name: Typecheck
         run: npx nuxt typecheck
 
-      # Falle: Vite/oxc sucht beim Build auch die tsconfig der Repo-Wurzel, die auf ../.nuxt/tsconfig.*.json der
-      # Launcher-App zeigt. Ohne `nuxt prepare` in der Wurzel fehlen die – leere Platzhalter anlegen (wie docs-site).
-      - name: Placeholder tsconfigs of the launcher app
-        run: node ../docs-site/scripts/ensure-parent-tsconfig.mjs
+      - name: Lint
+        run: npx eslint .
 
       - name: Build
         run: npx nuxt build

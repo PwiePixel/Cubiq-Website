@@ -184,12 +184,12 @@ const tableId = useId()
 
 <style scoped>
 .adm-series {
-  --mark: var(--color-redstone-500);
-  --mark-hi: var(--color-redstone-400);
+  --mark: var(--color-primary-500);
+  --mark-hi: var(--color-primary-400);
 }
 .adm-series.series-lamp {
-  --mark: var(--color-lamp-400);
-  --mark-hi: var(--color-lamp-300);
+  --mark: var(--color-primary-400);
+  --mark-hi: var(--color-primary-300);
 }
 .adm-series.series-ok {
   --mark: var(--color-ok);

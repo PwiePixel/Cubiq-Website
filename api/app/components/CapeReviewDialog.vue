@@ -125,9 +125,9 @@ function reportLabel(key: string): string {
   return labels[key] ?? key
 }
 const statusClass = computed(() => ({
-  pending: 'bg-lamp-900 text-lamp-300',
+  pending: 'bg-caution-900 text-caution-300',
   approved: 'bg-ok/15 text-ok',
-  rejected: 'bg-redstone-900 text-redstone-300',
+  rejected: 'bg-danger-900 text-danger-300',
 })[props.cape.status])
 
 // --- Ablehnen / Löschen ---------------------------------------------------------------------
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
             <h2 id="cape-review-title" class="display mt-1 truncate text-2xl text-base-50">{{ cape.name || cape.id }}</h2>
           </div>
           <span class="badge" :class="statusClass">{{ r.status[cape.status] }}</span>
-          <span v-if="cape.reports.count" class="badge bg-lamp-900 text-lamp-300">
+          <span v-if="cape.reports.count" class="badge bg-caution-900 text-caution-300">
             <SiteIcon name="flag" class="size-3" />{{ cape.reports.count }}
           </span>
           <div class="flex gap-1.5">
@@ -294,7 +294,7 @@ onBeforeUnmount(() => {
           </div>
         </header>
 
-        <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+        <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
 
         <div class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <!-- Textur -->
@@ -347,8 +347,8 @@ onBeforeUnmount(() => {
             <div v-if="stats.length">
               <p class="text-xs text-base-400">{{ r.ownerStats }}</p>
               <div class="mt-1.5 grid grid-cols-4 gap-1.5">
-                <div v-for="s in stats" :key="s.label" class="rounded-md bg-base-950 px-2 py-1.5 text-center" :class="{ 'text-redstone-300': s.warn }">
-                  <p class="display text-lg tabular-nums" :class="s.warn ? 'text-redstone-300' : 'text-base-50'">{{ s.value }}</p>
+                <div v-for="s in stats" :key="s.label" class="rounded-md bg-base-950 px-2 py-1.5 text-center" :class="{ 'text-caution-300': s.warn }">
+                  <p class="display text-lg tabular-nums" :class="s.warn ? 'text-caution-300' : 'text-base-50'">{{ s.value }}</p>
                   <p class="text-[10px] text-base-400">{{ s.label }}</p>
                 </div>
               </div>
@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
               <legend class="text-sm font-semibold text-base-50">{{ r.rejectTitle }}</legend>
               <div ref="reasonList" class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                 <label v-for="k in REASONS" :key="k" class="reason-opt" :class="{ 'reason-opt-on': reasonKey === k }">
-                  <input type="radio" name="reject-reason" class="accent-redstone-500" :value="k" :checked="reasonKey === k" @change="choose(k)" />
+                  <input type="radio" name="reject-reason" class="accent-danger-500" :value="k" :checked="reasonKey === k" @change="choose(k)" />
                   <span>{{ r.reasons[k].label }}</span>
                 </label>
               </div>
@@ -388,7 +388,7 @@ onBeforeUnmount(() => {
           </form>
 
           <div v-else-if="confirmDelete" class="flex flex-wrap items-center gap-3">
-            <p class="text-sm text-redstone-300">{{ r.deleteConfirm }}</p>
+            <p class="text-sm text-danger-300">{{ r.deleteConfirm }}</p>
             <button type="button" class="btn btn-danger" :disabled="busy" @click="emit('delete')">
               <SiteIcon name="trash" class="size-4" />{{ r.deleteNow }}
             </button>
@@ -484,7 +484,7 @@ onBeforeUnmount(() => {
   border-color: var(--color-base-600);
 }
 .reason-opt-on {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-50);
 }
 .key {

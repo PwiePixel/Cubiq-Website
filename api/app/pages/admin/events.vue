@@ -129,7 +129,7 @@ async function remove(ev: AdminEvent, p: EventPlayer, kind: ListKind = 'players'
       <h1 class="adm-title">{{ a.events.title }}</h1>
       <p class="adm-lead">{{ a.events.lead }}</p>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading" class="skeleton mt-6 h-48 rounded-xl" />
     <p v-else-if="!events.length" class="adm-empty mt-6"><SiteIcon name="moon" class="size-6" />{{ a.common.empty }}</p>
 

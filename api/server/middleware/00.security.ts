@@ -9,7 +9,7 @@ import { clientIp, limit, noContent } from '../lib/http'
 import { RULES } from '../lib/ratelimit'
 
 /** Gebaute Dateien der Website (Skripte, Stile, Schriften) – nicht aufs IP-Limit anrechnen. */
-const STATIC = /^\/(?:_nuxt|_fonts|news|img|shots|flags|wait-song|mail)\/|^\/(?:icon\.png|og\.png|favicon\.ico)$/
+const STATIC = /^\/(?:_nuxt|_fonts|news|img|shots|flags|mail)\/|^\/(?:icon\.png|logo\.png|og\.png|favicon\.ico)$/
 /** Maschinenlesbare Dateien der Website – gleich in jeder Sprache. */
 const FEEDS = /^\/(?:sitemap\.xml|robots\.txt|feed\.xml|llms\.txt|llms-full\.txt)$/
 
@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
       // Seiten: Adresse der Website für kanonische Links/hreflang (composables/useSeo.ts). Ohne `?lang=`
       // hängt die Sprache von Cookie und Accept-Language ab – das sagen wir Caches und Crawlern.
       event.context.siteUrl = ctx.config.siteUrl
+      event.context.wikiUrl = ctx.config.wikiUrl
       if (!FEEDS.test(event.path.split('?')[0]!)) setResponseHeader(event, 'Vary', 'Accept-Language, Cookie')
     }
     return

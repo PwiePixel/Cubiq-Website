@@ -36,7 +36,7 @@ usePageSeo(() => ({
 <template>
   <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
     <header class="max-w-3xl">
-      <p class="text-xs font-semibold tracking-[0.2em] text-lamp-300 uppercase">{{ m.features.kicker }}</p>
+      <p class="text-xs font-semibold tracking-[0.2em] text-primary-300 uppercase">{{ m.features.kicker }}</p>
       <h1 class="display mt-3 text-5xl leading-tight text-base-50">{{ m.features.title }}</h1>
       <p class="mt-4 text-lg leading-relaxed text-base-400">{{ m.features.lead }}</p>
     </header>
@@ -114,7 +114,7 @@ usePageSeo(() => ({
 }
 .toc-chip:hover {
   color: var(--color-base-50);
-  box-shadow: inset 0 0 0 1px var(--color-redstone-500);
+  box-shadow: inset 0 0 0 1px var(--color-primary-500);
 }
 .feature-row {
   display: grid;
@@ -134,8 +134,8 @@ usePageSeo(() => ({
   width: 0.45rem;
   height: 0.45rem;
   margin-top: 0.5rem;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 8px -1px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 8px -1px var(--color-primary-500);
 }
 .shot {
   overflow: hidden;
@@ -147,7 +147,7 @@ usePageSeo(() => ({
 }
 .cta {
   background:
-    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-redstone-900) 55%, transparent), transparent 70%),
+    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-primary-900) 55%, transparent), transparent 70%),
     var(--color-base-900);
 }
 </style>

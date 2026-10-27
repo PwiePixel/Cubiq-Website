@@ -75,28 +75,23 @@ export interface LandingTexts {
 
 export const NEWS_RAW_BASE = 'https://raw.githubusercontent.com/PwiePixel/Cubiq-launcher/main/public/news'
 
-/** Maße der genutzten Screenshots (gegen Layout-Sprünge). */
+/** Maße der genutzten Screenshots (gegen Layout-Sprünge). Pfade mit `/` liegen in public/ der Website. */
 export const SHOT_SIZES: Record<string, [number, number]> = {
-  '0.2.0/content.png': [2560, 1392],
-  '0.2.1/library.png': [1280, 800],
-  '0.3.0/hud-editor.png': [854, 480],
-  '0.4.0/running.png': [1100, 720],
-  '0.5.0/emote-wheel.png': [854, 480],
-  '0.5.0/redstone-overlay.png': [854, 480],
-  '0.8.0/worlds.png': [1400, 860],
-  '0.9.0/pvp-hud.png': [854, 480],
-  '0.10.0/circuit-ghost.png': [854, 480],
-  '0.10.0/circuits.png': [854, 480],
-  '0.10.0/crash-helper.png': [1280, 900],
-  '0.10.0/modpack-choice.png': [1280, 820],
-  '0.12.0/share-result.png': [1280, 800],
-  '0.12.0/pack-update.png': [1280, 800],
-  '0.13.0/minimap.png': [854, 480],
-  '0.14.0/achievements.png': [1280, 830],
+  '/shots/landing/instances-library.png': [1600, 1000],
+  '/shots/landing/clips-gallery.png': [1600, 1000],
+  '/shots/landing/crash-helper.png': [1600, 1000],
+  '/shots/landing/update-news.png': [1600, 1400],
+  '/shots/landing/discover.png': [1600, 1000],
+  '/shots/landing/modpack-install.png': [1600, 1000],
+  '/shots/landing/content-list.png': [1600, 1000],
+  '/shots/landing/change-version.png': [1600, 1000],
+  '/shots/landing/screenshots.png': [1600, 1000],
+  '/shots/zoom.png': [854, 480],
 }
 
+/** Adresse eines Screenshots: eigene Bilder (`/shots/…`) von der Website, sonst aus public/news des Launcher-Repos. */
 export function shotUrl(file: string): string {
-  return `${NEWS_RAW_BASE}/${file}`
+  return file.startsWith('/') ? file : `${NEWS_RAW_BASE}/${file}`
 }
 
 export function shotSize(file: string): [number, number] {

@@ -276,6 +276,13 @@ const origin = (s: string): string | null => {
   }
 }
 
+/** Leerer Wert (`KEY=` in .env) zählt wie nicht gesetzt – dann gilt der Standard. */
+const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v)
+
+/** Optionale http(s)-Adresse ohne `/` am Ende; leer = nicht gesetzt. */
+const optionalUrl = () =>
+  z.preprocess(emptyToUndefined, z.url({ protocol: /^https?$/ }).optional()).transform((s) => s?.replace(/\/+$/, ''))
+
 const envSchema = z.object({
   DATA_DIR: z.string().min(1).default('/data'),
   // Proprietäre Kosmetik. Leer = `<DATA_DIR>/private-assets`. Der Ordner darf beim Start fehlen.
@@ -286,10 +293,7 @@ const envSchema = z.object({
     .refine((s) => !s.includes('\0'), 'invalid path')
     .transform((s) => s.trim()),
   // Adresse der API für Umhang-/Bild-URLs in Antworten. Leer = SITE_URL (Website und API auf einer Domain).
-  PUBLIC_BASE_URL: z
-    .url({ protocol: /^https?$/ })
-    .optional()
-    .transform((s) => s?.replace(/\/+$/, '')),
+  PUBLIC_BASE_URL: optionalUrl(),
   // Adresse der Website, z. B. https://cubiq-launcher.de – die eine Einstellung, die jede Installation braucht.
   SITE_URL: z
     .url({ protocol: /^https?$/ })
@@ -302,10 +306,7 @@ const envSchema = z.object({
     .transform((raw) => new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean))),
   // Doku auf eigener Domain (server/lib/wiki.ts). Der Host-Name dieser Adresse bedient nur die Doku.
   // Leer = docs.<Host von SITE_URL>.
-  WIKI_URL: z
-    .url({ protocol: /^https?$/ })
-    .optional()
-    .transform((s) => s?.replace(/\/+$/, '')),
+  WIKI_URL: optionalUrl(),
   DOCS_DIR: z
     .string()
     .max(4096)
@@ -355,7 +356,7 @@ const envSchema = z.object({
   MS_CLIENT_ID: z.string().trim().default('').refine((s) => s === '' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s), 'must be a GUID'),
   MS_CLIENT_SECRET: z.string().trim().default(''),
   // Leer = SITE_URL + /auth/microsoft/callback.
-  MS_REDIRECT_URI: z.url({ protocol: /^https?$/ }).optional(),
+  MS_REDIRECT_URI: z.preprocess(emptyToUndefined, z.url({ protocol: /^https?$/ }).optional()),
   // Nur für lokale Tests mit Attrappen (http://…). Nie in Produktion ändern.
   MS_AUTHORITY_URL: z.url({ protocol: /^https?$/ }).default('https://login.microsoftonline.com/consumers/oauth2/v2.0').transform((s) => s.replace(/\/+$/, '')),
   XBOX_USER_AUTH_URL: z.url({ protocol: /^https?$/ }).default('https://user.auth.xboxlive.com/user/authenticate'),
@@ -374,11 +375,13 @@ const envSchema = z.object({
   SMTP_SECURE: bool.default(false),
   SMTP_USER: z.string().max(320).default(''),
   SMTP_PASS: z.string().max(1024).default(''),
-  MAIL_FROM: z.string().trim().max(200).default('Cubiq Launcher <no-reply@cubiq-launcher.invalid>'),
+  // Leer = `Cubiq Launcher <no-reply@<Host von SITE_URL>>`.
+  MAIL_FROM: z.string().trim().max(200).default(''),
   // Eigenes Konto für Kampagnen (gleicher SMTP-Server). Leer = Kampagnen über das System-Konto.
   NEWSLETTER_SMTP_USER: z.string().max(320).default(''),
   NEWSLETTER_SMTP_PASS: z.string().max(1024).default(''),
-  NEWSLETTER_FROM: z.string().trim().max(200).default('Cubiq Launcher <newsletter@cubiq-launcher.invalid>'),
+  // Leer = `Cubiq Launcher <newsletter@<Host von SITE_URL>>`.
+  NEWSLETTER_FROM: z.string().trim().max(200).default(''),
   MAIL_REPLY_TO: z.string().trim().max(254).default(''),
   MAIL_TEAM_TO: z.string().trim().max(2000).default(''),
   MAIL_RATE_PER_MIN: z.coerce.number().int().min(1).max(6000).default(60),
@@ -446,23 +449,26 @@ function parseMail(e: z.output<typeof envSchema>): MailConfig | null {
     const addr = m ? (m[2] ?? m[3]!) : ''
     if (!m || !MAIL_ADDRESS.test(addr)) throw new ConfigError(`Invalid configuration: ${key} (expected "Name <address>" or an address)`)
   }
-  checkFrom(e.MAIL_FROM, 'MAIL_FROM')
+  const host = new URL(e.SITE_URL).hostname
+  const mailFrom = e.MAIL_FROM || `Cubiq Launcher <no-reply@${host}>`
+  const newsletterFrom = e.NEWSLETTER_FROM || `Cubiq Launcher <newsletter@${host}>`
+  checkFrom(mailFrom, 'MAIL_FROM')
   if (e.MAIL_REPLY_TO !== '' && !MAIL_ADDRESS.test(e.MAIL_REPLY_TO)) throw new ConfigError('Invalid configuration: MAIL_REPLY_TO')
   const teamTo = e.MAIL_TEAM_TO.split(',').map((s) => s.trim()).filter(Boolean)
   if (teamTo.some((a) => !MAIL_ADDRESS.test(a))) throw new ConfigError('Invalid configuration: MAIL_TEAM_TO (comma-separated addresses)')
   if ((e.SMTP_USER === '') !== (e.SMTP_PASS === '')) throw new ConfigError('Invalid configuration: SMTP_USER and SMTP_PASS must be set together')
   if ((e.NEWSLETTER_SMTP_USER === '') !== (e.NEWSLETTER_SMTP_PASS === '')) throw new ConfigError('Invalid configuration: NEWSLETTER_SMTP_USER and NEWSLETTER_SMTP_PASS must be set together')
-  const system: MailAccount = { user: e.SMTP_USER || null, pass: e.SMTP_PASS || null, from: e.MAIL_FROM }
+  const system: MailAccount = { user: e.SMTP_USER || null, pass: e.SMTP_PASS || null, from: mailFrom }
   // Ohne eigenes Newsletter-Konto: alles über das System-Konto (Absender inklusive – der Server lässt meist nur die eigene Adresse zu).
   const own = e.NEWSLETTER_SMTP_USER !== ''
-  if (own) checkFrom(e.NEWSLETTER_FROM, 'NEWSLETTER_FROM')
+  if (own) checkFrom(newsletterFrom, 'NEWSLETTER_FROM')
   return {
     host: e.SMTP_HOST,
     port: e.SMTP_PORT,
     secure: e.SMTP_SECURE,
     system,
     newsletter: own
-      ? { user: e.NEWSLETTER_SMTP_USER, pass: e.NEWSLETTER_SMTP_PASS, from: e.NEWSLETTER_FROM, shared: false }
+      ? { user: e.NEWSLETTER_SMTP_USER, pass: e.NEWSLETTER_SMTP_PASS, from: newsletterFrom, shared: false }
       : { ...system, shared: true },
     replyTo: e.MAIL_REPLY_TO === '' ? null : e.MAIL_REPLY_TO,
     teamTo: teamTo.slice(0, 10),
@@ -507,6 +513,13 @@ function parseChatKeys(raw: string, secret: string): Config['chatKeys'] {
 
 export class ConfigError extends Error {}
 
+/** Doku-Adresse aus der Website-Adresse: `docs.<host>`; bei IP-Adressen (lokal) `docs.localhost` mit gleichem Port. */
+function docsUrl(site: URL): string {
+  const ip = /^\d+\.\d+\.\d+\.\d+$/.test(site.hostname) || site.hostname.startsWith('[')
+  const host = ip ? 'docs.localhost' : `docs.${site.hostname}`
+  return `${site.protocol}//${host}${site.port ? `:${site.port}` : ''}`
+}
+
 /** Liest die Konfiguration. Wirft `ConfigError` mit den Namen der fehlerhaften Variablen (nie deren Werte). */
 export function loadConfig(env: Record<string, string | undefined>, limits: Partial<Limits> = {}): Config {
   const parsed = envSchema.safeParse(env)
@@ -516,7 +529,7 @@ export function loadConfig(env: Record<string, string | undefined>, limits: Part
   }
   const e = parsed.data
   const site = new URL(e.SITE_URL)
-  const wikiUrl = e.WIKI_URL ?? `${site.protocol}//docs.${site.host}`
+  const wikiUrl = e.WIKI_URL ?? docsUrl(site)
   for (const key of ['MOJANG_SESSIONSERVER_URL', 'MOJANG_API_URL'] as const) {
     if (e[key].startsWith('http:') && !e.ALLOW_INSECURE_MOJANG_URL) {
       throw new ConfigError(`Invalid configuration: ${key} (must be https)`)

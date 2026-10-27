@@ -97,7 +97,7 @@ const fansLabel = (c: SiteCreator) => (c.fanCount === 1 ? t.value.oneFan : fill(
 <template>
   <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
     <header class="max-w-3xl">
-      <p class="text-xs font-semibold tracking-[0.2em] text-redstone-400 uppercase">{{ t.eyebrow }}</p>
+      <p class="text-xs font-semibold tracking-[0.2em] text-primary-400 uppercase">{{ t.eyebrow }}</p>
       <h1 class="display mt-2 text-5xl leading-tight text-base-50 sm:text-6xl">{{ t.title }}</h1>
       <p class="mt-4 text-lg text-base-400">{{ t.lead }}</p>
     </header>
@@ -156,7 +156,7 @@ const fansLabel = (c: SiteCreator) => (c.fanCount === 1 ? t.value.oneFan : fill(
   background: var(--color-base-800);
 }
 .tier-section[data-tier='top'] .tier-title {
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .creator-grid {
   display: grid;
@@ -203,7 +203,7 @@ const fansLabel = (c: SiteCreator) => (c.fanCount === 1 ? t.value.oneFan : fill(
   }
 }
 .become {
-  border-left: 3px solid var(--color-redstone-500);
+  border-left: 3px solid var(--color-primary-500);
 }
 @media (max-width: 420px) {
   .creator-grid {

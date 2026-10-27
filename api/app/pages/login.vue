@@ -146,7 +146,7 @@ const { look: hwOn } = useHalloween()
 
 <template>
   <div class="mx-auto max-w-3xl px-4 pt-14 pb-6 sm:px-6">
-    <p class="text-xs tracking-[0.18em] text-redstone-300 uppercase">Cubiq Launcher</p>
+    <p class="text-xs tracking-[0.18em] text-primary-300 uppercase">Cubiq Launcher</p>
     <h1 class="display mt-2 text-4xl text-base-50 sm:text-5xl">{{ l.title }}</h1>
     <p class="mt-3 max-w-2xl text-base-400">{{ l.lead }}</p>
 
@@ -167,7 +167,7 @@ const { look: hwOn } = useHalloween()
       <div class="grid gap-4 sm:grid-cols-2">
         <button type="button" class="method" data-testid="login-launcher" :disabled="starting" @click="startLauncher">
           <span class="tile">
-            <img src="/icon.png" alt="" width="40" height="40" class="size-10 [image-rendering:pixelated]" />
+            <img src="/icon.png" alt="" width="40" height="40" class="size-10" />
           </span>
           <span class="min-w-0 flex-1 text-left">
             <span class="block text-lg font-semibold text-base-50">{{ l.launcher.title }}</span>
@@ -187,7 +187,7 @@ const { look: hwOn } = useHalloween()
           <span class="tile opacity-50"><MsLogo class="size-9" /></span>
           <span class="min-w-0 flex-1 text-left">
             <span class="block text-lg font-semibold text-base-400">{{ l.microsoft.title }}</span>
-            <span class="mt-0.5 block text-sm text-lamp-300">{{ t.login.disabled }}</span>
+            <span class="mt-0.5 block text-sm text-caution-300">{{ t.login.disabled }}</span>
           </span>
         </div>
       </div>
@@ -196,9 +196,9 @@ const { look: hwOn } = useHalloween()
     <!-- Warten auf die Bestätigung im Launcher -->
     <section v-else-if="step === 'wait' || step === 'done'" class="card login-card mt-8 p-6 sm:p-8" aria-live="polite">
       <div class="flex items-start gap-4">
-        <span class="hidden sm:block"><span class="tile"><img src="/icon.png" alt="" width="40" height="40" class="size-10 [image-rendering:pixelated]" /></span></span>
+        <span class="hidden sm:block"><span class="tile"><img src="/icon.png" alt="" width="40" height="40" class="size-10" /></span></span>
         <div class="min-w-0 flex-1">
-          <p class="text-xs tracking-[0.14em] text-redstone-300 uppercase">{{ l.wait.kicker }}</p>
+          <p class="text-xs tracking-[0.14em] text-primary-300 uppercase">{{ l.wait.kicker }}</p>
           <h2 class="display mt-1 text-3xl text-base-50">{{ l.wait.title }}</h2>
           <p class="mt-2 text-sm text-base-200">{{ l.wait.lead }}</p>
         </div>
@@ -233,7 +233,7 @@ const { look: hwOn } = useHalloween()
         </div>
         <div class="hint">
           <p class="font-semibold text-base-50">{{ l.wait.noLauncher }}</p>
-          <NuxtLink :to="lp('/download')" class="mt-1 inline-flex items-center gap-1.5 text-redstone-300 hover:underline">
+          <NuxtLink :to="lp('/download')" class="mt-1 inline-flex items-center gap-1.5 text-primary-300 hover:underline">
             <SiteIcon name="download" class="size-4" />{{ l.wait.download }}
           </NuxtLink>
         </div>
@@ -243,7 +243,7 @@ const { look: hwOn } = useHalloween()
     <!-- Abgelaufen / abgelehnt -->
     <section v-else class="card login-card mt-8 p-6 sm:p-8" role="alert">
       <div class="flex items-start gap-3">
-        <SiteIcon :name="step === 'expired' ? 'clock' : 'ban'" class="mt-1 size-6 shrink-0 text-lamp-300" />
+        <SiteIcon :name="step === 'expired' ? 'clock' : 'ban'" class="mt-1 size-6 shrink-0 text-caution-300" />
         <div>
           <h2 class="display text-3xl text-base-50">{{ step === 'expired' ? l.expired.title : l.denied.title }}</h2>
           <p class="mt-2 text-sm text-base-200">{{ step === 'expired' ? l.expired.text : deniedBanned ? l.denied.banned : l.denied.text }}</p>
@@ -264,15 +264,15 @@ const { look: hwOn } = useHalloween()
 
 <style scoped>
 .login-card {
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 .alert {
   display: flex;
   gap: 0.5rem;
   border-radius: 0.375rem;
-  border: 1px solid color-mix(in srgb, var(--color-redstone-600) 60%, transparent);
-  background: color-mix(in srgb, var(--color-redstone-900) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger-600) 60%, transparent);
+  background: color-mix(in srgb, var(--color-danger-900) 45%, transparent);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   color: var(--color-base-200);
@@ -287,13 +287,13 @@ const { look: hwOn } = useHalloween()
   border-radius: 0.75rem;
   border: 1px solid var(--color-base-700);
   background-color: var(--color-base-900);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
   text-align: left;
   transition: border-color 0.15s, background-color 0.15s, translate 0.15s;
 }
 .method:not([aria-disabled='true'], :disabled):hover {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 70%, var(--color-base-700));
+  border-color: color-mix(in srgb, var(--color-primary-500) 70%, var(--color-base-700));
   background-color: var(--color-base-850);
   translate: 0 -1px;
 }
@@ -306,7 +306,7 @@ const { look: hwOn } = useHalloween()
   transition: translate 0.15s, color 0.15s;
 }
 .method:hover .go {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
   translate: 2px 0;
 }
 .tile {
@@ -318,7 +318,7 @@ const { look: hwOn } = useHalloween()
   border-radius: 0.625rem;
   border: 1px solid var(--color-base-700);
   background: var(--color-base-950);
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-redstone-600) 30%, transparent);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-primary-600) 30%, transparent);
 }
 .code-box {
   display: flex;
@@ -327,7 +327,7 @@ const { look: hwOn } = useHalloween()
   gap: 0.5rem;
   padding: 1.25rem 1rem;
   border-radius: 0.75rem;
-  border: 1px dashed color-mix(in srgb, var(--color-redstone-500) 55%, var(--color-base-700));
+  border: 1px dashed color-mix(in srgb, var(--color-primary-500) 55%, var(--color-base-700));
   background: color-mix(in srgb, var(--color-base-950) 70%, transparent);
 }
 .code {
@@ -335,14 +335,14 @@ const { look: hwOn } = useHalloween()
   line-height: 1.1;
   letter-spacing: 0.12em;
   color: var(--color-base-50);
-  text-shadow: 0 0 18px color-mix(in srgb, var(--color-redstone-500) 45%, transparent);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--color-primary-500) 45%, transparent);
 }
 .spinner {
   width: 1.1rem;
   height: 1.1rem;
   border-radius: 9999px;
   border: 2px solid var(--color-base-700);
-  border-top-color: var(--color-redstone-400);
+  border-top-color: var(--color-primary-400);
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin {
@@ -359,7 +359,7 @@ const { look: hwOn } = useHalloween()
 .timebar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--color-redstone-600), var(--color-redstone-400));
+  background: linear-gradient(90deg, var(--color-primary-600), var(--color-primary-400));
   transform-origin: left;
   transition: transform 0.25s linear;
 }

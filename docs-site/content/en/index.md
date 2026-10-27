@@ -1,6 +1,6 @@
 ---
 title: "Cubiq Launcher Documentation"
-description: "Guides for Cubiq Launcher, the free redstone Minecraft launcher by PwiePixel, and the Cubiq Client mod – install, play, fix problems."
+description: "Guides for Cubiq Launcher, the free Minecraft launcher by PwiePixel, and the Cubiq Client mod – install, play, fix problems."
 navigation: false
 ---
 
@@ -13,7 +13,7 @@ navigation: false
 Cubiq Launcher [Documentation]{.text-primary}
 
 #description
-Everything about **Cubiq Launcher** – the free, open-source redstone Minecraft launcher by PwiePixel – and the built-in **Cubiq Client** mod. Install it, set up instances and modpacks, learn every client module and fix problems fast.
+Everything about **Cubiq Launcher** – the free, open-source Minecraft launcher by PwiePixel – and the built-in **Cubiq Client** mod. Install it, set up instances and modpacks, learn every client module and fix problems fast.
 
 #links
   :::u-button
@@ -99,9 +99,9 @@ Five areas cover everything from the first start to the source code. Press :kbd{
     ::::u-page-card
     ---
     title: Community
-    description: Questions, ideas and news – join the Discord server or open an issue on the website.
-    icon: i-simple-icons-discord
-    to: https://cubiq-launcher.invalid/discord
+    description: Questions, ideas and bug reports – open an issue on the website and follow what's planned.
+    icon: i-lucide-messages-square
+    to: https://cubiq-launcher.invalid/issues
     target: _blank
     spotlight: true
     ---

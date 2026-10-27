@@ -91,7 +91,7 @@ useHead({ title: () => it.value.seo.new, meta: [{ name: 'robots', content: 'noin
               <SiteIcon :name="a === 'launcher' ? 'download' : a === 'client' ? 'client' : 'globe'" class="size-4" />{{ it.areas[a] }}
             </label>
           </div>
-          <p v-if="area === 'client' && type === 'bug'" class="mt-2 flex items-start gap-2 text-xs text-lamp-300">
+          <p v-if="area === 'client' && type === 'bug'" class="mt-2 flex items-start gap-2 text-xs text-caution-300">
             <SiteIcon name="client" class="mt-0.5 size-3.5 shrink-0" />{{ it.new.clientHint }}
           </p>
         </fieldset>
@@ -116,7 +116,7 @@ useHead({ title: () => it.value.seo.new, meta: [{ name: 'robots', content: 'noin
           />
         </div>
 
-        <p v-if="error" role="alert" class="text-sm text-redstone-300">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-danger-300">{{ error }}</p>
         <div class="flex justify-end gap-2">
           <NuxtLink :to="lp('/issues')" class="btn btn-ghost">{{ it.common.cancel }}</NuxtLink>
           <button type="submit" class="btn btn-primary" :disabled="busy || !valid || !!editor?.busy" data-testid="submit-issue">
@@ -161,18 +161,18 @@ useHead({ title: () => it.value.seo.new, meta: [{ name: 'robots', content: 'noin
   border-color: var(--color-base-600);
 }
 .choice.on {
-  border-color: var(--color-redstone-500);
-  background: color-mix(in srgb, var(--color-redstone-500) 10%, var(--color-base-900));
-  color: var(--color-redstone-300);
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-500) 10%, var(--color-base-900));
+  color: var(--color-primary-300);
 }
 .choice.on[data-t='feature'] {
-  border-color: var(--color-lamp-400);
-  background: color-mix(in srgb, var(--color-lamp-400) 10%, var(--color-base-900));
-  color: var(--color-lamp-300);
+  border-color: var(--color-caution-400);
+  background: color-mix(in srgb, var(--color-caution-400) 10%, var(--color-base-900));
+  color: var(--color-caution-300);
 }
 .choice:focus-within,
 .seg-choice:focus-within {
-  outline: 2px solid var(--color-redstone-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
 }
 .seg-choice {

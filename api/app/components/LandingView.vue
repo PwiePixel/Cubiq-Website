@@ -53,7 +53,7 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
     </nav>
 
     <header class="mt-6 max-w-3xl">
-      <p class="text-xs font-semibold tracking-[0.2em] text-lamp-300 uppercase">{{ p.kicker }}</p>
+      <p class="text-xs font-semibold tracking-[0.2em] text-primary-300 uppercase">{{ p.kicker }}</p>
       <h1 class="display mt-3 text-4xl leading-tight text-base-50 sm:text-5xl">{{ p.title }}</h1>
       <p class="mt-4 text-lg leading-relaxed text-base-300">{{ p.lead }}</p>
       <div class="mt-7 flex flex-wrap gap-2">
@@ -156,7 +156,7 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
 }
 .toc-chip:hover {
   color: var(--color-base-50);
-  box-shadow: inset 0 0 0 1px var(--color-redstone-500);
+  box-shadow: inset 0 0 0 1px var(--color-primary-500);
 }
 .landing-row {
   display: grid;
@@ -176,8 +176,8 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
   width: 0.45rem;
   height: 0.45rem;
   margin-top: 0.5rem;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 8px -1px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 8px -1px var(--color-primary-500);
 }
 .shot {
   overflow: hidden;
@@ -191,11 +191,11 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
   display: none;
 }
 .faq[open] summary h3 {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 .cta {
   background:
-    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-redstone-900) 55%, transparent), transparent 70%),
+    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-primary-900) 55%, transparent), transparent 70%),
     var(--color-base-900);
 }
 </style>

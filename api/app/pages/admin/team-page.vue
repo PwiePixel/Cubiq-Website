@@ -256,8 +256,8 @@ function moveToGroup(m: TeamPageMember, roleId: string) {
       </div>
       <NuxtLink :to="lp('/team')" target="_blank" class="btn btn-ghost text-sm"><SiteIcon name="external" class="size-4" />{{ tp.open }}</NuxtLink>
     </header>
-    <p v-if="view && !editable" class="mt-3 text-sm text-lamp-300">{{ tp.readOnly }}</p>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="view && !editable" class="mt-3 text-sm text-caution-300">{{ tp.readOnly }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading" class="skeleton mt-6 h-64 rounded-xl" />
 
     <div v-else-if="view" class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -355,7 +355,7 @@ function moveToGroup(m: TeamPageMember, roleId: string) {
             <option v-for="o in view.groups" :key="o.role.id" :value="o.role.id">{{ roleName(o.role) }}</option>
           </select>
           <p class="mt-1.5 text-xs text-base-400">{{ tp.addHint }}</p>
-          <p v-if="addError" role="alert" class="mt-3 text-sm text-redstone-300">{{ addError }}</p>
+          <p v-if="addError" role="alert" class="mt-3 text-sm text-danger-300">{{ addError }}</p>
           <button type="submit" class="btn btn-primary mt-4 w-full" :disabled="busy || !addQuery.trim()"><SiteIcon name="plus" class="size-4" />{{ tp.add }}</button>
         </form>
       </aside>
@@ -379,7 +379,7 @@ function moveToGroup(m: TeamPageMember, roleId: string) {
         <div>
           <label class="label" for="tp-discord">{{ tp.discord }}</label>
           <input id="tp-discord" v-model="draft.discord" class="field" maxlength="32" autocomplete="off" spellcheck="false" :aria-invalid="discordInvalid" aria-describedby="tp-discord-hint" />
-          <p id="tp-discord-hint" class="mt-1.5 text-xs" :class="discordInvalid ? 'text-redstone-300' : 'text-base-400'">{{ discordInvalid ? tp.errors.discord : tp.discordHint }}</p>
+          <p id="tp-discord-hint" class="mt-1.5 text-xs" :class="discordInvalid ? 'text-danger-300' : 'text-base-400'">{{ discordInvalid ? tp.errors.discord : tp.discordHint }}</p>
         </div>
         <div>
           <p class="label">{{ tp.links }}</p>
@@ -393,7 +393,7 @@ function moveToGroup(m: TeamPageMember, roleId: string) {
           <button v-if="draft.links.length < 3" type="button" class="btn btn-ghost mt-2 text-xs" @click="draft.links.push({ label: '', url: 'https://' })"><SiteIcon name="plus" class="size-3.5" />{{ tp.addLink }}</button>
           <p class="mt-1.5 text-xs text-base-400">{{ tp.linksHint }}</p>
         </div>
-        <ul v-if="draftErrors.length" role="alert" class="space-y-1 rounded-lg border border-redstone-600 bg-redstone-900/50 px-3 py-2 text-sm text-base-50">
+        <ul v-if="draftErrors.length" role="alert" class="space-y-1 rounded-lg border border-danger-600 bg-danger-900/50 px-3 py-2 text-sm text-base-50">
           <li v-for="(e, i) in draftErrors" :key="i">{{ e }}</li>
         </ul>
       </form>

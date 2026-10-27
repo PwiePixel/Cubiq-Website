@@ -130,7 +130,7 @@ const limitReached = computed(() => !!limits.value && limits.value.today >= limi
 
     <template v-else>
       <p v-if="limits" class="mt-6 text-sm text-base-400 tabular-nums">{{ fill(c.submit.limit, { today: limits.today, max: limits.maxPerDay }) }}</p>
-      <p v-if="error" role="alert" class="mt-4 rounded-md border border-redstone-600/50 bg-redstone-900/40 px-4 py-3 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-4 rounded-md border border-danger-600/50 bg-danger-900/40 px-4 py-3 text-sm text-danger-300">{{ error }}</p>
 
       <div class="mt-6 grid gap-6 lg:grid-cols-2">
         <section class="card p-6">
@@ -156,8 +156,8 @@ const limitReached = computed(() => !!limits.value && limits.value.today >= limi
             <p class="mt-2 text-xs text-base-400 tabular-nums">
               {{ result.format }} · {{ fill(c.common.size, result.size) }} · {{ fill(c.common.blocks, { n: result.blockCount }) }}
             </p>
-            <div v-if="result.warnings.length" class="mt-3 rounded-md border border-lamp-400/40 bg-lamp-900/30 px-3 py-2">
-              <p class="text-xs font-semibold text-lamp-300">{{ c.submit.warnings }}</p>
+            <div v-if="result.warnings.length" class="mt-3 rounded-md border border-caution-400/40 bg-caution-900/30 px-3 py-2">
+              <p class="text-xs font-semibold text-caution-300">{{ c.submit.warnings }}</p>
               <ul class="mt-1 space-y-0.5 text-xs text-base-200">
                 <li v-for="w in result.warnings" :key="`${w.block}-${w.action}`">{{ warnText(w) }}</li>
               </ul>
@@ -220,12 +220,12 @@ const limitReached = computed(() => !!limits.value && limits.value.today >= limi
 }
 .drop:hover,
 .drop[data-drag='true'] {
-  border-color: var(--color-redstone-500);
-  background: color-mix(in srgb, var(--color-redstone-500) 6%, transparent);
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-500) 6%, transparent);
 }
 .stage {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 </style>

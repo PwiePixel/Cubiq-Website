@@ -169,7 +169,7 @@ watch(() => props.creator.uuid, () => {
   padding: 2.25rem 1.5rem 1.75rem;
   text-align: center;
   border-bottom: 1px solid var(--color-base-800);
-  background: radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--color-redstone-500) 10%, transparent), transparent 75%);
+  background: radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--color-primary-500) 10%, transparent), transparent 75%);
 }
 @media (min-width: 768px) {
   .modal-side {
@@ -205,7 +205,7 @@ watch(() => props.creator.uuid, () => {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-redstone-400);
+  color: var(--color-primary-400);
 }
 .milestone {
   display: inline-block;
@@ -218,7 +218,7 @@ watch(() => props.creator.uuid, () => {
 }
 .milestone[data-m='gold'],
 .milestone[data-m='diamond'] {
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .cape-box {
   width: 100%;
@@ -250,8 +250,8 @@ watch(() => props.creator.uuid, () => {
   top: 0.7em;
   width: 0.4rem;
   height: 0.4rem;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 6px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 6px var(--color-primary-500);
 }
 .sub-title {
   font-size: 0.7rem;
@@ -275,7 +275,7 @@ watch(() => props.creator.uuid, () => {
 }
 .link-chip:hover,
 .link-chip:focus-visible {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   background: var(--color-base-800);
 }
 .pack-card {

@@ -1,33 +1,34 @@
-# Cubiq API
+# Cubiq-Website und API
 
-Server für den **Cubiq Launcher** und den **Cubiq Client** (In-Game-Mod): Anmeldung über die Mojang-Session, Profile, Cubiq-Abzeichen, Umhänge, Kosmetik (Hüte, Flügel, Rücken, Aura), Emotes, Live-Ereignisse für sichtbare Spieler, Skin-Abfrage, Freunde und Online-Status.
+Website, API und Doku für den **[Cubiq Launcher](https://github.com/PwiePixel/Cubiq-launcher)** und den **Cubiq Client** (In-Game-Mod) – alles in einer App:
 
-- Nuxt 4 / Nitro (`node-server`), Node 24 LTS, SQLite (`node:sqlite`, WAL) im Volume `/data`.
-- Betrieb zu Hause in Docker hinter einem **Cloudflare Tunnel**. Es gibt keinen offenen Port und keine Portweiterleitung am Router.
-- Öffentliche Adresse: **https://api.cubiq-launcher.invalid**
-- Schnittstellen-Vertrag (für Launcher und Mod): **[API.md](API.md)**
+- **Website**: Startseite, Download, Funktionen, Blog mit den Launcher-Updates, Umhänge und Kosmetik, Schaltungen, Creator, Team-Bewerbungen, Newsletter, Impressum und Datenschutz.
+- **API** für Launcher und Mod: Anmeldung über die Mojang-Session, Profile, Cubiq-Abzeichen, Umhänge, Kosmetik, Emotes, Freunde und Online-Status, Chat, Welt-Hosting, Modpack-Codes, Push.
+- **Doku** (`../docs-site`, Docus) auf eigener Domain `docs.<deine-domain>`.
+- **Team-Bereich** unter `/admin` (Freigaben, Meldungen, Sperren, Blog, Newsletter, Codes …).
+
+Technik: Nuxt 4 / Nitro (`node-server`), Node 24 LTS, SQLite (`node:sqlite`, WAL) im Volume `/data`. Betrieb zu Hause oder auf einem Server in Docker hinter einem **Cloudflare Tunnel** – kein offener Port, keine Portweiterleitung. Schnittstellen-Vertrag für Launcher und Mod: **[API.md](API.md)**.
 
 ## Aufbau
 
 ```
 api/
+├─ app/                  Website (Seiten, Komponenten, Texte in drei Sprachen)
 ├─ server/
 │  ├─ routes/v1/…        Endpunkte (je Datei eine Route, z. B. capes/redeem.post.ts)
 │  ├─ middleware/        Sicherheits-Header, CORS, globales Rate-Limit
 │  ├─ plugins/           Start: Konfiguration, DB + Migrationen, Umhang-Katalog, Aufräum-Timer
-│  ├─ lib/               Logik: auth, capes, codes, png, friends, lookup, admin, db, ratelimit …
+│  ├─ lib/               Logik: auth, capes, codes, png, friends, lookup, admin, db, ratelimit, mail …
 │  └─ error-handler.ts   einheitliche Fehler, niemals Stack-Traces an Clients
+├─ shared/               Code für Website und Server (SEO, Newsletter, Landing-Seiten)
+├─ modules/docs.ts       baut die Doku aus ../docs-site mit und liefert sie unter docs.<domain> aus
 ├─ assets/capes/         Standard-Umhänge: catalog.json + PNGs (im Build enthalten)
 ├─ assets/cosmetics/     Kosmetik: templates.json (3D-Vorlagen) + catalog.json + PNGs (im Build enthalten)
-├─ assets/cosmetic-previews/  erzeugte Vorschauen (nicht im Git, nicht im Build)
-├─ tests/                vitest (Validierung, Login, Codes, PNG-Prüfung, Freunde, Lookup, Kosmetik, Emotes, Ereignisse, Skins, Sync, Migration)
+├─ tests/                vitest
 ├─ scripts/smoke.mjs     End-to-End-Test gegen den gebauten Server (mit Mojang-Mock)
-├─ scripts/generate-*.mjs  Generatoren für die mitgelieferten Umhänge und Kosmetik-Teile
 ├─ Dockerfile, docker-compose.yml, docker-compose.local.yml, .env.example
 └─ API.md                genauer Vertrag mit Beispielen
 ```
-
-Das Projekt ist **unabhängig vom Launcher**. Es hat eine eigene `package.json`, eine eigene Lockfile und einen eigenen `pnpm-workspace.yaml`. Der Launcher-Build und seine Tests fassen `api/` nicht an.
 
 ## Entwicklung
 
@@ -40,55 +41,53 @@ pnpm typecheck && pnpm lint && pnpm test
 pnpm build && node scripts/smoke.mjs   # End-to-End gegen .output (Mojang gemockt)
 ```
 
-Lokal ohne Docker:
+Lokal ohne Docker (Website unter http://localhost:3000):
 
 ```bash
-DATA_DIR=./.data SECRET_KEY=$(openssl rand -base64 48) pnpm dev
+DATA_DIR=./.data SECRET_KEY=$(openssl rand -base64 48) SITE_URL=http://localhost:3000 pnpm dev
 ```
 
-`pnpm dev` hört nur auf `127.0.0.1:3000`.
+## Online stellen (Docker + Cloudflare Tunnel)
 
-## Deployment (Docker + Cloudflare Tunnel)
+Du brauchst: eine eigene Domain (im Folgenden `deine-domain.de`), ein kostenloses Cloudflare-Konto, das die Domain
+verwaltet, und einen Rechner oder Server mit Docker, der dauerhaft läuft.
 
-### 1. Tunnel in Cloudflare anlegen
+### 1. Domain zu Cloudflare
 
-1. Öffne https://one.dash.cloudflare.com und gehe zu **Networks → Tunnels → Create a tunnel**. Wähle **Cloudflared** und einen Namen, z. B. `cubiq-api`.
-2. Unter „Install and run a connector" wählst du **Docker**. Aus dem angezeigten Befehl kopierst du **nur den Token** (die lange Zeichenkette hinter `--token`).
-3. Lege unter **Public Hostname** diesen Eintrag an:
+Im Cloudflare-Dashboard **Add a domain**, dann die beiden Nameserver von Cloudflare beim Domain-Anbieter eintragen.
+Sobald die Domain „Active“ ist, geht es weiter.
 
-   | Feld | Wert |
-   |---|---|
-   | Subdomain | `api` |
-   | Domain | `cubiq-launcher.invalid` |
-   | Path | leer |
-   | Service Type | `HTTP` |
-   | URL | `api:3000` |
+### 2. Tunnel anlegen
 
-   `api` ist der Dienstname aus `docker-compose.yml`. cloudflared erreicht die API über das interne Docker-Netz, die Verbindung bleibt dabei im Rechner. HTTPS zum Nutzer macht Cloudflare, den Tunnel verschlüsselt cloudflared selbst.
-4. Unter **Additional application settings → HTTP Settings** lässt du „HTTP Host Header" leer. „No TLS Verify" ist nicht nötig.
+1. https://one.dash.cloudflare.com → **Networks → Tunnels → Create a tunnel** → **Cloudflared**, Name z. B. `cubiq`.
+2. Unter „Install and run a connector“ **Docker** wählen und aus dem angezeigten Befehl **nur den Token** kopieren
+   (die lange Zeichenkette hinter `--token`) – er kommt gleich in `.env`.
+3. Unter **Public Hostname** zwei Einträge anlegen (beide auf denselben Dienst):
 
-### 2. HTTPS erzwingen + HSTS (Cloudflare-Dashboard → Domain `cubiq-launcher.invalid`)
+   | Subdomain | Domain | Path | Service Type | URL |
+   |---|---|---|---|---|
+   | leer | `deine-domain.de` | leer | `HTTP` | `api:3000` |
+   | `docs` | `deine-domain.de` | leer | `HTTP` | `api:3000` |
 
-- **SSL/TLS → Edge Certificates**
-  - **Always Use HTTPS: An.** Damit wird jedes HTTP auf HTTPS umgeleitet.
-  - **HTTP Strict Transport Security (HSTS): Aktivieren.**
-    - Max-Age 12 Monate
-    - „Apply HSTS policy to subdomains" an
-    - „Preload" an, wenn alle Subdomains HTTPS können
-    - „No-Sniff" an
-  - **Minimum TLS Version: 1.2**
-  - **TLS 1.3: An**
-- **Speed → Optimization → Protocol Optimization:** HTTP/2 und **HTTP/3 (QUIC)** an.
-- Die API sendet `Strict-Transport-Security` zusätzlich selbst. So gilt HSTS auch, wenn die Cloudflare-Einstellung einmal fehlt.
-- Optional: unter **Security → WAF** eine Rate-Limiting-Regel für `/v1/auth/*` als zweite Stufe. Die API begrenzt selbst schon, siehe API.md §1.3.
+   `api` ist der Dienstname aus `docker-compose.yml`; cloudflared erreicht ihn im internen Docker-Netz. HTTPS zum
+   Nutzer macht Cloudflare, den Tunnel verschlüsselt cloudflared selbst. „HTTP Host Header“ leer lassen.
 
-### 3. Server einrichten
+### 3. HTTPS erzwingen + HSTS (Cloudflare-Dashboard → deine Domain)
+
+- **SSL/TLS → Edge Certificates**: **Always Use HTTPS** an, **HSTS** aktivieren (Max-Age 12 Monate, Subdomains an,
+  No-Sniff an), **Minimum TLS Version 1.2**, **TLS 1.3** an.
+- **Speed → Optimization → Protocol Optimization:** HTTP/2 und HTTP/3 an.
+- Die App sendet `Strict-Transport-Security` zusätzlich selbst.
+- Optional: unter **Security → WAF** eine Rate-Limiting-Regel für `/v1/auth/*` als zweite Stufe (die API begrenzt
+  selbst schon, API.md §1.3).
+
+### 4. Server einrichten
 
 ```bash
-git clone https://github.com/PwiePixel/Cubiq-launcher.git
-cd Cubiq-Launcher/api
+git clone https://github.com/PwiePixel/Cubiq-Website.git
+cd Cubiq-Website/api
 cp .env.example .env
-nano .env            # TUNNEL_TOKEN, SECRET_KEY, ADMIN_UUIDS, ADMIN_API_KEY eintragen
+nano .env            # mindestens: TUNNEL_TOKEN, SECRET_KEY, SITE_URL, ADMIN_UUIDS, NUXT_PUBLIC_OPERATOR_*
 docker compose up -d --build
 docker compose ps    # api muss "healthy" sein, dann startet cloudflared
 docker compose logs -f
@@ -97,10 +96,11 @@ docker compose logs -f
 Prüfen:
 
 ```bash
-curl -s https://api.cubiq-launcher.invalid/v1/health
+curl -s https://deine-domain.de/v1/health     # {"status":"ok",…}
 ```
 
-Erwartet: `{"status":"ok",…}`
+Danach im Cubiq Launcher (Repo-Variable `CUBIQ_API_BASE`) `https://deine-domain.de` als Adresse der Cubiq-Dienste
+eintragen – erst dann schaltet der Launcher Freunde, Chat, Umhänge usw. frei.
 
 ### `.env`-Schlüssel
 
@@ -108,26 +108,28 @@ Erwartet: `{"status":"ok",…}`
 |---|---|---|
 | `TUNNEL_TOKEN` | ja | Token des Cloudflare-Tunnels. Nur cloudflared bekommt ihn. |
 | `SECRET_KEY` | ja | ≥ 32 zufällige Zeichen (`openssl rand -base64 48`). Schlüssel für die Hashes der Einlösecodes. **Nach dem ersten Start nicht mehr ändern**, sonst werden offene Codes ungültig. |
-| `ADMIN_UUIDS` | nein | Admin-Konten (Minecraft-UUIDs, kommagetrennt). Die UUID von „PwiePixel" steht als Kommentar in `.env.example`. |
+| `ADMIN_UUIDS` | nein | Admin-Konten (Minecraft-UUIDs, kommagetrennt) – mindestens deine eigene. Nachschlagen im Cubiq Launcher unter Konten oder auf mcuuid.net. |
 | `ADMIN_API_KEY` | nein | ≥ 32 Zeichen, für Skripte über den Header `X-Admin-Key`. Leer heißt: nur Admin-Sitzungen. |
-| `PUBLIC_BASE_URL` | nein | Standard `https://api.cubiq-launcher.invalid`. Wird für die Umhang-URLs in Antworten verwendet (ältere Mods akzeptieren nur diesen Host). |
-| `SITE_URL` | nein | Standard `https://cubiq-launcher.invalid`. Adresse der Website (Sitemap, RSS, Weiterleitungen). |
-| `API_ONLY_HOSTS` | nein | Standard `api.cubiq-launcher.invalid`. Hosts, die nur noch die API sind; alle anderen Pfade leiten dort per 301 auf `SITE_URL` um. |
-| `WIKI_URL` | nein | Standard `https://docs.cubiq-launcher.invalid`. Doku-Domain: Anfragen mit diesem Host bekommen nur die Doku (an der Wurzel, `server/lib/wiki.ts`), `/docs/…` der Website leitet dorthin um. Der Cloudflare-Tunnel braucht dafür einen eigenen Public Hostname `docs.cubiq-launcher.invalid` **ohne Pfad** auf dasselbe Ziel. |
+| `SITE_URL` | ja | Adresse der Website, z. B. `https://deine-domain.de`. Daraus ergeben sich alle anderen Adressen (API, Doku, Microsoft-Rückleitung, Mail-Absender und -Links, Sitemap). Gilt auch beim Bauen: die Doku ist statisch und bekommt ihre Links zur Website beim Bauen – Docker reicht den Wert automatisch durch, von Hand `SITE_URL=… pnpm build`. |
+| `NUXT_PUBLIC_OPERATOR_NAME`, `…_ADDRESS`, `…_EMAIL` | ja (Impressum) | Betreiber für Impressum (`/imprint`) und Datenschutzerklärung. Optional `NUXT_PUBLIC_OPERATOR_REPRESENTATIVE`, `…_PHONE`, `…_AUTHORITY` (zuständige Datenschutz-Aufsicht). Ohne diese Angaben sind Impressum und Datenschutzerklärung unvollständig. |
+| `PUBLIC_BASE_URL` | nein | Standard = `SITE_URL`. Basis der Umhang-URLs in API-Antworten; nur setzen, wenn die API unter einer anderen Adresse läuft. |
+| `API_ONLY_HOSTS` | nein | Standard leer. Hosts, die nur die API sein sollen (z. B. `api.deine-domain.de`); alle anderen Pfade leiten dort per 301 auf `SITE_URL` um. |
+| `WIKI_URL` | nein | Standard `https://docs.<Host von SITE_URL>`. Doku-Domain: Anfragen mit diesem Host bekommen nur die Doku (`server/lib/wiki.ts`), `/docs/…` der Website leitet dorthin um. Braucht den Public Hostname `docs` im Tunnel (Schritt 2). |
 | `DOCS_DIR` | nein | Ordner mit dem Docs-Build. Leer (Standard) = `.output/docs-wiki` neben dem Server. |
 | `CORS_ORIGINS` | nein | Nur nötig, falls eine Webseite die API im Browser aufruft. Exakte `https://`-Origins, kein `*`. |
 | `TRUST_PROXY` | nein | `cloudflare` (Standard): Die Client-IP kommt aus `CF-Connecting-IP`. Das ist sicher, weil nur cloudflared die API erreicht. |
 | `LOG_REQUESTS` | nein | `true` schreibt ein Zugriffslog ohne IPs und Tokens. |
-| `RELAY_SECRET` | für Welt-Hosting | ≥ 32 Zeichen (`openssl rand -base64 48`), **derselbe Wert** wie in der `.env` des Pterodactyl-Servers „Cubiq Relay“ (`relay/` im Launcher-Repo). Signiert die Relay-Tokens (API.md §21.6). Schlüsseltausch: `NEU,ALT` – die API signiert mit dem ersten, das Relay akzeptiert beide. Leer = Welt-Hosting aus (`503 hosting_unavailable`). |
-| `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | für die Website-Anmeldung | Azure-App „Cubiq Launcher“ (Client-ID) + ein Client-Secret der Plattform „Web“. Ohne beide ist die Anmeldung mit Microsoft aus (Hinweis auf /login). API.md §24.1. |
-| `MS_REDIRECT_URI` | nein | Standard `https://cubiq-launcher.invalid/auth/microsoft/callback` – muss genau so im Azure-Portal stehen. |
-| `RELAY_HOST` | für Welt-Hosting | Öffentlicher Name oder IP des Relays, z. B. `relay.cubiq-launcher.invalid` (DNS-A-Record auf 135.125.185.232, **ohne** Cloudflare-Proxy). |
+| `RELAY_SECRET` | für Welt-Hosting | ≥ 32 Zeichen (`openssl rand -base64 48`), **derselbe Wert** wie in der `.env` deines Relays (`relay/` im Launcher-Repo). Signiert die Relay-Tokens (API.md §21.6). Schlüsseltausch: `NEU,ALT` – die API signiert mit dem ersten, das Relay akzeptiert beide. Leer = Welt-Hosting aus (`503 hosting_unavailable`). |
+| `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | für die Website-Anmeldung | Deine Azure-App (dieselbe Client-ID wie im Launcher) + ein Client-Secret der Plattform „Web“. Ohne beide ist die Anmeldung mit Microsoft aus (Hinweis auf /login). API.md §24.1. |
+| `MS_REDIRECT_URI` | nein | Standard `<SITE_URL>/auth/microsoft/callback` – genau diese Adresse im Azure-Portal als Umleitung der Plattform „Web“ eintragen. |
+| `CURSEFORGE_API_KEY` | nein | Für empfohlene Modpacks von CurseForge (API.md §37). Ohne Schlüssel gehen nur Modrinth-Links. |
+| `RELAY_HOST` | für Welt-Hosting | Öffentlicher Name oder IP deines Relays, z. B. `relay.deine-domain.de` (DNS-Eintrag **ohne** Cloudflare-Proxy, das Relay braucht direktes TCP/UDP). |
 | `RELAY_TCP_PORT` / `RELAY_UDP_PORT` | nein | Standard `25503` / `25504`. |
 | `HOSTING_STUN` | nein | STUN-Server `host:port`, kommagetrennt. Leer = nur das Relay (`RELAY_HOST:RELAY_UDP_PORT`). Fremde STUN-Server (z. B. Google) sehen die IP der Spieler – deshalb ab Werk keine. |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | für Push an die Apps | Schlüsselpaar für Web Push/UnifiedPush (RFC 8292), erzeugen mit `node scripts/vapid-keys.mjs` (base64url). `VAPID_SUBJECT` = `mailto:…` oder `https://…` (Kontakt für die Push-Dienste). Alle drei oder keiner; leer = UnifiedPush aus (`503 push_unavailable`), Abruf-Geräte (iOS) gehen trotzdem. **Nicht tauschen**, solange Geräte angemeldet sind. API.md §33, Betrieb eines eigenen ntfy: `docs/push.md`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | für Mail/Newsletter | Gemeinsamer SMTP-Server beider Konten (465 + `true` = TLS, 587 + `false` = STARTTLS). Leer = Mail aus (`503 mail_unavailable`, Warnung beim Start). API.md §40. |
-| `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | für Mail | System-Konto (`Cubiq Launcher <no-reply@cubiq-launcher.invalid>`): Double-Opt-in-Bestätigungen, Team-Benachrichtigungen. Nur in die Server-.env. |
-| `NEWSLETTER_SMTP_USER`, `NEWSLETTER_SMTP_PASS`, `NEWSLETTER_FROM` | optional | Newsletter-Konto (`Cubiq Launcher <newsletter@cubiq-launcher.invalid>`) für Kampagnen + Testmails; leer = über das System-Konto. |
+| `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | für Mail | System-Konto (z. B. `Cubiq Launcher <no-reply@deine-domain.de>`): Double-Opt-in-Bestätigungen, Team-Benachrichtigungen. Nur in die Server-.env. |
+| `NEWSLETTER_SMTP_USER`, `NEWSLETTER_SMTP_PASS`, `NEWSLETTER_FROM` | optional | Newsletter-Konto (z. B. `Cubiq Launcher <newsletter@deine-domain.de>`) für Kampagnen + Testmails; leer = über das System-Konto. |
 | `MAIL_REPLY_TO`, `MAIL_TEAM_TO`, `MAIL_RATE_PER_MIN` | optional | Antwort-Adresse; Fallback-Empfänger der Team-Benachrichtigungen (kommagetrennt); Drosselung je Konto (Vorgabe 60/min). |
 
 `.env` ist in `.gitignore` und darf **nie** ins Repo.
@@ -157,7 +159,8 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up --build api
 curl -s http://127.0.0.1:3000/v1/health
 ```
 
-Die API ist dann **nur** auf `127.0.0.1:3000` des eigenen Rechners erreichbar. cloudflared startet nicht, weil er im Profil `tunnel` liegt.
+Website und API sind dann **nur** unter http://localhost:3000 des eigenen Rechners erreichbar, die Doku unter
+http://docs.localhost:3000. cloudflared startet nicht, weil er im Profil `tunnel` liegt.
 
 ### Update
 
@@ -241,7 +244,7 @@ Uploads von Nutzern:
 
 ```bash
 KEY=…   # ADMIN_API_KEY
-API=https://api.cubiq-launcher.invalid
+API=https://deine-domain.de
 ```
 
 Wartende Uploads anzeigen:

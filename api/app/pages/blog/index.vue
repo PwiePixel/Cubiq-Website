@@ -73,7 +73,7 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
       </button>
     </div>
 
-    <p v-if="error" class="mt-10 text-lamp-300">{{ m.common.error }}</p>
+    <p v-if="error" class="mt-10 text-caution-300">{{ m.common.error }}</p>
     <p v-else-if="!visible.length" class="mt-10 text-base-400">{{ filter === 'news' ? b.emptyNews : m.blog.empty }}</p>
     <template v-else>
       <div class="mt-6">
@@ -112,6 +112,6 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
 .seg-btn.on {
   background: var(--color-base-700);
   color: var(--color-base-50);
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-redstone-500) 60%, transparent);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-primary-500) 60%, transparent);
 }
 </style>

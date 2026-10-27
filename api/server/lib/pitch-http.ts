@@ -146,7 +146,7 @@ export function withBase(html: string, base: string): string {
 const NOT_FOUND_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>404</title>
 <style>html,body{margin:0;height:100%;background:#111116;color:#e4e4e7;font-family:system-ui,sans-serif}main{display:grid;place-content:center;height:100%;text-align:center;gap:.25rem}h1{margin:0;font-size:3rem;color:#ef4444}p{margin:0;color:#a1a1aa}a{color:#f4f4f5}</style>
-</head><body><main><h1>404</h1><p>Page not found · Seite nicht gefunden</p><p><a href="/">cubiq-launcher.invalid</a></p></main></body></html>
+</head><body><main><h1>404</h1><p>Page not found · Seite nicht gefunden</p><p><a href="/">Cubiq Launcher</a></p></main></body></html>
 `
 
 function notFoundPage(event: H3Event): string {

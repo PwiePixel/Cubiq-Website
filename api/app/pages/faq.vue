@@ -3,6 +3,7 @@ import { breadcrumbLd, faqPageLd } from '#shared/seo'
 
 const { lang, m } = useLang()
 const siteUrl = useSiteUrl()
+const wikiUrl = useWikiUrl()
 
 // Strukturierte Daten für Suchmaschinen: FAQPage mit genau den sichtbaren Fragen und Antworten.
 usePageSeo(() => ({
@@ -38,7 +39,7 @@ usePageSeo(() => ({
 
     <div class="mt-10 flex flex-wrap gap-3">
       <a v-if="DISCORD_URL" :href="DISCORD_URL" class="btn btn-primary" rel="noopener" target="_blank"><SiteIcon name="discord" class="size-4" />{{ m.faq.discord }}</a>
-      <a :href="docsUrl(lang)" class="btn btn-ghost"><SiteIcon name="docs" class="size-4" />{{ m.faq.docs }}</a>
+      <a :href="docsUrl(lang, wikiUrl)" class="btn btn-ghost"><SiteIcon name="docs" class="size-4" />{{ m.faq.docs }}</a>
     </div>
 
     <LandingLinks class="mt-16" heading-id="related-title" narrow />
@@ -50,6 +51,6 @@ usePageSeo(() => ({
   display: none;
 }
 .faq[open] summary span {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 </style>

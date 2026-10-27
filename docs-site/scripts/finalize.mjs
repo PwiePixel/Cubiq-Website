@@ -15,6 +15,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { contentRoutes, ROOT } from '../build/content-routes.mjs'
+import { PLACEHOLDER_WEBSITE, siteUrls } from '../build/site-urls.mjs'
 
 const OUT = join(ROOT, '.output', 'public')
 const META = join(ROOT, '.output', 'docs-meta')
@@ -127,6 +128,14 @@ for (const need of ['/llms.txt', '/llms-full.txt', '/404.html']) {
   if (!existsSync(join(OUT, need))) errors.push(`${need} fehlt`)
 }
 
+// Adressen dieses Builds (SITE_URL/WIKI_URL, build/site-urls.mjs). Mit eigener Domain darf in den Seiten kein
+// Platzhalter mehr stehen (die Markdown-Dateien ersetzt modules/site-urls.ts, den Rest die Runtime-Config).
+const urls = siteUrls()
+if (urls.website !== PLACEHOLDER_WEBSITE) {
+  const left = files.filter((f) => /\.(?:html|json|txt|md|xml)$/.test(f) && readFileSync(f, 'utf8').includes('cubiq-launcher.invalid'))
+  if (left.length) warnings.push(`Platzhalter cubiq-launcher.invalid noch in ${left.length} Datei(en), z. B. ${rel(left[0])}`)
+}
+
 // Bilder aus Markdown (`/shots/…`), die es nicht gibt: nur warnen.
 for (const r of contentRoutes()) {
   const md = readFileSync(r.file, 'utf8')
@@ -139,6 +148,8 @@ for (const r of contentRoutes()) {
 mkdirSync(META, { recursive: true })
 writeFileSync(join(META, 'csp.json'), `${JSON.stringify({ base: BASE, builtAt: buildTime, scriptHashes: [...hashes].sort() }, null, 2)}\n`)
 writeFileSync(join(META, 'routes.json'), `${JSON.stringify({ base: BASE, builtAt: buildTime, routes }, null, 2)}\n`)
+// Mit welchen Adressen gebaut wurde – api/modules/docs.ts baut neu, wenn sich SITE_URL/WIKI_URL ändern.
+writeFileSync(join(META, 'urls.json'), `${JSON.stringify({ ...urls, env: { SITE_URL: process.env.SITE_URL ?? '', WIKI_URL: process.env.WIKI_URL ?? '' } }, null, 2)}\n`)
 
 const size = files.reduce((n, f) => n + statSync(f).size, 0)
 for (const w of warnings) console.warn(`[docs] Warnung: ${w}`)

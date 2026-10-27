@@ -12,19 +12,19 @@ const short = computed(() => {
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col items-center justify-center bg-[#111116] px-[90px]">
-    <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_30%,rgba(224,40,30,0.30)_0%,rgba(224,40,30,0.08)_35%,transparent_65%)]" />
-    <div class="absolute bottom-[80px] left-0 w-full h-[4px] bg-[#b31a12]" />
+  <div class="w-full h-full flex flex-col items-center justify-center bg-[#0c100e] px-[90px]">
+    <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_30%,rgba(113,163,48,0.32)_0%,rgba(113,163,48,0.08)_35%,transparent_65%)]" />
+    <div class="absolute bottom-[80px] left-0 w-full h-[3px] bg-[#5c8726]" />
 
     <img src="/icon.png" width="120" height="120" class="w-[120px] h-[120px] mb-[28px]">
     <h1 v-if="title" class="m-0 mb-5 text-[60px] font-bold text-white text-center leading-[1.1]">
       {{ title?.slice(0, 60) }}
     </h1>
-    <p v-if="description" class="m-0 text-[28px] text-[#c8c8d8] text-center leading-[1.4] max-w-[980px]">
+    <p v-if="description" class="m-0 text-[28px] text-[#c5d0c8] text-center leading-[1.4] max-w-[980px]">
       {{ short }}
     </p>
-    <p class="m-0 mt-[28px] text-[22px] font-bold text-[#ffb84d]">
-      The Redstone Launcher by PwiePixel
+    <p class="m-0 mt-[28px] text-[22px] font-bold text-[#a9d46b]">
+      The Minecraft launcher by PwiePixel
     </p>
   </div>
 </template>

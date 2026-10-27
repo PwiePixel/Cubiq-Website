@@ -12,7 +12,7 @@ const { it } = useIssueText()
 
 <style scoped>
 .area-pill {
-  --c: var(--color-redstone-300);
+  --c: var(--color-primary-300);
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -27,7 +27,7 @@ const { it } = useIssueText()
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 38%, transparent);
 }
 .area-pill[data-a='client'] {
-  --c: var(--color-lamp-300);
+  --c: var(--color-caution-300);
 }
 .area-pill[data-a='website'] {
   --c: #5fd4c4;

@@ -1,42 +1,63 @@
 @import "tailwindcss";
-@import "@fontsource-variable/pixelify-sans";
+@import "@fontsource-variable/inter";
 
 /*
- * Redstone-Look: Deepslate-Grau (leicht violett, wie der Block) als Grund,
- * Redstone-Rot für Aktionen, Lampen-Bernstein für alles, was "unter Strom"
- * steht (laufendes Spiel, geladene Leitung).
+ * Cubiq-Look (wie im Launcher): schlichte, dunkle Flächen mit einem Hauch Grün als Grund,
+ * das Grün aus dem Logo (#71a330) für Aktionen, Bernstein für Hinweise und Rot nur für Fehler.
  */
 @theme {
-  --color-base-950: #111116;
-  --color-base-900: #17171e;
-  --color-base-850: #1d1d26;
-  --color-base-800: #252531;
-  --color-base-700: #333343;
-  --color-base-600: #4a4a5e;
-  --color-base-400: #8b8ba2;
-  --color-base-200: #c8c8d8;
-  --color-base-50: #f3f3f8;
+  --color-base-950: #0c100e;
+  --color-base-900: #111613;
+  --color-base-850: #161c18;
+  --color-base-800: #1d2520;
+  --color-base-700: #29332c;
+  --color-base-600: #3d4a41;
+  --color-base-500: #5f6d63;
+  --color-base-400: #869489;
+  --color-base-300: #a6b2a9;
+  --color-base-200: #c5d0c8;
+  --color-base-100: #dbe3dd;
+  --color-base-50: #eef4ef;
 
-  --color-redstone-300: #ff8f85;
-  --color-redstone-400: #ff5a4d;
-  --color-redstone-500: #e0281e;
-  --color-redstone-600: #b31a12;
-  --color-redstone-900: #3a0d09;
+  --color-primary-200: #cde8a6;
+  --color-primary-300: #a9d46b;
+  --color-primary-400: #88bb45;
+  --color-primary-500: #71a330;
+  --color-primary-600: #5c8726;
+  --color-primary-900: #1a2810;
+  /* Text auf Flächen in der Akzentfarbe (Knöpfe, Zähler). */
+  --color-on-primary: #0b1405;
 
-  --color-lamp-300: #ffd48a;
-  --color-lamp-400: #ffb84d;
-  --color-lamp-900: #3d2a0c;
+  /* „Gerade aktiv“ (online, läuft): helles Lime. */
+  --color-live-300: #d0f29b;
+  --color-live-400: #b4e46a;
+  --color-live-900: #22300f;
 
-  --color-ok: #5ee08a;
-  --color-warn: #ffb84d;
+  /* Hinweise, Warnungen und „in Arbeit“: warmes Bernstein. */
+  --color-caution-200: #fde7b8;
+  --color-caution-300: #f8cd7a;
+  --color-caution-400: #f0b44c;
+  --color-caution-500: #d99a2b;
+  --color-caution-900: #33260c;
 
-  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Pixelify Sans Variable", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Cascadia Mono", Consolas, monospace;
+  /* Fehler, Löschen, Sperren. */
+  --color-danger-200: #fecdcd;
+  --color-danger-300: #fda4a4;
+  --color-danger-400: #f87171;
+  --color-danger-500: #e5484d;
+  --color-danger-600: #c62f35;
+  --color-danger-900: #3b1215;
+
+  --color-ok: #6fd88f;
+  --color-warn: #f0b44c;
+
+  --font-sans: "Inter Variable", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Inter Variable", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "JetBrains Mono", ui-monospace, monospace;
 
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-pop: pop 0.18s ease-out;
-  --animate-lamp: lamp 2.4s ease-in-out infinite;
+  --animate-live: live 2.4s ease-in-out infinite;
 
   @keyframes shimmer {
     from { background-position: 200% 0; }
@@ -46,74 +67,21 @@
     from { opacity: 0; transform: translateY(6px) scale(0.98); }
     to { opacity: 1; transform: none; }
   }
-  @keyframes lamp {
+  @keyframes live {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.55; }
   }
 }
 
-/*
- * Themes: überschreiben nur die Deepslate-Skala. „Dunkel“ ist der Standard
- * oben; OLED geht auf echtes Schwarz, Hell dreht die Skala um.
- */
-:root[data-theme="oled"] {
-  --color-base-950: #000000;
-  --color-base-900: #060608;
-  --color-base-850: #0c0c10;
-  --color-base-800: #15151b;
-  --color-base-700: #24242e;
-  --color-base-600: #3c3c4c;
-}
-:root[data-theme="light"] {
-  color-scheme: light;
-  --color-base-950: #eeeef3;
-  --color-base-900: #ffffff;
-  --color-base-850: #f6f6fa;
-  --color-base-800: #e6e6ee;
-  --color-base-700: #d4d4df;
-  --color-base-600: #a9a9bb;
-  --color-base-400: #5f5f75;
-  --color-base-200: #30303c;
-  --color-base-50: #101015;
-  --color-redstone-300: #c81e14;
-  --color-lamp-300: #9a5a00;
-  --color-lamp-900: #fdf0d8;
-  --color-redstone-900: #fde4e1;
-}
-
-/*
- * Deepslate-Fliesen als Grund (16 × 16 Texel, pixelig auf 48 px skaliert).
- * Nur Schwarz/Weiß mit wenig Deckkraft – die Theme-Farbe darunter bleibt.
- */
 :root {
-  --deepslate: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'><path d='M0 7h16v1H0zM0 15h16v1H0zM7 0h1v16H7zM15 0h1v16h-1z' fill-opacity='.28'/><path d='M8 0h7v7H8zM0 8h7v7H0z' fill='%23fff' fill-opacity='.018'/><path d='M2 0h1v1H2zM6 1h1v1H6zM9 2h1v1H9zM14 2h1v1H14zM5 3h1v1H5zM13 5h1v1H13zM12 6h1v1H12zM11 8h1v1H11zM12 9h1v1H12zM11 10h1v1H11zM8 11h1v1H8zM5 12h1v1H5zM12 12h1v1H12zM12 13h1v1H12zM6 14h1v1H6zM8 14h1v1H8z' fill='%23fff' fill-opacity='.045'/><path d='M4 0h1v1H4zM12 0h1v1H12zM14 1h1v1H14zM1 4h1v1H1zM5 6h1v1H5zM6 6h1v1H6zM8 6h1v1H8zM11 6h1v1H11zM4 8h1v1H4zM3 9h1v1H3zM13 9h1v1H13zM14 9h1v1H14zM2 10h1v1H2zM13 11h1v1H13zM11 13h1v1H11z' fill-opacity='.2'/></svg>");
-}
-:root[data-theme="light"] {
-  --deepslate: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'><path d='M0 7h16v1H0zM0 15h16v1H0zM7 0h1v16H7zM15 0h1v16h-1z' fill-opacity='.035'/><path d='M8 0h7v7H8zM0 8h7v7H0z' fill='%23fff' fill-opacity='.2'/><path d='M2 0h1v1H2zM6 1h1v1H6zM9 2h1v1H9zM14 2h1v1H14zM5 3h1v1H5zM13 5h1v1H13zM12 6h1v1H12zM11 8h1v1H11zM12 9h1v1H12zM11 10h1v1H11zM8 11h1v1H8zM5 12h1v1H5zM12 12h1v1H12zM12 13h1v1H12zM6 14h1v1H6zM8 14h1v1H8z' fill='%23fff' fill-opacity='.28'/><path d='M4 0h1v1H4zM12 0h1v1H12zM14 1h1v1H14zM1 4h1v1H1zM5 6h1v1H5zM6 6h1v1H6zM8 6h1v1H8zM11 6h1v1H11zM4 8h1v1H4zM3 9h1v1H3zM13 9h1v1H13zM14 9h1v1H14zM2 10h1v1H2zM13 11h1v1H13zM11 13h1v1H11z' fill-opacity='.05'/></svg>");
+  /* Weicher Schein hinter Inhalten der Akzentfarbe (Szene, Knöpfe). */
+  --glow-primary: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
+  /* Feines isometrisches Würfel-Raster wie im Logo (Bühnen, Fußzeile, Anmeldung) – nur angedeutet. */
+  --cube-grid:
+    linear-gradient(30deg, color-mix(in srgb, var(--color-base-50) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(150deg, color-mix(in srgb, var(--color-base-50) 4%, transparent) 1px, transparent 1px);
 }
 
-/* Akzentfarben: ersetzen die Redstone-Skala (Aktionen, aktive Punkte). */
-:root[data-accent="lamp"] {
-  --color-redstone-300: #ffd48a;
-  --color-redstone-400: #ffb84d;
-  --color-redstone-500: #e0900c;
-  --color-redstone-600: #b06e00;
-  --color-redstone-900: #3d2a0c;
-}
-:root[data-accent="emerald"] {
-  --color-redstone-300: #86efac;
-  --color-redstone-400: #4ade80;
-  --color-redstone-500: #17a34a;
-  --color-redstone-600: #15803d;
-  --color-redstone-900: #0c2a17;
-}
-:root[data-accent="lapis"] {
-  --color-redstone-300: #9dbaff;
-  --color-redstone-400: #6b95ff;
-  --color-redstone-500: #3563e9;
-  --color-redstone-600: #2447b8;
-  --color-redstone-900: #0f1c42;
-}
 /*
  * Halloween 2026 „Nacht der langen Schatten“ (Klasse am <html>, solange GET /v1/events halloween global an ist).
  * Mondnacht: Nachtschwarz, Nebelgrund, Pflaume, Violett, Mondsilber; Kürbislicht nur als Licht, Blut nur als Akzent.
@@ -153,11 +121,12 @@ html.theme-halloween {
   --color-base-200: #c3bdd8;
   --color-base-50: #ece9f5;
 
-  --color-lamp-300: #b9a2ea;
-  --color-lamp-400: #cfd5e3;
-  --color-lamp-900: #2a1a40;
-  --color-redstone-300: #b9a2ea;
-  --color-redstone-400: #8e6cc9;
+  --color-caution-300: #b9a2ea;
+  --color-caution-400: #cfd5e3;
+  --color-caution-900: #2a1a40;
+  --color-primary-300: #b9a2ea;
+  --color-primary-400: #8e6cc9;
+  --color-on-primary: #ffffff;
 
   --font-display: "IM Fell English SC", Georgia, serif;
   --hw-plum: #3a1f5c;
@@ -169,14 +138,6 @@ html.theme-halloween {
   --hw-blood: #7a0f18;
   --hw-blood2: #c9424a;
   accent-color: var(--hw-violet);
-}
-
-:root[data-accent="amethyst"] {
-  --color-redstone-300: #dcbcff;
-  --color-redstone-400: #c38cfb;
-  --color-redstone-500: #9b4ddf;
-  --color-redstone-600: #7a2fc0;
-  --color-redstone-900: #2b1442;
 }
 
 /* „Erweitertes Rendering“ aus: keine Unschärfe-Effekte. */
@@ -196,6 +157,7 @@ body {
   background: var(--color-base-950);
   color: var(--color-base-50);
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
   overflow: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
@@ -207,8 +169,12 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-redstone-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary-500) 35%, transparent);
 }
 
 ::-webkit-scrollbar {
@@ -253,53 +219,45 @@ textarea {
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition-[background-color,color,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow,transform] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
-  /* Wie ein Minecraft-Knopf: helle Oberkante, dunkle Unterkante, leichtes Glühen. */
   .btn-primary {
-    @apply bg-redstone-500 text-white hover:bg-redstone-400 active:bg-redstone-600;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.22),
-      inset 0 -2px 0 rgb(0 0 0 / 0.25);
-  }
-  /* Wie eine Redstone-Lampe: beim Drücken blitzt sie warm auf. */
-  .btn-primary:not(:disabled):hover:active,
-  .btn-primary:not(:disabled):active {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.3),
-      inset 0 0 12px color-mix(in srgb, var(--color-lamp-300) 55%, transparent),
-      0 0 18px -2px color-mix(in srgb, var(--color-lamp-400) 70%, transparent);
-  }
-  .btn-ghost:not(:disabled):hover {
-    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-redstone-500) 55%, transparent);
+    @apply bg-primary-500 hover:bg-primary-400 active:bg-primary-600;
+    color: var(--color-on-primary);
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
   }
   .btn-primary:not(:disabled):hover {
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      inset 0 -2px 0 rgb(0 0 0 / 0.2),
-      0 0 14px -2px color-mix(in srgb, var(--color-redstone-500) 70%, transparent);
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 6px 18px -8px var(--glow-primary);
   }
   .btn-ghost {
     @apply bg-base-800 text-base-200 hover:bg-base-700 hover:text-base-50;
   }
   .btn-danger {
-    @apply bg-transparent text-redstone-300 ring-1 ring-redstone-600/60 hover:bg-redstone-900;
+    @apply bg-transparent text-danger-300 ring-1 ring-danger-600/60 hover:bg-danger-900;
   }
   .field {
-    @apply w-full rounded-md border border-base-700 bg-base-900 px-3 py-2 text-sm text-base-50 outline-none transition-colors placeholder:text-base-400 focus:border-redstone-500;
+    @apply w-full rounded-lg border border-base-700 bg-base-900 px-3 py-2 text-sm text-base-50 outline-none transition-[border-color,box-shadow] placeholder:text-base-400 focus:border-primary-500;
+  }
+  .field:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-base-400;
   }
   .card {
     @apply rounded-xl border border-base-800 bg-base-900;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
   }
   .card-hover {
-    @apply relative transition-[border-color,background-color] duration-150 hover:border-base-700 hover:bg-base-850;
+    @apply relative transition-[border-color,background-color,box-shadow] duration-150 hover:border-base-700 hover:bg-base-850;
+  }
+  .card-hover:hover {
+    box-shadow: 0 10px 30px -18px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 22%, transparent);
   }
   .btn-icon {
-    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-base-800 text-base-200 transition-colors hover:bg-base-700 hover:text-base-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-base-800 text-base-200 transition-[background-color,color,scale] hover:bg-base-700 hover:text-base-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
   .badge {
     @apply inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap;
@@ -308,98 +266,64 @@ textarea {
     @apply inline-flex items-center rounded-full bg-base-800 px-2.5 py-1 text-xs text-base-200;
   }
   .menu {
-    @apply absolute z-40 min-w-48 rounded-lg border border-base-700 bg-base-850 p-1 shadow-xl shadow-black/40;
+    @apply absolute z-40 min-w-48 rounded-xl border border-base-700 bg-base-850 p-1 shadow-xl shadow-black/40;
+    animation: menu-in 0.14s ease-out;
+    transform-origin: top;
   }
   .menu-item {
-    @apply flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm text-base-200 transition-colors hover:bg-base-700 hover:text-base-50 disabled:opacity-40;
+    @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm text-base-200 transition-colors hover:bg-base-700 hover:text-base-50 disabled:opacity-40;
   }
   .section-title {
     @apply text-sm font-semibold text-base-50;
   }
   .display {
     font-family: var(--font-display);
-    letter-spacing: 0.01em;
+    font-weight: 650;
+    letter-spacing: -0.015em;
   }
-  /* Abschnittstitel auf der Startseite: Pixelschrift, klar über dem Inhalt. */
+  /* Abschnittstitel auf der Startseite: kräftig, klar über dem Inhalt. */
   .heading {
     font-family: var(--font-display);
-    @apply text-xl leading-none text-base-50;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    @apply text-xl leading-tight text-base-50;
   }
-  /* Ecken im Pixel-Raster abgeschnitten (Stufe = --notch). */
+  /* Früher Pixel-Ecken; heute weich gerundet wie alle Flächen (`--notch` bleibt als Maß). */
   .pixel-corners {
-    --n: var(--notch, 4px);
-    clip-path: polygon(
-      0 var(--n), var(--n) var(--n), var(--n) 0,
-      calc(100% - var(--n)) 0, calc(100% - var(--n)) var(--n), 100% var(--n),
-      100% calc(100% - var(--n)), calc(100% - var(--n)) calc(100% - var(--n)), calc(100% - var(--n)) 100%,
-      var(--n) 100%, var(--n) calc(100% - var(--n)), 0 calc(100% - var(--n))
-    );
+    border-radius: calc(var(--notch, 4px) * 2.5);
   }
-  .deepslate {
+  /* Grundfläche der Seiten. */
+  .surface {
     background-color: var(--color-base-950);
-    background-image: var(--deepslate);
-    /* Vektor-Quadrate mit crispEdges – bleiben auch skaliert scharf. */
-    background-size: 48px 48px;
   }
-  /* Redstone-Schaltung hinter allen Seiten (Einstellung „Animierter Hintergrund“). */
+  /* Hintergrund-Szene (Startseite). */
   .app-bg {
     position: absolute;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
-    opacity: 0.55;
+    opacity: 0.9;
   }
-  /* Über der Schaltung: halbdurchsichtiger Schleier statt des Deepslate-Musters, damit Inhalte lesbar bleiben. */
-  .deepslate.deepslate-over-scene {
-    background-color: color-mix(in srgb, var(--color-base-950) 62%, transparent);
-    background-image: none;
+  /* Über der Szene: halbdurchsichtiger Schleier, damit Inhalte lesbar bleiben. */
+  .surface.surface-over-scene {
+    background-color: color-mix(in srgb, var(--color-base-950) 72%, transparent);
   }
-  /* Platzhalter, während Daten laden: dunkle Platte, unten läuft ein Redstone-Signal durch. */
+  /* Platzhalter, während Daten laden: ruhiger Schimmer über der Fläche. */
   .skeleton {
-    @apply relative overflow-hidden rounded-md bg-base-850;
-    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--color-redstone-600) 25%, transparent);
+    @apply relative overflow-hidden rounded-lg bg-base-850;
   }
   .skeleton::after {
     content: "";
     position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 35%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--color-redstone-500), var(--color-redstone-300), var(--color-redstone-500), transparent);
-    box-shadow: 0 0 6px var(--color-redstone-500);
-    animation: signal-run 1.8s steps(24) infinite;
-  }
-
-  /* Karten: beim Drüberfahren läuft ein Signal einmal um den Rand. */
-  .card-hover::before {
-    content: "";
-    position: absolute;
     inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: conic-gradient(
-      from var(--signal-angle),
-      transparent 0deg 250deg,
-      var(--color-redstone-600) 290deg,
-      var(--color-redstone-300) 330deg,
-      transparent 350deg
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in srgb, var(--color-base-50) 5%, transparent) 50%,
+      transparent 80%
     );
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-  }
-  .card-hover:hover::before {
-    opacity: 1;
-    animation: signal-spin 2.6s linear infinite;
-  }
-
-  /* Menüs „schalten sich ein“: kurzes Aufglühen beim Öffnen. */
-  .menu {
-    animation: power-on 0.35s ease-out;
+    transform: translateX(-100%);
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
   }
   .seg {
     @apply px-3 py-1.5 text-base-400 transition-colors hover:text-base-50;
@@ -441,7 +365,7 @@ textarea {
   font-size: 1rem;
 }
 .prose-md a {
-  @apply text-redstone-300 underline decoration-redstone-500/40 underline-offset-2 hover:decoration-redstone-300;
+  @apply text-primary-300 underline decoration-primary-500/40 underline-offset-2 hover:decoration-primary-300;
   cursor: pointer;
 }
 .prose-md :where(ul) {
@@ -462,7 +386,7 @@ textarea {
   border-radius: 0.5rem;
 }
 .prose-md :where(code) {
-  @apply rounded bg-base-800 px-1 py-0.5 font-mono text-[0.85em] text-lamp-300;
+  @apply rounded bg-base-800 px-1 py-0.5 font-mono text-[0.85em] text-primary-300;
 }
 .prose-md pre {
   @apply overflow-x-auto rounded-lg bg-base-950 p-3;
@@ -501,42 +425,32 @@ textarea {
   }
 }
 
-/* --- Redstone-Animationen im ganzen Launcher ------------------------------- */
-@property --signal-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes signal-spin {
+/* --- Bewegung ------------------------------------------------------------------------ */
+@keyframes skeleton-sweep {
   to {
-    --signal-angle: 360deg;
+    transform: translateX(100%);
   }
 }
-/* Ein Signal läuft einmal über die Breite (Ladeplatzhalter, Seitenwechsel). */
-@keyframes signal-run {
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Ein Verlauf läuft einmal über die Breite (Seitenwechsel). */
+@keyframes progress-run {
   from {
     transform: translateX(-100%);
   }
   to {
-    transform: translateX(290%);
+    transform: translateX(340%);
   }
 }
-@keyframes power-on {
-  0% {
-    opacity: 0;
-    transform: translateY(-3px);
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  45% {
-    opacity: 1;
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--color-redstone-500) 60%, transparent));
-  }
-  100% {
-    transform: none;
-    filter: drop-shadow(0 0 0 transparent);
-  }
-}
-/* Seitenwechsel: ein kurzer Impuls läuft oben am Inhalt entlang. */
+/* Seitenwechsel: ein dünner Ladebalken läuft oben am Inhalt entlang. */
 .route-signal {
   position: absolute;
   inset-inline: 0;
@@ -552,16 +466,13 @@ textarea {
   inset-block: 0;
   left: 0;
   width: 30%;
-  background: linear-gradient(90deg, transparent, var(--color-redstone-500), var(--color-redstone-300), transparent);
-  box-shadow: 0 0 8px var(--color-redstone-500);
-  animation: signal-run 0.7s steps(18) 1 forwards;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--color-primary-500), var(--color-primary-300), transparent);
+  animation: progress-run 0.6s cubic-bezier(0.3, 0.6, 0.4, 1) 1 forwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after,
-  .card-hover:hover::before,
-  .route-signal::after {
-    animation: none;
-  }
+  .route-signal::after,
   .menu {
     animation: none;
   }
@@ -677,17 +588,17 @@ html.theme-halloween .field:focus {
   border-color: var(--hw-violet);
 }
 html.theme-halloween .prose-md a,
-html.theme-halloween a.text-redstone-300,
-html.theme-halloween a.text-redstone-400,
-html.theme-halloween a .text-redstone-300,
-html.theme-halloween a .text-redstone-400 {
+html.theme-halloween a.text-primary-300,
+html.theme-halloween a.text-primary-400,
+html.theme-halloween a .text-primary-300,
+html.theme-halloween a .text-primary-400 {
   color: var(--hw-violet2);
 }
 html.theme-halloween .prose-md a:hover,
-html.theme-halloween a.text-redstone-300:hover,
-html.theme-halloween a.text-redstone-400:hover,
-html.theme-halloween a:hover .text-redstone-300,
-html.theme-halloween a:hover .text-redstone-400 {
+html.theme-halloween a.text-primary-300:hover,
+html.theme-halloween a.text-primary-400:hover,
+html.theme-halloween a:hover .text-primary-300,
+html.theme-halloween a:hover .text-primary-400 {
   color: var(--hw-silver2);
 }
 html.theme-halloween .menu-link:hover,

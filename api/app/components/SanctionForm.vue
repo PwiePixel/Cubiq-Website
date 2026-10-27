@@ -92,7 +92,7 @@ const maxWarnDays = computed(() => ((props.limits.maxWarnMinutes ?? 0) / 1440))
           <option value="days">{{ a.customUnit.days }}</option>
         </select>
       </div>
-      <p v-if="customError" class="mt-1 text-xs text-redstone-300">{{ customError }}</p>
+      <p v-if="customError" class="mt-1 text-xs text-danger-300">{{ customError }}</p>
       <p v-if="!limits.permanent" class="mt-2 text-xs text-base-400">{{ fill(a.common.limitHint, { days: maxDays, warnDays: maxWarnDays }) }}</p>
     </fieldset>
 

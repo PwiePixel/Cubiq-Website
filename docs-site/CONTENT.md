@@ -49,7 +49,7 @@ navigation:
 - **Werte immer in `"…"` setzen.** Ein Doppelpunkt mit Leerzeichen (`mod: FPS`) macht YAML sonst zu einem Objekt und
   der Build bricht beim Vorschaubild ab.
 - Im Text selbst **keine `# H1`** – die Überschrift kommt aus `title`. Gliedern mit `##` und `###` (die erscheinen
-  rechts in „Auf dieser Seite“). `h1`/`h2` werden in der Pixel-Schrift gesetzt.
+  rechts in „Auf dieser Seite“). `h1`/`h2` werden kräftig in Inter gesetzt.
 - Keine Namen anderer Launcher oder Clients in `title`/`description` (SEO-Regel der Website).
 
 ## Links
@@ -153,8 +153,8 @@ Sprachen mit Farbe: `bash`, `shell`, `json`, `js`, `ts`, `yaml`, `md`, `diff`, `
 Jede Instanz hat eigene Welten, Mods und Einstellungen.
 :::
 
-:::card{title="Discord" icon="i-simple-icons-discord" to="https://cubiq-launcher.invalid/discord"}
-Fragen an die Community.
+:::card{title="Issues" icon="i-lucide-messages-square" to="https://cubiq-launcher.invalid/issues"}
+Fragen, Ideen und Bug-Meldungen.
 :::
 ::
 ```
@@ -168,7 +168,7 @@ Seit :badge{label="0.14.0" color="primary"} dabei, noch :badge{label="Beta" colo
 
 - `:kbd{value="…"}`: einzelne Taste. Sonderwerte: `ctrl`, `meta` (⌘ auf Mac, Strg sonst), `shift`, `alt`, `enter`,
   `escape`; sonst der Text (`F6`, `K`, `G`).
-- `:badge{label="…" color="…"}`: `color` = `primary` (Rot), `secondary` (Lampen-Gelb), `success`, `warning`, `error`,
+- `:badge{label="…" color="…"}`: `color` = `primary` (Cubiq-Grün), `secondary` (helles Lime), `success`, `warning`, `error`,
   `neutral`; optional `variant="subtle"`.
 
 ### Tabellen

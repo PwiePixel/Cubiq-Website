@@ -55,13 +55,13 @@ onMounted(async () => {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 999px;
-  color: var(--color-base-50);
-  background: var(--color-redstone-600);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--color-redstone-500) 60%, transparent);
+  color: var(--color-on-primary);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-primary-500) 60%, transparent);
 }
 .nl-bad {
   background: var(--color-base-800);
   box-shadow: none;
-  color: var(--color-lamp-300, #ffb84d);
+  color: var(--color-caution-300);
 }
 </style>

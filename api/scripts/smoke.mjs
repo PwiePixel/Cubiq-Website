@@ -20,8 +20,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PORT = 3000 + Math.floor(Math.random() * 1000) + 3000
 const BASE = `http://127.0.0.1:${PORT}`
 const ADMIN_KEY = 'smoke-admin-key-0123456789abcdef-0123456789'
-const ADMIN_UUID = '75c1a6f3112240abbdb57b9d21c64232'
+const ADMIN_UUID = '0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b'
 const ORIGIN = 'https://allowed.example'
+/** Größte Umhang-Datei (server/lib/png.ts MAX_UPLOAD_BYTES). */
+const MAX_UPLOAD = 20 * 1024 * 1024
 
 // ------------------------------------------------------------ Mojang-Mock
 const joins = new Map()
@@ -228,7 +230,7 @@ try {
   check('polyglot 400', poly.status === 400)
   const dims = await http('POST', '/v1/capes/upload', { token: B, raw: png(100, 50), headers: { 'content-type': 'image/png' } })
   check('wrong dims 400', dims.json?.error.code === 'invalid_dimensions')
-  const huge = await http('POST', '/v1/capes/upload', { token: B, raw: Buffer.alloc(5 * 1024 * 1024 + 1, 1), headers: { 'content-type': 'image/png' } })
+  const huge = await http('POST', '/v1/capes/upload', { token: B, raw: Buffer.alloc(MAX_UPLOAD + 1, 1), headers: { 'content-type': 'image/png' } })
   check('oversized 413', huge.status === 413)
   const hidden = await http('GET', `/v1/capes/${capeId}.png`)
   check('pending texture hidden', hidden.status === 404)
@@ -272,8 +274,8 @@ try {
   // SSE-Stream von A öffnen, dann schickt B eine Anfrage.
   const ac = new AbortController()
   const events = []
-  const sse = fetch(`${BASE}/v1/events`, { headers: { authorization: `Bearer ${A}` }, signal: ac.signal }).then(async (res) => {
-    check('sse content-type', res.headers.get('content-type') === 'text/event-stream')
+  const sse = fetch(`${BASE}/v1/events`, { headers: { authorization: `Bearer ${A}`, accept: 'text/event-stream' }, signal: ac.signal }).then(async (res) => {
+    check('sse content-type', res.headers.get('content-type')?.startsWith('text/event-stream'), res.headers.get('content-type'))
     const reader = res.body.getReader()
     const dec = new TextDecoder()
     let buf = ''
@@ -712,7 +714,7 @@ try {
 
   console.log('admin + deletion')
   const stats = await http('GET', '/v1/admin/stats', { token: A })
-  check('stats', stats.json.users.total === 3 && stats.json.chat.messages === 4 && stats.json.reports.resolved === 3 && stats.json.capes.approved === 1 && stats.json.cosmetics.builtin === 12 && stats.json.cosmetics.approved === 1 && stats.json.cosmetics.pending === 1, JSON.stringify(stats.json))
+  check('stats', stats.json.users.total === 3 && stats.json.chat.messages === 4 && stats.json.reports.resolved === 3 && stats.json.capes.approved === 1 && stats.json.cosmetics.builtin === 14 && stats.json.cosmetics.approved === 1 && stats.json.cosmetics.pending === 1, JSON.stringify(stats.json))
   const ban = await http('POST', '/v1/admin/users/b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0/ban', { headers: { 'x-admin-key': ADMIN_KEY }, body: { reason: 'smoke' } })
   check('ban', ban.json.user.banned?.reason === 'smoke')
   const banned = await http('GET', '/v1/me', { token: B })
@@ -762,7 +764,7 @@ try {
     } })
     check('create job', job.status === 201 && job.json.job.id === 'moderator')
     const site = await http('GET', '/v1/site/team')
-    check('team page data', site.json.jobs.some((j) => j.id === 'moderator') && site.json.team.roles.some((r) => r.id === 'owner'))
+    check('team page data', site.json.jobs.some((j) => j.id === 'moderator') && Array.isArray(site.json.team?.groups))
     const page = await http('GET', '/team/moderator?lang=de')
     check('job page SSR', page.status === 200 && page.text.includes('Chat freundlich halten'))
     const sitemap = await http('GET', '/sitemap.xml')

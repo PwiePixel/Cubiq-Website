@@ -60,7 +60,7 @@ async function submit() {
         <SiteIcon name="mail" class="size-4" />{{ state === 'busy' ? n.form.sending : n.form.submit }}
       </button>
     </form>
-    <p v-if="error" :id="`${uid}-err`" role="alert" class="mt-2 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" :id="`${uid}-err`" role="alert" class="mt-2 text-sm text-danger-300">{{ error }}</p>
     <p :id="`${uid}-hint`" class="mt-2 text-xs text-base-600">
       {{ n.form.hint }} <NuxtLink :to="lp('/privacy')" class="underline hover:text-base-300">{{ n.form.privacy }}</NuxtLink>
     </p>
@@ -84,7 +84,7 @@ async function submit() {
 }
 .nl-sent :deep(svg) {
   margin-top: 0.15rem;
-  color: var(--color-redstone-400);
+  color: var(--color-primary-400);
 }
 .nl-page .field {
   height: 3rem;

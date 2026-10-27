@@ -219,10 +219,10 @@ const cardOf = (c: RoadmapColumnView): IssueView[] => c.issues
 }
 .col[data-s='open'] { --c: var(--color-base-200); }
 .col[data-s='planned'] { --c: #7cc4ff; }
-.col[data-s='in_progress'] { --c: var(--color-lamp-400); }
+.col[data-s='in_progress'] { --c: var(--color-caution-400); }
 .col[data-s='in_review'] { --c: #c4a5ff; }
 .col[data-s='done'] { --c: var(--color-ok); }
-.col[data-s='rejected'] { --c: var(--color-redstone-300); }
+.col[data-s='rejected'] { --c: var(--color-danger-300); }
 .col.over {
   border-color: var(--c);
   background: color-mix(in srgb, var(--c) 7%, var(--color-base-900));
@@ -252,10 +252,10 @@ const cardOf = (c: RoadmapColumnView): IssueView[] => c.issues
 }
 .cdot[data-s='open'] { --c: var(--color-base-200); }
 .cdot[data-s='planned'] { --c: #7cc4ff; }
-.cdot[data-s='in_progress'] { --c: var(--color-lamp-400); box-shadow: 0 0 8px var(--color-lamp-400); }
+.cdot[data-s='in_progress'] { --c: var(--color-caution-400); box-shadow: 0 0 8px var(--color-caution-400); }
 .cdot[data-s='in_review'] { --c: #c4a5ff; }
 .cdot[data-s='done'] { --c: var(--color-ok); }
-.cdot[data-s='rejected'] { --c: var(--color-redstone-300); }
+.cdot[data-s='rejected'] { --c: var(--color-danger-300); }
 .cnt {
   margin-left: auto;
   min-width: 1.6rem;
@@ -309,7 +309,7 @@ const cardOf = (c: RoadmapColumnView): IssueView[] => c.issues
   overflow: hidden;
   padding: 0.7rem 0.8rem;
   border-radius: 0.65rem;
-  border: 1px solid var(--color-lamp-400);
+  border: 1px solid var(--color-caution-400);
   background: var(--color-base-850);
   box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.85);
   font-size: 0.9rem;
@@ -351,8 +351,8 @@ const cardOf = (c: RoadmapColumnView): IssueView[] => c.issues
 }
 .drop-chip.over,
 .tab.over {
-  border-color: var(--color-lamp-400);
-  background: color-mix(in srgb, var(--color-lamp-400) 16%, transparent);
+  border-color: var(--color-caution-400);
+  background: color-mix(in srgb, var(--color-caution-400) 16%, transparent);
   color: var(--color-base-50);
 }
 @media (max-width: 719px) {
@@ -379,8 +379,8 @@ const cardOf = (c: RoadmapColumnView): IssueView[] => c.issues
     line-height: 1.1rem;
   }
   .tab[aria-selected='true'] {
-    border-color: var(--color-redstone-500);
-    background: color-mix(in srgb, var(--color-redstone-500) 12%, transparent);
+    border-color: var(--color-primary-500);
+    background: color-mix(in srgb, var(--color-primary-500) 12%, transparent);
     color: var(--color-base-50);
   }
   .board {

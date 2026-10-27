@@ -1,22 +1,27 @@
-# Cubiq API hinter einem Cloudflare-Tunnel (siehe README.md).
+# Cubiq-Website und API hinter einem Cloudflare-Tunnel (siehe README.md).
 # Die API veröffentlicht KEINEN Port – erreichbar ist sie nur über cloudflared
 # im internen Netz. Werte kommen aus .env (siehe .env.example).
 name: cubiq-api
 
 services:
   api:
-    build: .
+    # Kontext ist der ganze Repo-Ordner: Website + API (api/) und Doku (docs-site/).
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+      # Die Doku ist statisch – ihre Links zur Website entstehen beim Bauen aus denselben Adressen.
+      args:
+        SITE_URL: ${SITE_URL:?SITE_URL fehlt in .env (z. B. https://deine-domain.de)}
+        WIKI_URL: ${WIKI_URL:-}
     image: cubiq-api:latest
     restart: unless-stopped
-    # Nur die Variablen, die die API braucht (TUNNEL_TOKEN bleibt bei cloudflared).
+    # Alle Werte aus .env (SITE_URL, Mail, Microsoft-Anmeldung, Impressum NUXT_PUBLIC_OPERATOR_* …) –
+    # nur der Tunnel-Token bleibt bei cloudflared.
+    env_file: .env
     environment:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY fehlt in .env}
-      ADMIN_UUIDS: ${ADMIN_UUIDS:-}
-      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://api.cubiq-launcher.invalid}
-      CORS_ORIGINS: ${CORS_ORIGINS:-}
-      TRUST_PROXY: ${TRUST_PROXY:-cloudflare}
-      LOG_REQUESTS: ${LOG_REQUESTS:-false}
+      SITE_URL: ${SITE_URL:?SITE_URL fehlt in .env (z. B. https://deine-domain.de)}
+      TUNNEL_TOKEN: ''
     volumes:
       - cubiq-data:/data
     networks:
@@ -28,7 +33,7 @@ services:
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
-    mem_limit: 512m
+    mem_limit: 1g
     pids_limit: 200
     logging:
       driver: json-file

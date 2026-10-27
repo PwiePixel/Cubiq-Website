@@ -136,7 +136,7 @@ function reportTone(r: ReportSummaryV2): string {
         <div class="adm-seg" role="group" :aria-label="a.reports.status">
           <button v-for="s in STATUSES" :key="s" type="button" :aria-pressed="f.status === s" @click="f.status = s">
             {{ mod.filters[s] }}
-            <span v-if="s === 'open' && counts?.open" class="ml-1 tabular-nums text-lamp-300">{{ counts.open }}</span>
+            <span v-if="s === 'open' && counts?.open" class="ml-1 tabular-nums text-caution-300">{{ counts.open }}</span>
             <span v-if="s === 'in_review' && counts?.in_review" class="ml-1 tabular-nums">{{ counts.in_review }}</span>
           </button>
         </div>
@@ -170,7 +170,7 @@ function reportTone(r: ReportSummaryV2): string {
       </div>
     </div>
 
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <p v-if="notice" class="mt-4 text-sm text-ok" role="status">{{ notice }}</p>
 
     <div v-if="loading && !items.length" class="mt-6 space-y-3">
@@ -210,7 +210,7 @@ function reportTone(r: ReportSummaryV2): string {
                 <span>{{ fill(mod.against, { name: r.target?.name || mod.unknown }) }}</span>
                 <span>{{ fill(mod.by, { name: r.anonymous ? mod.anonymous : (r.reporter?.name || mod.unknown) }) }}</span>
                 <span v-if="r.images">{{ fill(mod.images, { n: r.images }) }}</span>
-                <span v-if="r.targetOpenReports > 1" class="text-lamp-300">{{ fill(mod.targetOpen, { n: r.targetOpenReports }) }}</span>
+                <span v-if="r.targetOpenReports > 1" class="text-caution-300">{{ fill(mod.targetOpen, { n: r.targetOpenReports }) }}</span>
                 <span v-if="r.assignedTo">→ {{ r.assignedTo.name }}</span>
               </span>
             </button>

@@ -99,7 +99,7 @@ usePageSeo(() => ({
       </div>
     </div>
 
-    <p v-if="error" class="mt-10 text-lamp-300">{{ m.common.error }}</p>
+    <p v-if="error" class="mt-10 text-caution-300">{{ m.common.error }}</p>
     <p v-else-if="!all.length" class="mt-10 text-base-400">{{ c.list.empty }}</p>
     <p v-else-if="!list.length" class="mt-10 text-base-400">{{ c.list.noResults }}</p>
     <ul v-else class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,7 +127,7 @@ usePageSeo(() => ({
     </ul>
 
     <section class="card mt-12 grid gap-4 p-6 md:grid-cols-[auto_1fr] md:items-center">
-      <SiteIcon name="client" class="size-10 text-redstone-400" />
+      <SiteIcon name="client" class="size-10 text-primary-400" />
       <div>
         <h2 class="heading text-xl text-base-50">{{ c.list.clientTitle }}</h2>
         <p class="mt-1 text-sm text-base-400">{{ c.list.clientText }}</p>
@@ -140,14 +140,14 @@ usePageSeo(() => ({
 .stage {
   position: relative;
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
   border-bottom: 1px solid var(--color-base-800);
 }
 .cat[aria-pressed='true'] {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-50);
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
 }
 .diff {
   border-radius: 999px;
@@ -157,12 +157,12 @@ usePageSeo(() => ({
   color: var(--color-ok);
 }
 .diff[data-d='2'] {
-  background: color-mix(in srgb, var(--color-lamp-400) 16%, transparent);
-  color: var(--color-lamp-300);
+  background: color-mix(in srgb, var(--color-caution-400) 16%, transparent);
+  color: var(--color-caution-300);
 }
 .diff[data-d='3'] {
-  background: color-mix(in srgb, var(--color-redstone-500) 18%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-danger-500) 18%, transparent);
+  color: var(--color-danger-300);
 }
 .circuit-card:hover .stage {
   background-color: var(--color-base-900);

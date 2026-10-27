@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Rechts im Kopf: Website, Download, GitHub, Discord (Sprache und Farbschema folgen danach von Docus).
+// Rechts im Kopf: Website, Download, GitHub und – falls eingetragen – Discord (Sprache und Farbschema folgen danach
+// von Docus).
 import { DISCORD_URL, REPO_URL } from '~/composables/useCubiqLinks'
 
 const { text, website, download } = useCubiqLinks()
@@ -33,6 +34,7 @@ const { text, website, download } = useCubiqLinks()
       aria-label="GitHub"
     />
     <UButton
+      v-if="DISCORD_URL"
       :to="DISCORD_URL"
       target="_blank"
       rel="noopener"

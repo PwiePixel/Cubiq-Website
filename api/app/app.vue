@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isSeoLang } from '#shared/seo'
+import { absoluteUrl, isSeoLang } from '#shared/seo'
 
 const { lang, m } = useLang()
 const route = useRoute()
@@ -30,7 +30,7 @@ useSeoMeta({
   description: () => m.value.meta.description,
   ogSiteName: 'Cubiq Launcher',
   ogType: 'website',
-  ogImage: 'https://cubiq-launcher.invalid/og.png',
+  ogImage: absoluteUrl(useSiteUrl(), '/og.png'),
   twitterCard: 'summary_large_image',
 })
 

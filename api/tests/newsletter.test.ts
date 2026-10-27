@@ -158,6 +158,11 @@ describe('config', () => {
     const two = loadConfig({ ...base, SMTP_HOST: 'mail.example.test', SMTP_USER: 'no-reply@x.test', SMTP_PASS: 'a', NEWSLETTER_SMTP_USER: 'newsletter@x.test', NEWSLETTER_SMTP_PASS: 'b' }).mail!
     expect(two.newsletter).toEqual({ user: 'newsletter@x.test', pass: 'b', from: 'Cubiq Launcher <newsletter@cubiq-launcher.invalid>', shared: false })
     expect(() => loadConfig({ ...base, SMTP_HOST: 'mail.example.test', NEWSLETTER_SMTP_USER: 'n' })).toThrow(/NEWSLETTER_SMTP_USER and NEWSLETTER_SMTP_PASS/)
+    // Ohne Absender: Adressen der eigenen Domain (SITE_URL); gesetzte Absender gelten wie eingetragen.
+    const own = loadConfig({ ...base, SITE_URL: 'https://cubiq.example.test', SMTP_HOST: 'mail.example.test', MAIL_FROM: '', NEWSLETTER_SMTP_USER: 'n', NEWSLETTER_SMTP_PASS: 'b' }).mail!
+    expect(own.system.from).toBe('Cubiq Launcher <no-reply@cubiq.example.test>')
+    expect(own.newsletter.from).toBe('Cubiq Launcher <newsletter@cubiq.example.test>')
+    expect(loadConfig({ ...base, SMTP_HOST: 'mail.example.test', MAIL_FROM: 'Team <team@x.test>' }).mail!.system.from).toBe('Team <team@x.test>')
   })
   it('rejects broken values without echoing them', () => {
     expect(() => loadConfig({ ...base, SMTP_HOST: 'smtp.example.test', SMTP_USER: 'only-user' })).toThrow(/SMTP_USER and SMTP_PASS/)
@@ -290,7 +295,7 @@ describe('campaigns', () => {
     expect(contentSchema.safeParse(sample).success).toBe(true)
   })
 
-  it('renders every block in all four looks with pixel titles, alt text and a text part', () => {
+  it('renders every block in all four looks – text titles in Cubiq, pixel titles with alt text in the event looks – and a text part', () => {
     const env = mailEnv()
     seedFixtures(env)
     for (const look of LOOKS) {
@@ -299,8 +304,13 @@ describe('campaigns', () => {
       expect(p.subject).toBe('Version 0.31.0 – Der Coup')
       expect(p.html).toContain(`/mail/head-${look}.png`)
       expect(p.html).toContain(`/mail/div-${look}.png`)
-      expect(p.html).toMatch(/\/v1\/mail\/px\/[0-9a-f]{24}\.png\?d=/)
-      expect(p.html).toContain('alt="Version 0.31.0 – Der Coup"')
+      if (look === 'cubiq') {
+        expect(p.html).not.toMatch(/\/v1\/mail\/px\//)
+        expect(p.html).toContain('Version 0.31.0 – <span style="color:#88bb45;">Der Coup</span>')
+      } else {
+        expect(p.html).toMatch(/\/v1\/mail\/px\/[0-9a-f]{24}\.png\?d=/)
+        expect(p.html).toContain('alt="Version 0.31.0 – Der Coup"')
+      }
       expect(p.html).toContain('https://site.example.test/news/0.31.0/banner.png')
       expect(p.html).toContain('Schwarzes Schaf')
       expect(p.html).toContain('@media (max-width:620px)')
@@ -509,7 +519,7 @@ describe('team notifications', () => {
     const env = makeEnv({ env: { SITE_URL: 'https://site.example.test', SMTP_HOST: '127.0.0.1', MAIL_TEAM_TO: 'team@example.test' } })
     const sender = new FakeSender()
     env.ctx.mail.setSender(sender)
-    notifyTeam(env.ctx, 'application', { fields: [['job', 'Moderator (DE)'], ['from', 'Lencraft151']], path: '/admin/applications/a1' })
+    notifyTeam(env.ctx, 'application', { fields: [['job', 'Moderator (DE)'], ['from', 'BlockBauer42']], path: '/admin/applications/a1' })
     notifyTeam(env.ctx, 'application', { fields: [['job', 'Moderator (DE)'], ['from', 'Steve']], path: '/admin/applications/a2' })
     notifyTeam(env.ctx, 'report', { fields: [['reason', 'spam']], path: '/admin/reports/r1' })
     await processOutbox(env.ctx, 10)
@@ -517,7 +527,7 @@ describe('team notifications', () => {
       ['team@example.test', '[Cubiq Team] Neue Bewerbung eingegangen'],
       ['team@example.test', '[Cubiq Team] Neue Meldung eingegangen'],
     ])
-    expect(sender.sent[0]!.html).toContain('Lencraft151')
+    expect(sender.sent[0]!.html).toContain('BlockBauer42')
     expect(sender.sent[0]!.html).toContain('https://site.example.test/admin/applications/a1')
     expect(flushTeam(env.ctx)).toBe(0)
     env.clock.advance(TEAM_BUNDLE_MS)

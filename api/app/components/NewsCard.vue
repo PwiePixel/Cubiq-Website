@@ -21,7 +21,7 @@ const kicker = computed(() => `${b.value.kind.news} · ${date(props.post.publish
           <component :is="featured ? 'h2' : 'h3'" class="display mt-1 line-clamp-2 leading-tight cover-title drop-shadow" :class="featured ? 'text-4xl' : 'text-2xl'">{{ title }}</component>
         </div>
       </template>
-      <UpdateBanner v-else :kicker="kicker" :title="title" accent="#ffb84d" :size="featured ? 'lg' : 'sm'" :tag="featured ? 'h2' : 'h3'" />
+      <UpdateBanner v-else :kicker="kicker" :title="title" accent="#88bb45" :size="featured ? 'lg' : 'sm'" :tag="featured ? 'h2' : 'h3'" />
       <span class="badge news-badge absolute top-3 right-3">{{ b.kind.news }}</span>
     </div>
     <div class="flex flex-1 flex-col gap-3 p-5">
@@ -31,7 +31,7 @@ const kicker = computed(() => `${b.value.kind.news} · ${date(props.post.publish
           <PlayerHead :uuid="post.author.uuid" :name="post.author.name" :skin="post.author.skin" :size="22" :fetch="false" />
           <span class="truncate text-xs text-base-400">{{ fill(b.by, { name: post.author.name }) }}</span>
         </template>
-        <span class="ml-auto inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-redstone-300">
+        <span class="ml-auto inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary-300">
           {{ b.read }}
           <SiteIcon name="arrow" class="size-4 transition-transform group-hover:translate-x-0.5" />
         </span>
@@ -59,12 +59,12 @@ const kicker = computed(() => `${b.value.kind.news} · ${date(props.post.publish
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
 }
 .news-badge {
-  background: color-mix(in srgb, var(--color-lamp-900) 85%, transparent);
-  color: var(--color-lamp-300);
-  border: 1px solid color-mix(in srgb, var(--color-lamp-400) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary-900) 85%, transparent);
+  color: var(--color-primary-300);
+  border: 1px solid color-mix(in srgb, var(--color-primary-400) 40%, transparent);
   backdrop-filter: blur(4px);
 }
 </style>

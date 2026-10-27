@@ -27,10 +27,10 @@ const { it } = useIssueText()
 }
 .issue-status[data-s='open'] { --c: var(--color-base-200); }
 .issue-status[data-s='planned'] { --c: #7cc4ff; }
-.issue-status[data-s='in_progress'] { --c: var(--color-lamp-400); }
-.issue-status[data-s='in_progress'] .dot { box-shadow: 0 0 6px var(--color-lamp-400); }
+.issue-status[data-s='in_progress'] { --c: var(--color-caution-400); }
+.issue-status[data-s='in_progress'] .dot { box-shadow: 0 0 6px var(--color-caution-400); }
 .issue-status[data-s='in_review'] { --c: #c4a5ff; }
 .issue-status[data-s='done'] { --c: var(--color-ok); }
-.issue-status[data-s='rejected'] { --c: var(--color-redstone-300); }
+.issue-status[data-s='rejected'] { --c: var(--color-danger-300); }
 .issue-status[data-s='duplicate'] { --c: var(--color-base-400); }
 </style>

@@ -1,15 +1,17 @@
 import { contentRoutes } from './build/content-routes.mjs'
 import { iconsToBundle } from './build/icons'
+import { siteUrls } from './build/site-urls.mjs'
 
 // Cubiq Launcher – Dokumentation (Docus-Layer, Nuxt 4). Wird statisch erzeugt (`npm run generate`) und von der
-// Website-App (api/) auf eigener Domain https://docs.cubiq-launcher.invalid ausgeliefert (Wurzel, ohne /docs) – es gibt keinen
-// eigenen Server.
+// Website-App (api/) auf eigener Domain docs.<Domain der Website> ausgeliefert (Wurzel, ohne /docs) – es gibt keinen
+// eigenen Server. Die Adressen kommen beim Bauen aus SITE_URL/WIKI_URL (build/site-urls.mjs).
 // Aufbau, Build und Sicherheit: README.md; Regeln für Inhalte: CONTENT.md.
 
+const urls = siteUrls()
 /** Kanonische Adresse der Doku (eigene Domain, gleiche Website-App, siehe api/server/lib/wiki.ts). */
-const SITE_URL = 'https://docs.cubiq-launcher.invalid'
+const SITE_URL = urls.docs
 /** Die Website (Download, Datenschutz, llms.txt der Website). */
-const WEBSITE_URL = 'https://cubiq-launcher.invalid'
+const WEBSITE_URL = urls.website
 
 /** Die fünf Bereiche (Ordner `content/<lang>/<N>.<slug>/`) – Reihenfolge wie in der Navigation. */
 const DOC_SECTIONS = [
@@ -34,12 +36,20 @@ export default defineNuxtConfig({
     // getrennte Pfade schließen jede Verwechslung (auch in Caches) aus.
     buildAssetsDir: '/_docs/',
     head: {
-      meta: [{ name: 'theme-color', content: '#111116' }],
+      meta: [{ name: 'theme-color', content: '#0c100e' }],
     },
   },
 
-  // Pixel-Schrift für Überschriften, lokal gebündelt (keine Google Fonts). Farben und Stil: app/app.css.
-  css: ['@fontsource-variable/pixelify-sans'],
+  // Schrift Inter, lokal gebündelt (keine Google Fonts). Farben und Stil: app/app.css.
+  css: ['@fontsource-variable/inter'],
+
+  // Adressen für Links und Vorschaubilder (beim Bauen festgelegt, siehe oben).
+  runtimeConfig: {
+    public: {
+      websiteUrl: WEBSITE_URL,
+      docsHost: new URL(SITE_URL).host,
+    },
+  },
 
   // Standard dunkel wie die Website.
   colorMode: {
@@ -108,7 +118,7 @@ export default defineNuxtConfig({
     domain: SITE_URL,
     title: 'Cubiq Launcher Documentation',
     description:
-      'Documentation for Cubiq Launcher (the redstone Minecraft launcher by PwiePixel) and the Cubiq Client mod: installation, launcher features, client modules, help and developer notes.',
+      'Documentation for Cubiq Launcher (the free Minecraft launcher by PwiePixel) and the Cubiq Client mod: installation, launcher features, client modules, help and developer notes.',
     full: {
       title: 'Cubiq Launcher Documentation – full text',
       description: 'All English documentation pages of Cubiq Launcher and Cubiq Client in one Markdown text.',

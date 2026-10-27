@@ -225,7 +225,7 @@ const pageLink = (p: number) => ({ query: { ...route.query, page: p > 1 ? String
     <p v-else-if="view === 'board' && canMove" class="hint team mt-4"><SiteIcon name="grip" class="size-4 shrink-0" />{{ it.board.dragHint }}</p>
     <p v-if="message" class="toast-line mt-3" :class="message.kind" role="status">{{ message.text }}</p>
 
-    <p v-if="error" class="mt-8 text-lamp-300">{{ errorText(error) }}</p>
+    <p v-if="error" class="mt-8 text-caution-300">{{ errorText(error) }}</p>
     <div v-else-if="!data && status === 'pending'" class="mt-6 grid gap-3 sm:grid-cols-3">
       <div v-for="i in 6" :key="i" class="skeleton h-40 rounded-xl" />
     </div>
@@ -290,7 +290,7 @@ const pageLink = (p: number) => ({ query: { ...route.query, page: p > 1 ? String
 .seg button[aria-pressed='true'] {
   background: var(--color-base-800);
   color: var(--color-base-50);
-  box-shadow: inset 0 -2px 0 var(--color-redstone-500);
+  box-shadow: inset 0 -2px 0 var(--color-primary-500);
 }
 .drop-select {
   padding: 0.35rem 0.6rem;
@@ -312,7 +312,7 @@ const pageLink = (p: number) => ({ query: { ...route.query, page: p > 1 ? String
   cursor: pointer;
 }
 .closed-toggle input {
-  accent-color: var(--color-redstone-500);
+  accent-color: var(--color-primary-500);
 }
 .hint {
   display: flex;
@@ -325,7 +325,7 @@ const pageLink = (p: number) => ({ query: { ...route.query, page: p > 1 ? String
   color: var(--color-base-200);
 }
 .hint.team {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 45%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary-500) 45%, transparent);
 }
 .toast-line {
   padding: 0.5rem 0.8rem;
@@ -337,7 +337,7 @@ const pageLink = (p: number) => ({ query: { ...route.query, page: p > 1 ? String
   color: var(--color-ok);
 }
 .toast-line.error {
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-danger-500) 14%, transparent);
+  color: var(--color-danger-300);
 }
 </style>

@@ -1,12 +1,14 @@
 import { spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readdirSync, rmSync, statSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { defineNuxtModule, useLogger } from 'nuxt/kit'
 
-// Bindet die Dokumentation (../docs-site, Docus, statisch erzeugt) für die Doku-Domain https://docs.cubiq-launcher.invalid ein:
+// Bindet die Dokumentation (../docs-site, Docus, statisch erzeugt) für die Doku-Domain (WIKI_URL, Standard
+// docs.<Host von SITE_URL>) ein:
 //
-// - `nuxt build`: erzeugt die Doku bei Bedarf selbst (`npm run generate` in docs-site, vorher `npm ci`, wenn
-//   node_modules fehlt) – nur wenn sie fehlt oder eine Quelldatei neuer ist als der letzte Docs-Build.
+// - `nuxt build`: erzeugt die Doku bei Bedarf selbst (`npm run generate` in docs-site, vorher `npm install`, wenn
+//   node_modules fehlt) – nur wenn sie fehlt, eine Quelldatei neuer ist als der letzte Docs-Build oder SITE_URL/WIKI_URL
+//   sich geändert haben (die Links der Doku entstehen beim Bauen, docs-site/build/site-urls.mjs).
 //   CUBIQ_DOCS_BUILD=skip überspringt das (dann wird eine vorhandene Ausgabe eingebunden), =force erzwingt es.
 // - docs-site/.output/public → `.output/docs-wiki` (echte Dateien, keine Links). Bewusst KEINE Public-Assets: die
 //   liefert Nitro auf jedem Host aus, und Doku und Website haben gleiche Pfade (/icon.png, /shots/, /llms.txt).
@@ -68,11 +70,21 @@ function newestSource(dir: string): number {
   return newest
 }
 
+/** Wurde die vorhandene Doku mit denselben SITE_URL/WIKI_URL gebaut (docs-site/scripts/finalize.mjs → urls.json)? */
+function builtForCurrentUrls(metaDir: string): boolean {
+  try {
+    const built = JSON.parse(readFileSync(join(metaDir, 'urls.json'), 'utf8')) as { env?: Record<string, string> }
+    return built.env?.SITE_URL === (process.env.SITE_URL ?? '') && built.env?.WIKI_URL === (process.env.WIKI_URL ?? '')
+  } catch {
+    return false
+  }
+}
+
 function ensureDocsBuilt(docsDir: string, metaDir: string, logger: ReturnType<typeof useLogger>): void {
   const mode = (process.env.CUBIQ_DOCS_BUILD ?? 'auto').toLowerCase()
   if (mode === 'skip') return
   const marker = join(metaDir, 'routes.json')
-  const fresh = existsSync(marker) && statSync(marker).mtimeMs >= newestSource(docsDir)
+  const fresh = existsSync(marker) && statSync(marker).mtimeMs >= newestSource(docsDir) && builtForCurrentUrls(metaDir)
   if (mode !== 'force' && fresh) {
     logger.info('Doku ist aktuell (docs-site/.output) – kein neuer Docs-Build nötig.')
     return

@@ -220,7 +220,7 @@ watch(tab, (v) => {
     </div>
 
     <p v-if="!mailAvailable" class="nl-warn mt-4"><SiteIcon name="warn" class="size-4 shrink-0" />{{ t.mailOff }}</p>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <!-- Kampagnen -->
     <template v-if="tab === 'campaigns'">
@@ -241,7 +241,7 @@ watch(tab, (v) => {
             <div class="flex flex-wrap gap-1.5">
               <NuxtLink :to="`/admin/newsletter/${c.id}`" class="btn btn-ghost px-2.5 py-1 text-xs">{{ t.open }}</NuxtLink>
               <button type="button" class="btn btn-ghost px-2.5 py-1 text-xs" :disabled="busy === `d:${c.id}`" @click="duplicate(c)"><SiteIcon name="copy" class="size-3.5" />{{ t.duplicate }}</button>
-              <button v-if="c.status !== 'scheduled' && c.status !== 'sending'" type="button" class="btn btn-ghost px-2.5 py-1 text-xs text-redstone-300" @click="removing = c"><SiteIcon name="trash" class="size-3.5" /></button>
+              <button v-if="c.status !== 'scheduled' && c.status !== 'sending'" type="button" class="btn btn-ghost px-2.5 py-1 text-xs text-danger-300" @click="removing = c"><SiteIcon name="trash" class="size-3.5" /></button>
             </div>
           </article>
         </li>
@@ -300,7 +300,7 @@ watch(tab, (v) => {
             <button type="button" class="btn btn-ghost" @click="copyToken"><SiteIcon :name="copied ? 'check' : 'copy'" class="size-4" />{{ copied ? t.keys.copied : t.keys.copy }}</button>
           </div>
         </div>
-        <p v-if="keyMsg" role="alert" class="mt-3 text-sm text-redstone-300">{{ keyMsg }}</p>
+        <p v-if="keyMsg" role="alert" class="mt-3 text-sm text-danger-300">{{ keyMsg }}</p>
       </section>
       <div v-if="!keys.length" class="adm-empty mt-4"><SiteIcon name="key" class="size-6" />{{ t.keys.empty }}</div>
       <ul v-else class="mt-4 space-y-2">
@@ -317,7 +317,7 @@ watch(tab, (v) => {
               <span v-if="k.testEmail"> · {{ k.testEmail }}</span>
             </p>
           </div>
-          <button v-if="!k.revokedAt" type="button" class="btn btn-ghost px-2.5 py-1 text-xs text-redstone-300" @click="revoking = k">{{ t.keys.revoke }}</button>
+          <button v-if="!k.revokedAt" type="button" class="btn btn-ghost px-2.5 py-1 text-xs text-danger-300" @click="revoking = k">{{ t.keys.revoke }}</button>
         </li>
       </ul>
     </template>
@@ -336,7 +336,7 @@ watch(tab, (v) => {
             <input id="nn-email" v-model="notifyDraft.email" class="field min-w-0 flex-1" type="email" maxlength="254" autocomplete="email" />
             <button v-if="notify.email || notify.pendingEmail" type="button" class="btn btn-ghost" :disabled="busy === 'notify'" @click="saveNotify(true)">{{ t.notify.remove }}</button>
           </div>
-          <p v-if="notify.pendingEmail" class="mt-1.5 text-xs text-lamp-300">{{ fill(t.notify.pending, { email: notify.pendingEmail }) }}</p>
+          <p v-if="notify.pendingEmail" class="mt-1.5 text-xs text-caution-300">{{ fill(t.notify.pending, { email: notify.pendingEmail }) }}</p>
           <p v-else-if="notify.email" class="mt-1.5 text-xs text-base-400">{{ fill(t.notify.confirmed, { email: notify.email }) }} · {{ t.notify.testAddress }}</p>
         </div>
         <fieldset>
@@ -384,8 +384,8 @@ watch(tab, (v) => {
   color: var(--color-base-400);
 }
 .adm-tabs button[aria-selected='true'] {
-  background: var(--color-redstone-600);
-  color: var(--color-base-50);
+  background: var(--color-primary-500);
+  color: var(--color-on-primary);
 }
 .nl-warn {
   display: flex;
@@ -393,8 +393,8 @@ watch(tab, (v) => {
   align-items: flex-start;
   padding: 0.7rem 0.9rem;
   border-radius: 0.6rem;
-  border: 1px solid color-mix(in srgb, #ffb84d 40%, transparent);
-  background: color-mix(in srgb, #ffb84d 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-caution-400) 40%, transparent);
+  background: color-mix(in srgb, var(--color-caution-400) 8%, transparent);
   font-size: 0.875rem;
   color: #ffd48a;
 }
@@ -411,7 +411,7 @@ watch(tab, (v) => {
 .nl-token {
   padding: 0.8rem 1rem;
   border-radius: 0.6rem;
-  border: 1px dashed var(--color-redstone-500);
+  border: 1px dashed var(--color-primary-500);
   background: var(--color-base-950);
 }
 .nl-token code {

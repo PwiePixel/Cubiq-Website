@@ -1,13 +1,13 @@
-// Dokumentation auf eigener Domain https://docs.cubiq-launcher.invalid (statisch erzeugt in ../docs-site, beim Build nach
+// Dokumentation auf eigener Domain docs.<Domain der Website> (statisch erzeugt in ../docs-site, beim Build nach
 // .output/docs-wiki kopiert, siehe modules/docs.ts; ausgeliefert von server/lib/wiki.ts). Reine Funktionen für Server
 // (Weiterleitungen, Header, Sitemap) und Tests.
 
 import type { SeoLang } from './seo'
 
 /**
- * Kanonische Adresse der Doku (ohne `/` am Ende). Steht so auch im Docs-Build (docs-site/nuxt.config.ts: canonical,
- * hreflang, og:url, llms.txt) – bei einem Umzug beide Stellen ändern. Der Server nimmt `WIKI_URL` aus der Umgebung
- * (Standard = dieser Wert) für Host-Erkennung und Weiterleitungen.
+ * Vorgabe für die Adresse der Doku (ohne `/` am Ende), solange keine eingestellt ist (Tests, Entwicklung). Im Betrieb
+ * gilt `WIKI_URL` bzw. docs.<Host von SITE_URL> aus der Server-Konfiguration (server/lib/config.ts) – die Seiten
+ * bekommen sie über `useWikiUrl()`, der Docs-Build beim Bauen (docs-site/build/site-urls.mjs).
  */
 export const WIKI_URL = 'https://docs.cubiq-launcher.invalid'
 /** Alter Pfad der Doku auf der Website – leitet dauerhaft auf die Doku-Domain um. */

@@ -7,9 +7,11 @@
 // Optional trägt die Überschrift einen Update-Namen (Englisch | Deutsch):
 //   ## 0.5.0 – 2026-09-25 – The Clip Update | Das Clip-Update
 //
-// Das Banner jedes Updates hat einen festen Stil (Deepslate, Redstone-Rahmen, Pixel-Schrift); je Version
-// ändern sich nur Akzentfarbe und Motiv (freigestellte HD-Pixel-Art aus Cubiq Studio, Vorlage „Update-Banner“):
-//   <!-- banner: accent=#ff7ab8 motif=/news/0.4.3/banner.png -->
+// Das Banner jedes Updates hat einen festen Stil (dunkle Fläche, weicher Schein, feines Würfel-Raster); je
+// Version ändern sich nur Akzentfarbe und Motiv (ein freigestelltes Bild, z. B. ein Item). Ohne Motiv zeigt das
+// Banner das Cubiq-Logo – so legt die Release-Automatik des Launchers das Banner an:
+//   <!-- banner: accent=#71a330 -->
+//   <!-- banner: accent=#71a330 motif=/news/0.1.0/banner.png -->
 //
 // Screenshots der Neuerungen stehen als zweiter Kommentar direkt darunter – je Zeile eine Datei aus
 // public/news/<version>/ (PNG oder WebP, höchstens SHOTS_MAX), optional mit Bildunterschrift auf

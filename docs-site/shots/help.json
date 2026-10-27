@@ -4,7 +4,7 @@
     "page": "4.help/01.crash-helper",
     "what": "Crash helper dialog right after a crash: main finding with explanation, involved mods with icons, fix buttons, 'Other possible causes' collapsed, 'Launch again' button",
     "route": "/instances/demo-fabric",
-    "state": "Mock instance 'Redstone Fabric' (Fabric 1.21.1). Crash analysis (crashAnalyzed event / get_crash) with primary finding known_issue/sodium_optifine (Sodium + OptiFabric, action disableMods optifabric) and a second finding mixin_conflict/transform; crashed after 12 min of play. Language per shot en/de/es."
+    "state": "Mock instance 'Fabric 1.21.1' (Fabric 1.21.1). Crash analysis (crashAnalyzed event / get_crash) with primary finding known_issue/sodium_optifine (Sodium + OptiFabric, action disableMods optifabric) and a second finding mixin_conflict/transform; crashed after 12 min of play. Language per shot en/de/es."
   },
   {
     "file": "crash-helper-confirm.png",
@@ -24,7 +24,7 @@
     "file": "repair.png",
     "page": "4.help/02.common-problems",
     "what": "Instance settings dialog, section Installation: Cubiq optimization, Graphics mode (Pretty / Max FPS) and Repair",
-    "route": "/instances/demo-vanilla",
+    "route": "/instances/vanilla",
     "state": "Mock vanilla 1.21.11 instance with Cubiq optimization on; instance settings opened and section 'Installation' selected."
   },
   {
@@ -32,7 +32,7 @@
     "page": "4.help/02.common-problems",
     "what": "Tasks panel open with a running modpack install (stage 'Downloading mods', progress bar, time left, pause/cancel) and one finished task",
     "route": "/",
-    "state": "Mock task registry: modpack task 'Redstone Pack' at 46 % in stage packFiles, one finished Java install in history; tasks panel opened from the title bar."
+    "state": "Mock task registry: modpack task 'Fabulously Optimized' at 46 % in stage packFiles, one finished Java install in history; tasks panel opened from the title bar."
   },
   {
     "file": "java-settings.png",

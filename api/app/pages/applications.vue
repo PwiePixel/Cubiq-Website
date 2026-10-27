@@ -59,7 +59,7 @@ const stepIndex = (s: ApplicationStatus) => steps.indexOf(s)
       <NuxtLink :to="`${lp('/login')}${lp('/login').includes('?') ? '&' : '?'}return=/applications`" class="btn btn-primary mt-4"><SiteIcon name="user" class="size-4" />{{ t.account.signIn }}</NuxtLink>
     </div>
     <template v-else>
-      <p v-if="error" role="alert" class="mt-6 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-6 text-sm text-danger-300">{{ error }}</p>
       <div v-if="!items.length" class="card mt-8 p-6">
         <p class="text-base-300">{{ t.myApps.empty }}</p>
         <NuxtLink :to="lp('/team')" class="btn btn-primary mt-4"><SiteIcon name="briefcase" class="size-4" />{{ t.myApps.browse }}</NuxtLink>
@@ -103,12 +103,12 @@ const stepIndex = (s: ApplicationStatus) => steps.indexOf(s)
   border-left: 3px solid var(--color-ok);
 }
 .app-card[data-status='rejected'] {
-  border-left: 3px solid var(--color-redstone-600);
+  border-left: 3px solid var(--color-danger-600);
 }
 .app-card[data-status='new'],
 .app-card[data-status='review'],
 .app-card[data-status='interview'] {
-  border-left: 3px solid var(--color-lamp-400);
+  border-left: 3px solid var(--color-caution-400);
 }
 .tone {
   display: inline-flex;
@@ -118,10 +118,10 @@ const stepIndex = (s: ApplicationStatus) => steps.indexOf(s)
   font-size: 0.75rem;
   font-weight: 600;
 }
-.tone-warn { background: color-mix(in srgb, var(--color-lamp-400) 18%, transparent); color: var(--color-lamp-300); }
+.tone-warn { background: color-mix(in srgb, var(--color-caution-400) 18%, transparent); color: var(--color-caution-300); }
 .tone-info { background: color-mix(in srgb, #3b82f6 18%, transparent); color: #93c5fd; }
 .tone-ok { background: color-mix(in srgb, var(--color-ok) 18%, transparent); color: var(--color-ok); }
-.tone-danger { background: color-mix(in srgb, var(--color-redstone-500) 18%, transparent); color: var(--color-redstone-300); }
+.tone-danger { background: color-mix(in srgb, var(--color-danger-500) 18%, transparent); color: var(--color-danger-300); }
 .tone-muted { background: var(--color-base-800); color: var(--color-base-300); }
 .steps {
   display: grid;
@@ -135,7 +135,7 @@ const stepIndex = (s: ApplicationStatus) => steps.indexOf(s)
   color: var(--color-base-400);
 }
 .steps li[data-done='true'] {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-100);
 }
 .confirm-backdrop {

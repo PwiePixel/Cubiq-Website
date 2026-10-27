@@ -28,8 +28,8 @@ const rejects = (fn: () => unknown) => {
 
 describe('ids', () => {
   it('normalizes dashed and plain UUIDs', () => {
-    expect(normalizeUuid('75C1A6F3-1122-40AB-BDB5-7B9D21C64232')).toBe('75c1a6f3112240abbdb57b9d21c64232')
-    expect(normalizeUuid('75c1a6f3112240abbdb57b9d21c64232')).toBe('75c1a6f3112240abbdb57b9d21c64232')
+    expect(normalizeUuid('0D5E9A3C-7B21-4F6E-8A1C-2B3D4E5F6A7B')).toBe('0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b')
+    expect(normalizeUuid('0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b')).toBe('0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b')
     expect(normalizeUuid('75c1a6f3-112240abbdb57b9d21c64232')).toBeNull()
     expect(normalizeUuid('zzzzzzzz112240abbdb57b9d21c64232')).toBeNull()
   })
@@ -71,8 +71,8 @@ describe('request schemas', () => {
   })
 
   it('lookup: 1–100 UUIDs, normalized', () => {
-    const r = parseWith(lookupBody, { uuids: ['75c1a6f3-1122-40ab-bdb5-7b9d21c64232'] })
-    expect(r.uuids).toEqual(['75c1a6f3112240abbdb57b9d21c64232'])
+    const r = parseWith(lookupBody, { uuids: ['0d5e9a3c-7b21-4f6e-8a1c-2b3d4e5f6a7b'] })
+    expect(r.uuids).toEqual(['0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b'])
     rejects(() => parseWith(lookupBody, { uuids: [] }))
     rejects(() => parseWith(lookupBody, { uuids: Array.from({ length: 101 }, () => 'a'.repeat(32)) }))
     rejects(() => parseWith(lookupBody, { uuids: ['not-a-uuid'] }))
@@ -89,7 +89,7 @@ describe('request schemas', () => {
 
   it('friend target: name or UUID', () => {
     expect(parseWith(targetBody, { target: 'PwiePixel' }).target).toEqual({ name: 'PwiePixel' })
-    expect(parseWith(targetBody, { target: '75c1a6f3-1122-40ab-bdb5-7b9d21c64232' }).target).toEqual({ uuid: '75c1a6f3112240abbdb57b9d21c64232' })
+    expect(parseWith(targetBody, { target: '0d5e9a3c-7b21-4f6e-8a1c-2b3d4e5f6a7b' }).target).toEqual({ uuid: '0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b' })
     rejects(() => parseWith(targetBody, { target: "Robert'); DROP TABLE users;--" }))
   })
 
@@ -129,9 +129,21 @@ describe('config', () => {
   })
 
   it('parses admin UUIDs and rejects garbage', () => {
-    const c = loadConfig({ ...base, ADMIN_UUIDS: '75c1a6f3-1122-40ab-bdb5-7b9d21c64232, ' })
-    expect([...c.adminUuids]).toEqual(['75c1a6f3112240abbdb57b9d21c64232'])
+    const c = loadConfig({ ...base, ADMIN_UUIDS: '0d5e9a3c-7b21-4f6e-8a1c-2b3d4e5f6a7b, ' })
+    expect([...c.adminUuids]).toEqual(['0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b'])
     expect(() => loadConfig({ ...base, ADMIN_UUIDS: 'PwiePixel' })).toThrow(ConfigError)
+  })
+
+  it('derives every address from SITE_URL; empty optional addresses count as unset', () => {
+    const c = loadConfig({ ...base, SITE_URL: 'https://cubiq.example.test/', PUBLIC_BASE_URL: '', WIKI_URL: '', MS_REDIRECT_URI: '' })
+    expect(c.siteUrl).toBe('https://cubiq.example.test')
+    expect(c.publicBaseUrl).toBe('https://cubiq.example.test')
+    expect(c.wikiUrl).toBe('https://docs.cubiq.example.test')
+    expect([...c.wikiHosts]).toEqual(['docs.cubiq.example.test'])
+    expect(loadConfig({ ...base, SITE_URL: 'http://127.0.0.1:3000' }).wikiUrl).toBe('http://docs.localhost:3000')
+    expect(loadConfig({ ...base, PUBLIC_BASE_URL: 'https://api.example.test/' }).publicBaseUrl).toBe('https://api.example.test')
+    expect(() => loadConfig({ ...base, SITE_URL: '' })).toThrow(/SITE_URL/)
+    expect(() => loadConfig({ ...base, WIKI_URL: 'docs' })).toThrow(/WIKI_URL/)
   })
 
   it('CORS: exact https origins only, no wildcard', () => {

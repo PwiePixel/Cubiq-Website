@@ -17,7 +17,7 @@ export const ALTSTORE_SOURCE = `${MOBILE_CHANNEL}altstore.json`
  * Launcher-Repos). Beim Wechsel des Schlüssels dort auch hier eintragen – sonst lehnt die Website mobile.json ab.
  */
 export const MOBILE_PUBLIC_KEY =
-  'dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDREMjk3RERDOENBOTFEQUQKUldTdEhhbU0zSDBwVFhIb29oaVozcEZ2WktyR1pMZmgyTW9COStuYXJuYXZRWUJxMUduYWdUbEoK'
+  'dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0MjdDRjU4OEQ0REY4NkEKUldScStFMk5XTThucERNTjlrSlozN0plT3NNMjBLL0x1Q0VnY3hEVTNuSzk1NE9jNTlrMVk1aCsK'
 
 const MANIFEST = 'mobile.json'
 const MAX_MANIFEST_BYTES = 256 * 1024

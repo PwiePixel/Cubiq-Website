@@ -237,7 +237,7 @@ const durationText = (r: RoleView) => (r.maxSanctionMinutes === null ? t.value.a
       <span class="flex items-center gap-1.5"><SiteIcon name="key" class="size-3.5" />{{ fill(t.adm.roles.rankRule, { rank: myRank }) }}</span>
       <span>{{ t.adm.roles.multi }}</span>
     </p>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading" class="skeleton mt-6 h-64 rounded-xl" />
 
     <!-- Rollen -->
@@ -339,7 +339,7 @@ const durationText = (r: RoleView) => (r.maxSanctionMinutes === null ? t.value.a
       <p v-if="!draft.locked" class="mt-1 text-xs text-base-400">{{ t.adm.roles.maxHint }}</p>
 
       <h3 class="section-title mt-6">{{ t.adm.roles.permissions }}</h3>
-      <p v-if="draft.locked" class="mt-2 text-sm text-lamp-300">{{ t.adm.roles.locked }}</p>
+      <p v-if="draft.locked" class="mt-2 text-sm text-caution-300">{{ t.adm.roles.locked }}</p>
       <div class="perm-grid mt-3">
         <fieldset v-for="g in PERMISSION_GROUPS" :key="g.id" class="rounded-lg border border-base-800 p-3">
           <legend class="px-1">
@@ -354,7 +354,7 @@ const durationText = (r: RoleView) => (r.maxSanctionMinutes === null ? t.value.a
           </label>
         </fieldset>
       </div>
-      <p v-if="draftError" role="alert" class="mt-3 text-sm text-redstone-300">{{ draftError }}</p>
+      <p v-if="draftError" role="alert" class="mt-3 text-sm text-danger-300">{{ draftError }}</p>
       <template #footer>
         <button v-if="draft.id && !draft.builtin" type="button" class="btn btn-danger mr-auto" :disabled="busy" @click="deleting = roles.find((x: RoleView) => x.id === draft!.id) ?? null"><SiteIcon name="trash" class="size-4" />{{ t.adm.roles.delete }}</button>
         <button type="button" class="btn btn-ghost" @click="draft = null">{{ a.common.cancel }}</button>
@@ -374,7 +374,7 @@ const durationText = (r: RoleView) => (r.maxSanctionMinutes === null ? t.value.a
       </div>
       <label class="label mt-4" for="member-note">{{ t.adm.roles.note }}</label>
       <input id="member-note" v-model="member.note" class="field" maxlength="200" />
-      <p v-if="memberError" role="alert" class="mt-3 text-sm text-redstone-300">{{ memberError }}</p>
+      <p v-if="memberError" role="alert" class="mt-3 text-sm text-danger-300">{{ memberError }}</p>
       <template #footer>
         <button type="button" class="btn btn-ghost" @click="member = null">{{ a.common.cancel }}</button>
         <button type="button" class="btn btn-primary" :disabled="busy" @click="saveMember">{{ t.adm.roles.saveMember }}</button>

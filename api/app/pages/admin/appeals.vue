@@ -91,11 +91,11 @@ const { active } = useListKeys(items, {
     <div class="adm-toolbar mt-6">
       <div class="adm-seg">
         <button v-for="s in (['open', 'decided', 'all'] as const)" :key="s" type="button" :aria-pressed="status === s" @click="status = s">
-          {{ a.appeals.filters[s] }}<span v-if="s === 'open' && open" class="ml-1 tabular-nums text-lamp-300">{{ open }}</span>
+          {{ a.appeals.filters[s] }}<span v-if="s === 'open' && open" class="ml-1 tabular-nums text-caution-300">{{ open }}</span>
         </button>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
 
     <div v-if="loading && !items.length" class="mt-6 space-y-3">
       <div v-for="i in 3" :key="i" class="skeleton h-40 rounded-xl" />
@@ -122,7 +122,7 @@ const { active } = useListKeys(items, {
           </div>
           <p v-if="x.response" class="text-sm text-base-200">→ {{ x.response }} <span class="text-xs text-base-400">· {{ fill(a.appeals.decidedBy, { name: actor(x.decidedBy), date: when(x.decidedAt) }) }}</span></p>
           <template v-if="x.status === 'open'">
-            <p v-if="own(x)" class="text-xs text-lamp-300">{{ a.appeals.ownSanction }}</p>
+            <p v-if="own(x)" class="text-xs text-caution-300">{{ a.appeals.ownSanction }}</p>
             <div v-else class="flex flex-wrap gap-2">
               <button type="button" class="btn btn-primary text-sm" :disabled="adminOnly(x)" :title="adminOnly(x) ? a.appeals.adminSanction : ''" @click="start(x, 'lift')"><SiteIcon name="check" class="size-4" />{{ a.appeals.lift }}</button>
               <button type="button" class="btn btn-ghost text-sm" :disabled="adminOnly(x) || x.sanction.status !== 'active'" @click="start(x, 'shorten')"><SiteIcon name="clock" class="size-4" />{{ a.appeals.shorten }}</button>
@@ -148,7 +148,7 @@ const { active } = useListKeys(items, {
       <label class="label mt-4" for="ap-response">{{ a.appeals.response }} *</label>
       <textarea id="ap-response" v-model="response" class="field min-h-28" maxlength="1000" autofocus />
       <p class="mt-1 text-xs text-base-400">{{ a.appeals.responseHint }}</p>
-      <p v-if="decideError" role="alert" class="mt-3 text-sm text-redstone-300">{{ decideError }}</p>
+      <p v-if="decideError" role="alert" class="mt-3 text-sm text-danger-300">{{ decideError }}</p>
       <template #footer>
         <button type="button" class="btn btn-ghost" @click="deciding = null">{{ a.common.cancel }}</button>
         <button type="button" class="btn btn-primary" :disabled="busy || !response.trim()" @click="confirming = true">{{ a.common.confirm }}</button>

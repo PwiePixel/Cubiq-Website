@@ -17,7 +17,7 @@ The German deployment guide is in [README.md](README.md).
 | Body format | JSON (`Content-Type: application/json`, UTF-8). The only exceptions are the cape and cosmetic uploads, which send raw `image/png`, chat images (§18.7) and shared screenshots (§23), which send raw `image/png`, `image/jpeg` or `image/webp`, and circuit files (§25.6), which send the raw file as `application/octet-stream`. |
 | Body size | JSON bodies can be at most **16 KiB**. A cape upload can be at most **20 MiB**, a cosmetic upload at most **512 KiB**, a chat image at most **5 MiB**, a shared screenshot at most **10 MiB**. Sync bodies are larger (§17): a skin upload at most **192 KiB**, presets at most **96 KiB**, notes (§17.5) at most **512 KiB**. Circuit bodies (§25) at most **300 KiB**, circuit files at most **2 MiB**. Anything larger gets `413`. |
 | Unknown fields | They are **rejected** with `400 invalid_request`. All request objects are strict. |
-| UUIDs | Requests accept 32 hex digits with or without dashes, in any case. **Responses always use 32 lowercase hex digits without dashes**, for example `75c1a6f3112240abbdb57b9d21c64232`. |
+| UUIDs | Requests accept 32 hex digits with or without dashes, in any case. **Responses always use 32 lowercase hex digits without dashes**, for example `0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b`. |
 | Minecraft names | `^[A-Za-z0-9_]{1,16}$` |
 | Timestamps | ISO 8601 in UTC, for example `2026-09-23T18:04:59.167Z` |
 | Auth header | `Authorization: Bearer <token>`, where the token matches `^cubiq_[A-Za-z0-9_-]{43}$`. Treat it as a secret: store it encrypted (DPAPI) and never log it. |
@@ -218,7 +218,7 @@ Auth required.
 **200**
 ```json
 {
-  "uuid": "75c1a6f3112240abbdb57b9d21c64232",
+  "uuid": "0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b",
   "name": "PwiePixel",
   "admin": true,
   "role": "admin",
@@ -1796,7 +1796,7 @@ Chat between Cubiq users. **Who may write:** friends (direct messages, "DM") and
   "id": "c1f0e2d3c4b5a69788990",
   "kind": "group",
   "name": "Bau-Crew",
-  "owner": "75c1a6f3112240abbdb57b9d21c64232",
+  "owner": "0d5e9a3c7b214f6e8a1c2b3d4e5f6a7b",
   "members": [ { "uuid": "75c1…", "name": "PwiePixel", "role": "owner", "joinedAt": "…" }, { "uuid": "b0b0…", "name": "Bob", "role": "member", "joinedAt": "…" } ],
   "peer": null,
   "canWrite": true,

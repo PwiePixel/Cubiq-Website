@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, readFileSync, readdirSync } from 'node:fs'
+import { createReadStream, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { crc32, deflateRawSync } from 'node:zlib'

@@ -35,7 +35,7 @@ const more = computed(() => Math.max(0, shots.value.length - thumbCount.value))
         </li>
         <li v-if="more" class="chip" :title="fill(m.blog.more, { n: more })">+{{ more }}</li>
       </ul>
-      <span class="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-redstone-300">
+      <span class="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary-300">
         {{ m.blog.read }}
         <SiteIcon name="arrow" class="size-4 transition-transform group-hover:translate-x-0.5" />
       </span>

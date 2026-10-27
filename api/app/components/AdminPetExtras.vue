@@ -207,7 +207,7 @@ const scaleText = (n: number) => fill(x.value.scale, { n: String(n).replace('.',
   <section class="mt-8" aria-labelledby="pet-extras-title">
     <h2 id="pet-extras-title" class="section-title">{{ x.title }}</h2>
     <p class="mt-1 max-w-3xl text-xs text-base-400">{{ x.lead }}</p>
-    <p v-if="error" class="mt-3 text-sm text-redstone-300" role="alert">{{ error }}</p>
+    <p v-if="error" class="mt-3 text-sm text-danger-300" role="alert">{{ error }}</p>
     <p v-if="notice" class="mt-3 text-sm text-ok" role="status">{{ notice }}</p>
 
     <div class="mt-3 grid gap-4 2xl:grid-cols-[1fr_22rem]">
@@ -266,12 +266,12 @@ const scaleText = (n: number) => fill(x.value.scale, { n: String(n).replace('.',
                   <template v-if="known(id).petScale !== 1">{{ scaleText(known(id).petScale) }} · </template>
                   <template v-if="option(id)?.owner">{{ fill(x.owner, { name: option(id)!.owner!.name }) }}</template>
                   <template v-else>{{ option(id)?.unlock === 'code' ? x.code : option(id)?.unlock === 'free' ? x.free : x.team }}</template>
-                  <template v-if="!known(id).available"> · <span class="text-redstone-300">{{ x.unavailable }}</span></template>
+                  <template v-if="!known(id).available"> · <span class="text-caution-300">{{ x.unavailable }}</span></template>
                 </span>
               </span>
               <button type="button" class="extra-btn" :disabled="i === 0" :aria-label="x.up" :title="x.up" @click="move(i, -1)"><SiteIcon name="up" class="size-4" /></button>
               <button type="button" class="extra-btn" :disabled="i === draft.length - 1" :aria-label="x.down" :title="x.down" @click="move(i, 1)"><SiteIcon name="up" class="size-4 rotate-180" /></button>
-              <button type="button" class="extra-btn text-redstone-300" :aria-label="x.remove" :title="x.remove" @click="drop(i)"><SiteIcon name="trash" class="size-4" /></button>
+              <button type="button" class="extra-btn text-danger-300" :aria-label="x.remove" :title="x.remove" @click="drop(i)"><SiteIcon name="trash" class="size-4" /></button>
             </li>
           </ol>
           <select v-model="pick" class="field mt-3" :disabled="draft.length >= max" :aria-label="x.pick">
@@ -280,7 +280,7 @@ const scaleText = (n: number) => fill(x.value.scale, { n: String(n).replace('.',
               {{ o.name }}{{ o.owner ? ` – ${fill(x.owner, { name: o.owner.name })}` : '' }}{{ o.available ? '' : ` (${x.unavailable})` }}
             </option>
           </select>
-          <p v-if="dirty" class="mt-2 text-xs text-lamp-300">{{ x.unsaved }}</p>
+          <p v-if="dirty" class="mt-2 text-xs text-caution-300">{{ x.unsaved }}</p>
           <button type="submit" class="btn btn-primary mt-3 w-full" :disabled="busy || !dirty">{{ x.save }}</button>
         </template>
       </form>

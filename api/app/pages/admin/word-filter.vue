@@ -58,7 +58,7 @@ const shown = computed(() => (q.value.trim() ? words.value.filter((w) => w.word.
       <h1 class="adm-title">{{ mod.filterTitle }}</h1>
       <p class="adm-lead">{{ mod.filterLead }}</p>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div class="mt-6 grid gap-6" :class="can('wordfilter') ? 'lg:grid-cols-[22rem_1fr]' : ''">
       <form v-if="can('wordfilter')" class="card h-fit p-5" @submit.prevent="add">
         <label class="label" for="wf-word">{{ mod.word }}</label>

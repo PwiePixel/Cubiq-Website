@@ -88,7 +88,7 @@ const items = computed(() => {
         <p v-if="!collapsed" class="ws-label mt-5 px-3">{{ it.team.title }}</p>
         <div v-else class="mx-3 my-3 border-t border-base-800" />
         <NuxtLink to="/admin/issues" class="ws-link" :title="collapsed ? it.ws.team : undefined">
-          <SiteIcon name="shield" class="size-4.5 shrink-0 text-redstone-400" />
+          <SiteIcon name="shield" class="size-4.5 shrink-0 text-primary-400" />
           <span v-if="!collapsed" class="min-w-0 flex-1 truncate">{{ it.ws.team }}</span>
           <span v-if="!collapsed && summary?.team" class="ws-count hot">{{ summary.team.new }}</span>
         </NuxtLink>
@@ -119,7 +119,7 @@ const items = computed(() => {
             <span v-if="i.count !== null" class="ws-count">{{ i.count }}</span>
           </NuxtLink>
           <NuxtLink v-if="isTeam" to="/admin/issues" class="ws-link">
-            <SiteIcon name="shield" class="size-4.5 shrink-0 text-redstone-400" />
+            <SiteIcon name="shield" class="size-4.5 shrink-0 text-primary-400" />
             <span class="min-w-0 flex-1 truncate">{{ it.ws.team }}</span>
             <span v-if="summary?.team" class="ws-count hot">{{ summary.team.new }}</span>
           </NuxtLink>
@@ -205,7 +205,7 @@ const items = computed(() => {
   color: var(--color-base-50);
 }
 .ws-link[aria-current='page'] {
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
   color: var(--color-base-50);
 }
 .ws-link[aria-current='page']::before {
@@ -216,8 +216,8 @@ const items = computed(() => {
   bottom: 0.4rem;
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 8px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 8px var(--color-primary-500);
 }
 .ws-count {
   min-width: 1.5rem;
@@ -231,8 +231,8 @@ const items = computed(() => {
   font-variant-numeric: tabular-nums;
 }
 .ws-count.hot {
-  background: color-mix(in srgb, var(--color-lamp-400) 20%, transparent);
-  color: var(--color-lamp-300);
+  background: color-mix(in srgb, var(--color-caution-400) 20%, transparent);
+  color: var(--color-caution-300);
 }
 .ws-main {
   min-width: 0;

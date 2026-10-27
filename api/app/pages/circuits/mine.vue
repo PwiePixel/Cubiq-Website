@@ -41,7 +41,7 @@ onMounted(async () => {
       <a :href="loginUrl()" class="btn btn-primary mt-4"><SiteIcon name="user" class="size-4" />{{ c.common.signIn }}</a>
     </div>
     <template v-else>
-      <p v-if="error" role="alert" class="mt-6 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-6 text-sm text-danger-300">{{ error }}</p>
       <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p v-if="limits" class="text-sm text-base-400 tabular-nums">{{ fill(c.submit.limit, { today: limits.today, max: limits.maxPerDay }) }}</p>
         <NuxtLink :to="lp('/circuits/submit')" class="btn btn-primary"><SiteIcon name="plus" class="size-4" />{{ c.mine.submit }}</NuxtLink>
@@ -74,10 +74,10 @@ onMounted(async () => {
   border-left: 3px solid var(--color-ok);
 }
 .sub-card[data-status='rejected'] {
-  border-left: 3px solid var(--color-redstone-600);
+  border-left: 3px solid var(--color-danger-600);
 }
 .sub-card[data-status='pending'] {
-  border-left: 3px solid var(--color-lamp-400);
+  border-left: 3px solid var(--color-caution-400);
 }
 .tone {
   display: inline-flex;
@@ -87,7 +87,7 @@ onMounted(async () => {
   font-size: 0.75rem;
   font-weight: 600;
 }
-.tone-warn { background: color-mix(in srgb, var(--color-lamp-400) 18%, transparent); color: var(--color-lamp-300); }
+.tone-warn { background: color-mix(in srgb, var(--color-caution-400) 18%, transparent); color: var(--color-caution-300); }
 .tone-ok { background: color-mix(in srgb, var(--color-ok) 18%, transparent); color: var(--color-ok); }
-.tone-danger { background: color-mix(in srgb, var(--color-redstone-500) 18%, transparent); color: var(--color-redstone-300); }
+.tone-danger { background: color-mix(in srgb, var(--color-danger-500) 18%, transparent); color: var(--color-danger-300); }
 </style>

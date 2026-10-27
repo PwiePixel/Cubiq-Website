@@ -29,7 +29,8 @@ export function operatorLines(o: Operator, lang: Lang): string {
   const l = LABELS[lang]
   if (!o.name.trim()) return l.missing
   const lines = [o.representative.trim() ? `${o.name}, ${l.represented} ${o.representative}` : o.name]
-  if (o.address.trim()) lines.push(o.address)
+  // Mehrzeilige Anschrift: in .env mit \n getrennt (Umgebungsvariablen haben keine echten Zeilenumbrüche).
+  if (o.address.trim()) lines.push(o.address.replace(/\\n/g, '\n'))
   const contact = [o.email.trim() ? `${l.email}: ${o.email}` : '', o.phone.trim() ? `${l.phone}: ${o.phone}` : ''].filter(Boolean)
   if (contact.length) lines.push(contact.join(' · '))
   return lines.join('\n')

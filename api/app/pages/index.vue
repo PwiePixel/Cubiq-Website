@@ -70,9 +70,7 @@ const primary = computed(() => {
 
 /** „Ein Blick hinein“: Bildunterschrift + Text des passenden Abschnitts von /features. */
 const LOOK_SECTIONS: Record<string, string> = {
-  'emote-wheel.png': 'emotes',
   'redstone-overlay.png': 'redstone',
-  'cape-physics.png': 'capes',
   'zoom.png': 'client',
 }
 const look = computed(() =>
@@ -82,8 +80,8 @@ const look = computed(() =>
   }),
 )
 
-// Die Hauptleitung der Szene endet am Download-Knopf; beim Zeigen darauf leuchtet die Lampe.
-const lamp = shallowRef<HTMLElement | null>(null)
+// Der Schein der Szene sitzt hinter dem Download-Knopf; beim Zeigen darauf leuchtet er heller.
+const cta = shallowRef<HTMLElement | null>(null)
 const powered = ref(false)
 </script>
 
@@ -94,9 +92,9 @@ const powered = ref(false)
         <HalloweenScene v-if="hwLook" @anchor="onAnchor">
           <div class="scrim" />
         </HalloweenScene>
-        <RedstoneScene v-else :mode="powered ? 'running' : 'idle'" :anchor="lamp">
+        <CubiqScene v-else :mode="powered ? 'running' : 'idle'" :anchor="cta">
           <div class="scrim" />
-        </RedstoneScene>
+        </CubiqScene>
       </ClientOnly>
 
       <template v-if="halloween">
@@ -112,7 +110,7 @@ const powered = ref(false)
         <p v-if="hwLook" class="hw-eyebrow">{{ hwText.eyebrow }} · {{ hwText.until }}</p>
         <!-- Die Zeile darüber gehört zur Überschrift (sichtbar, gleiche Optik wie vorher) – so steht „Minecraft-Launcher“ in der h1. -->
         <h1>
-          <span class="block text-xs font-semibold tracking-[0.2em] text-lamp-300 uppercase">{{ m.home.kicker }}</span>
+          <span class="block text-xs font-semibold tracking-[0.2em] text-primary-300 uppercase">{{ m.home.kicker }}</span>
           <span class="hero-title display mt-3 block max-w-3xl text-5xl leading-[1.02] text-balance text-base-50 sm:text-6xl lg:text-7xl">
             {{ m.home.title }}
           </span>
@@ -120,7 +118,7 @@ const powered = ref(false)
         <div class="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
           <p class="max-w-xl text-base leading-relaxed text-base-200 sm:text-lg">{{ m.home.lead }}</p>
           <div class="flex w-full flex-col gap-2 sm:w-auto">
-            <div ref="lamp" class="flex flex-wrap gap-2">
+            <div ref="cta" class="flex flex-wrap gap-2">
               <a
                 v-if="primary.external"
                 :href="primary.href"
@@ -191,7 +189,7 @@ const powered = ref(false)
           <h2 id="creators-title" class="heading text-3xl">{{ m.creators.home.title }}</h2>
           <p class="mt-2 max-w-xl text-sm text-base-400">{{ m.creators.home.lead }}</p>
         </div>
-        <NuxtLink :to="lp('/creators')" class="inline-flex items-center gap-1.5 text-sm font-semibold text-redstone-400 hover:text-redstone-300">
+        <NuxtLink :to="lp('/creators')" class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-400 hover:text-primary-300">
           {{ m.creators.home.all }} <SiteIcon name="arrow" class="size-4" />
         </NuxtLink>
       </div>
@@ -235,7 +233,7 @@ const powered = ref(false)
         <div class="look-panels mt-8" data-fx="stagger">
           <div v-for="p in look" :key="p.src" class="look-panel" data-fx-panel>
             <div class="look-text" data-fx-panel-text>
-              <p class="text-xs font-semibold tracking-[0.2em] text-lamp-300 uppercase">{{ p.short }}</p>
+              <p class="text-xs font-semibold tracking-[0.2em] text-primary-300 uppercase">{{ p.short }}</p>
               <h3 class="display mt-3 text-3xl leading-tight text-base-50">{{ p.caption }}</h3>
               <p class="mt-3 leading-relaxed text-base-300">{{ p.text }}</p>
               <NuxtLink :to="lp(`/features#${p.id}`)" class="btn btn-ghost mt-6">
@@ -428,11 +426,11 @@ const powered = ref(false)
   font-weight: 600;
 }
 .hero-on .cta {
-  background: var(--color-lamp-400);
-  color: var(--color-base-950);
+  background: var(--color-primary-400);
+  color: var(--color-on-primary);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.35),
-    0 0 28px -4px var(--color-lamp-400);
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 0 28px -4px var(--color-primary-400);
 }
 
 .feature-icon {
@@ -440,18 +438,18 @@ const powered = ref(false)
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
   background: var(--color-base-900);
   box-shadow:
     inset 0 0 0 1px var(--color-base-800),
-    inset 0 -3px 0 color-mix(in srgb, var(--color-redstone-600) 60%, transparent);
+    inset 0 -3px 0 color-mix(in srgb, var(--color-primary-600) 60%, transparent);
 }
 .feature:hover .feature-icon {
-  color: var(--color-lamp-300);
+  color: var(--color-primary-200);
   box-shadow:
     inset 0 0 0 1px var(--color-base-700),
-    inset 0 -3px 0 var(--color-lamp-400),
-    0 0 18px -6px var(--color-lamp-400);
+    inset 0 -3px 0 var(--color-primary-400),
+    0 0 18px -6px var(--color-primary-400);
 }
 
 .tiles {
@@ -515,7 +513,7 @@ const powered = ref(false)
   font-style: italic;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
 }
 .tile-title {
   font-family: var(--font-display);
@@ -562,8 +560,8 @@ const powered = ref(false)
 .look-steps li {
   width: 1.75rem;
   height: 4px;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 10px -2px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 10px -2px var(--color-primary-500);
 }
 /* … am Desktop angeheftet: alle Texte in einer Zelle, alle Bilder in der anderen (übereinander). */
 [data-fx-pinned] .look-steps {
@@ -627,8 +625,8 @@ const powered = ref(false)
   text-align: center;
 }
 .compare .col-cubiq {
-  background: color-mix(in srgb, var(--color-redstone-500) 9%, transparent);
-  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--color-redstone-500) 40%, transparent), inset -1px 0 0 color-mix(in srgb, var(--color-redstone-500) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary-500) 9%, transparent);
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--color-primary-500) 40%, transparent), inset -1px 0 0 color-mix(in srgb, var(--color-primary-500) 40%, transparent);
 }
 .compare thead .col-cubiq {
   font-family: var(--font-display);
@@ -654,25 +652,25 @@ const powered = ref(false)
   background: var(--color-base-800);
 }
 .mark-partial {
-  background: var(--color-lamp-900);
+  background: var(--color-primary-900);
 }
 .mark-dot {
   width: 40%;
   height: 40%;
-  background: var(--color-lamp-400);
+  background: var(--color-primary-400);
 }
 
 .capes-band {
   background:
-    radial-gradient(80% 120% at 85% 50%, color-mix(in srgb, var(--color-redstone-900) 55%, transparent), transparent 70%),
+    radial-gradient(80% 120% at 85% 50%, color-mix(in srgb, var(--color-primary-900) 55%, transparent), transparent 70%),
     var(--color-base-900);
 }
 .viewer-stage {
   position: relative;
   height: 100%;
   min-height: 340px;
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 .cape-pick {
   display: grid;
@@ -688,7 +686,7 @@ const powered = ref(false)
 }
 .cape-pick-on {
   box-shadow:
-    inset 0 0 0 2px var(--color-lamp-400),
-    0 0 16px -6px var(--color-lamp-400);
+    inset 0 0 0 2px var(--color-primary-400),
+    0 0 16px -6px var(--color-primary-400);
 }
 </style>

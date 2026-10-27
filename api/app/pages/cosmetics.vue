@@ -20,7 +20,7 @@ usePageSeo(() => ({
   path: '/cosmetics',
   title: m.value.seo.cosmetics.title,
   description: m.value.seo.cosmetics.description,
-  image: { url: '/shots/cape-physics.png', width: 854, height: 480, alt: m.value.seo.cosmetics.title },
+  image: { url: '/og.png', width: 1260, height: 660, alt: m.value.seo.cosmetics.title },
   jsonLd: [
     breadcrumbLd(siteUrl, lang.value, [
       { name: m.value.nav.home, path: '/' },
@@ -33,7 +33,7 @@ type Unlockable = { unlock: 'free' | 'code' | 'admin' | 'event' | 'reward', achi
 const unlockLabel = (c: Unlockable) =>
   c.unlock === 'reward' ? m.value.cosmetics.halloweenReward : c.unlock === 'event' ? m.value.cosmetics.halloween : c.achievement ? fill(m.value.capes.achievement, { name: c.achievement[lang.value] ?? c.achievement.en }) : c.unlock === 'free' ? m.value.capes.free : c.unlock === 'code' ? m.value.capes.code : m.value.capes.admin
 const unlockClass = (c: Unlockable) =>
-  c.unlock === 'event' || c.unlock === 'reward' ? 'badge-hw' : c.achievement ? 'bg-[#2a1f4a] text-[#c4a5ff]' : c.unlock === 'free' ? 'bg-ok/15 text-ok' : c.unlock === 'code' ? 'bg-lamp-900 text-lamp-300' : 'bg-redstone-900 text-redstone-300'
+  c.unlock === 'event' || c.unlock === 'reward' ? 'badge-hw' : c.achievement ? 'bg-[#2a1f4a] text-[#c4a5ff]' : c.unlock === 'free' ? 'bg-ok/15 text-ok' : c.unlock === 'code' ? 'bg-caution-900 text-caution-300' : 'bg-primary-900 text-primary-300'
 
 // Tag/Nacht und Animation gelten für alle 3D-Abschnitte (CosmeticSection).
 const night = ref(false)
@@ -56,7 +56,7 @@ onMounted(() => {
       <h2 id="capes-title" class="display text-3xl text-base-50">{{ m.cosmetics.capesTitle }}</h2>
       <p class="mt-2 max-w-2xl text-base-400">{{ m.capes.lead }}</p>
 
-      <p v-if="error" class="mt-8 text-lamp-300">{{ m.common.error }}</p>
+      <p v-if="error" class="mt-8 text-caution-300">{{ m.common.error }}</p>
       <p v-else-if="!capes.length" class="mt-8 text-base-400">{{ m.capes.empty }}</p>
       <div v-else class="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
         <ul class="grid grid-cols-2 content-start gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -78,7 +78,7 @@ onMounted(() => {
               <span class="mt-1.5 flex flex-wrap justify-center gap-1">
                 <span class="badge" :class="unlockClass(c)">{{ unlockLabel(c) }}</span>
                 <span v-if="c.scale > 1" class="badge bg-base-800 text-base-200">HD</span>
-                <span v-if="c.frames > 1" class="badge bg-lamp-900 text-lamp-300">{{ m.capes.animated }}</span>
+                <span v-if="c.frames > 1" class="badge bg-primary-900 text-primary-300">{{ m.capes.animated }}</span>
               </span>
             </button>
           </li>
@@ -189,13 +189,13 @@ onMounted(() => {
   border-color: var(--color-base-700);
 }
 .cos-card-on {
-  border-color: var(--color-lamp-400);
-  box-shadow: 0 0 22px -8px var(--color-lamp-400);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 22px -8px var(--color-primary-400);
 }
 .stage {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
   transition: background-color 0.3s;
 }
 .stage-night {
@@ -205,7 +205,7 @@ onMounted(() => {
 .divider {
   position: relative;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-redstone-900) 12%, var(--color-redstone-600) 50%, var(--color-redstone-900) 88%, transparent);
+  background: linear-gradient(90deg, transparent, var(--color-primary-900) 12%, var(--color-primary-600) 50%, var(--color-primary-900) 88%, transparent);
 }
 .divider span {
   position: absolute;
@@ -214,8 +214,8 @@ onMounted(() => {
   width: 14px;
   height: 14px;
   transform: translate(-50%, -50%) rotate(45deg);
-  background: var(--color-lamp-400);
-  box-shadow: 0 0 18px 2px var(--color-lamp-400);
+  background: var(--color-primary-400);
+  box-shadow: 0 0 18px 2px var(--color-primary-400);
   border: 2px solid var(--color-base-950);
 }
 </style>

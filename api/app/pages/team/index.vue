@@ -31,10 +31,10 @@ const roleName = (r: TeamRole) => r.name ?? t.value.adm.roleNames[r.id] ?? r.id
 <template>
   <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
     <header class="max-w-3xl">
-      <p class="text-xs tracking-[0.18em] text-redstone-300 uppercase">{{ t.team.kicker }}</p>
+      <p class="text-xs tracking-[0.18em] text-primary-300 uppercase">{{ t.team.kicker }}</p>
       <h1 class="display mt-2 text-5xl leading-tight text-base-50">{{ t.team.title }}</h1>
       <p class="mt-3 text-lg text-base-400">{{ t.team.lead }}</p>
-      <a v-if="jobs.length" href="#jobs-title" class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-redstone-400 hover:text-redstone-300">
+      <a v-if="jobs.length" href="#jobs-title" class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-400 hover:text-primary-300">
         <SiteIcon name="briefcase" class="size-4" />{{ t.team.jobsTitle }} · {{ jobs.length }}
       </a>
     </header>
@@ -68,17 +68,17 @@ const roleName = (r: TeamRole) => r.name ?? t.value.adm.roleNames[r.id] ?? r.id
     </section>
 
     <section class="mt-20" aria-labelledby="jobs-title">
-      <h2 id="jobs-title" class="section-title flex scroll-mt-24 items-center gap-2"><SiteIcon name="briefcase" class="size-5 text-redstone-400" />{{ t.team.jobsTitle }}</h2>
+      <h2 id="jobs-title" class="section-title flex scroll-mt-24 items-center gap-2"><SiteIcon name="briefcase" class="size-5 text-primary-400" />{{ t.team.jobsTitle }}</h2>
       <p v-if="!jobs.length" class="mt-4 rounded-lg border border-base-800 bg-base-900 px-4 py-5 text-base-400">{{ t.team.noJobs }}</p>
       <ul v-else class="mt-4 grid gap-4 md:grid-cols-2">
         <li v-for="j in jobs" :key="j.id">
-          <NuxtLink :to="lp(`/team/${j.id}`)" class="card card-hover job-card flex h-full flex-col p-6" :style="{ '--role': j.role?.color ?? 'var(--color-redstone-500)' }">
+          <NuxtLink :to="lp(`/team/${j.id}`)" class="card card-hover job-card flex h-full flex-col p-6" :style="{ '--role': j.role?.color ?? 'var(--color-primary-500)' }">
             <div class="flex items-start gap-3">
               <h3 class="heading flex-1 text-xl text-base-50">{{ inLang(j.texts, lang)?.title }}</h3>
               <RoleBadge v-if="j.role" :role="j.role" small />
             </div>
             <p class="mt-2 flex-1 text-sm text-base-300">{{ inLang(j.texts, lang)?.summary }}</p>
-            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-redstone-300">{{ t.team.apply }}<SiteIcon name="arrow" class="size-4" /></span>
+            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-300">{{ t.team.apply }}<SiteIcon name="arrow" class="size-4" /></span>
           </NuxtLink>
         </li>
       </ul>

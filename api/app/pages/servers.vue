@@ -22,7 +22,8 @@ usePageSeo(() => ({
   ],
 }))
 
-const docsLink = computed(() => docsPageUrl(lang.value, '/developers/server-rules'))
+const wikiUrl = useWikiUrl()
+const docsLink = computed(() => docsPageUrl(lang.value, '/developers/server-rules', wikiUrl))
 /** Anker des Abschnitts zum Team-Bypass in der Doku (Überschrift je Sprache). */
 const BYPASS_ANCHOR = { en: 'cubiq-team-bypass', de: 'cubiq-team-bypass', es: 'bypass-del-equipo-cubiq' } as const
 const modrinth = SERVER_PLUGIN_MODRINTH_URL
@@ -43,7 +44,7 @@ async function copyConfig() {
 <template>
   <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
     <header class="max-w-3xl">
-      <p class="text-xs font-semibold tracking-[0.2em] text-lamp-300 uppercase">{{ s.kicker }}</p>
+      <p class="text-xs font-semibold tracking-[0.2em] text-primary-300 uppercase">{{ s.kicker }}</p>
       <h1 class="display mt-3 text-5xl leading-tight text-base-50">{{ s.title }}</h1>
       <p class="mt-4 text-lg leading-relaxed text-base-400">{{ s.lead }}</p>
       <div class="mt-7 flex flex-wrap gap-3">
@@ -111,7 +112,7 @@ async function copyConfig() {
         <h3 class="mt-6 font-semibold text-base-50">{{ s.config.commandsTitle }}</h3>
         <ul class="mt-2 grid gap-2">
           <li v-for="c in s.config.commands" :key="c.cmd" class="text-sm text-base-400">
-            <code class="mono text-lamp-300">{{ c.cmd }}</code> – {{ c.text }}
+            <code class="mono text-primary-300">{{ c.cmd }}</code> – {{ c.text }}
           </li>
         </ul>
         <p class="mt-2 text-xs text-base-600">{{ s.config.permission }}</p>
@@ -126,7 +127,7 @@ async function copyConfig() {
           </li>
         </ol>
         <p class="note mt-6 text-sm text-base-400">
-          <SiteIcon name="shield" class="mt-0.5 size-4 shrink-0 text-lamp-300" />
+          <SiteIcon name="shield" class="mt-0.5 size-4 shrink-0 text-caution-300" />
           <span>{{ s.how.honest }}</span>
         </p>
       </section>
@@ -171,7 +172,7 @@ async function copyConfig() {
   height: 2.5rem;
   color: var(--color-base-50);
   background: var(--color-base-800);
-  box-shadow: inset 0 -3px 0 var(--color-redstone-600);
+  box-shadow: inset 0 -3px 0 var(--color-primary-600);
 }
 .mono {
   font-family: var(--font-mono);
@@ -195,9 +196,9 @@ async function copyConfig() {
   width: 2rem;
   height: 2rem;
   font-weight: 700;
-  color: var(--color-redstone-300);
-  background: color-mix(in srgb, var(--color-redstone-900) 60%, var(--color-base-900));
-  box-shadow: inset 0 0 0 1px var(--color-redstone-600);
+  color: var(--color-primary-300);
+  background: color-mix(in srgb, var(--color-primary-900) 60%, var(--color-base-900));
+  box-shadow: inset 0 0 0 1px var(--color-primary-600);
 }
 .note {
   display: flex;
@@ -210,18 +211,18 @@ async function copyConfig() {
   width: 0.45rem;
   height: 0.45rem;
   margin-top: 0.5rem;
-  background: var(--color-lamp-400);
-  box-shadow: 0 0 8px -1px var(--color-lamp-400);
+  background: var(--color-primary-400);
+  box-shadow: 0 0 8px -1px var(--color-primary-400);
 }
 .team {
-  border-color: color-mix(in srgb, var(--color-lamp-400) 35%, var(--color-base-800));
+  border-color: color-mix(in srgb, var(--color-caution-400) 35%, var(--color-base-800));
   background:
-    radial-gradient(70% 120% at 100% 0%, color-mix(in srgb, var(--color-lamp-900) 35%, transparent), transparent 70%),
+    radial-gradient(70% 120% at 100% 0%, color-mix(in srgb, var(--color-caution-900) 35%, transparent), transparent 70%),
     var(--color-base-900);
 }
 .cta {
   background:
-    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-redstone-900) 55%, transparent), transparent 70%),
+    radial-gradient(80% 140% at 90% 50%, color-mix(in srgb, var(--color-primary-900) 55%, transparent), transparent 70%),
     var(--color-base-900);
 }
 </style>

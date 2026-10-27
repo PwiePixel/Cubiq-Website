@@ -107,9 +107,9 @@ const en = {
     halloweenBanner: 'Halloween event: witch hat, pumpkin head, bat and cape free in the launcher',
     tiles: [
       { kicker: 'Vanilla to NeoForge', title: 'Every version', img: 'library.png', to: '/download' },
-      { kicker: 'Built into every version', title: 'Cubiq Client', img: 'emote-wheel.png', to: '/features#client' },
+      { kicker: 'Built into every version', title: 'Cubiq Client', img: 'redstone-overlay.png', to: '/features#client' },
       { kicker: 'Sodium & co. in one click', title: 'FPS boost', img: 'zoom.png', to: '/features#performance' },
-      { kicker: 'One launcher, two systems', title: 'Windows & Linux', img: 'title-screen.png', to: '/download' },
+      { kicker: 'One launcher, two systems', title: 'Windows & Linux', img: 'launcher-home.png', to: '/download' },
     ],
     compare: {
       title: 'How it compares',
@@ -141,9 +141,7 @@ const en = {
     ],
     shotsTitle: 'A look inside',
     shots: [
-      { src: 'emote-wheel.png', caption: 'The emote wheel in the Cubiq Client' },
       { src: 'redstone-overlay.png', caption: 'Redstone tools: signal strength over every dust' },
-      { src: 'cape-physics.png', caption: 'Cape physics with a live preview' },
       { src: 'zoom.png', caption: 'Smooth zoom' },
     ],
     capesTitle: 'Capes that move',
@@ -186,8 +184,8 @@ const en = {
           'Module packs for PvP, redstone, comfort or a minimal HUD – one click, with undo',
           'Updates through its own channel, without waiting for a launcher release',
         ],
-        img: 'title-screen.png',
-        alt: 'The Cubiq Client title screen',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -253,8 +251,8 @@ const en = {
         title: 'Minecraft emotes and the emote wheel',
         text: 'Wave, dance or cheer: press G for the emote wheel and pick an emote. Friends who also play with the Cubiq Client see it in game.',
         points: ['Emote wheel with your favourite emotes', 'Your wheel follows you to every PC with your account'],
-        img: 'emote-wheel.png',
-        alt: 'The emote wheel of the Cubiq Client in Minecraft',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -263,8 +261,8 @@ const en = {
         title: 'Minecraft capes with cape physics',
         text: 'Cubiq capes swing like cloth when you run and jump. Many of them are free, some are animated or in HD, and others are unlocked with codes.',
         points: ['Free Cubiq capes for everyone who uses the Cubiq Launcher', 'Animated and HD capes', 'Upload your own cape – the team checks it before others see it'],
-        img: 'cape-physics.png',
-        alt: 'A Cubiq cape with cape physics in the Cubiq Client',
+        img: '',
+        alt: '',
         link: { to: '/cosmetics', label: 'See all capes' },
       },
       {
@@ -1048,9 +1046,9 @@ const de: Messages = {
     halloweenBanner: 'Halloween-Event: Hexenhut, Kürbiskopf, Fledermaus & Umhang gratis im Launcher',
     tiles: [
       { kicker: 'Vanilla bis NeoForge', title: 'Jede Version', img: 'library.png', to: '/download' },
-      { kicker: 'In jeder Version eingebaut', title: 'Cubiq Client', img: 'emote-wheel.png', to: '/features#client' },
+      { kicker: 'In jeder Version eingebaut', title: 'Cubiq Client', img: 'redstone-overlay.png', to: '/features#client' },
       { kicker: 'Sodium & Co. mit einem Klick', title: 'FPS-Boost', img: 'zoom.png', to: '/features#performance' },
-      { kicker: 'Ein Launcher, zwei Systeme', title: 'Windows & Linux', img: 'title-screen.png', to: '/download' },
+      { kicker: 'Ein Launcher, zwei Systeme', title: 'Windows & Linux', img: 'launcher-home.png', to: '/download' },
     ],
     compare: {
       title: 'Im Vergleich',
@@ -1082,9 +1080,7 @@ const de: Messages = {
     ],
     shotsTitle: 'Ein Blick hinein',
     shots: [
-      { src: 'emote-wheel.png', caption: 'Das Emote-Rad im Cubiq Client' },
       { src: 'redstone-overlay.png', caption: 'Redstone-Werkzeuge: Signalstärke über jedem Staub' },
-      { src: 'cape-physics.png', caption: 'Umhang-Physik mit Live-Vorschau' },
       { src: 'zoom.png', caption: 'Weicher Zoom' },
     ],
     capesTitle: 'Umhänge, die sich bewegen',
@@ -1127,8 +1123,8 @@ const de: Messages = {
           'Modul-Pakete für PvP, Redstone, Komfort oder ein schlankes HUD – ein Klick, rückgängig machbar',
           'Updates über einen eigenen Kanal, ohne auf ein Launcher-Update zu warten',
         ],
-        img: 'title-screen.png',
-        alt: 'Der Titelbildschirm des Cubiq Client',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -1194,8 +1190,8 @@ const de: Messages = {
         title: 'Minecraft Emotes und das Emote-Rad',
         text: 'Winken, tanzen oder jubeln: Mit G öffnest du das Emote-Rad und wählst ein Emote. Freunde, die auch mit dem Cubiq Client spielen, sehen es im Spiel.',
         points: ['Emote-Rad mit deinen Lieblings-Emotes', 'Dein Rad kommt mit deinem Konto auf jeden PC mit'],
-        img: 'emote-wheel.png',
-        alt: 'Das Emote-Rad des Cubiq Client in Minecraft',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -1204,8 +1200,8 @@ const de: Messages = {
         title: 'Minecraft Umhänge mit Umhang-Physik',
         text: 'Cubiq-Umhänge schwingen wie Stoff, wenn du läufst und springst. Viele sind kostenlos, manche animiert oder in HD, andere schaltest du mit Codes frei.',
         points: ['Kostenlose Cubiq-Umhänge für alle mit dem Cubiq Launcher', 'Animierte und HD-Umhänge', 'Eigenen Umhang hochladen – das Team prüft ihn, bevor andere ihn sehen'],
-        img: 'cape-physics.png',
-        alt: 'Ein Cubiq-Umhang mit Umhang-Physik im Cubiq Client',
+        img: '',
+        alt: '',
         link: { to: '/cosmetics', label: 'Alle Umhänge ansehen' },
       },
       {
@@ -1988,9 +1984,9 @@ const es: Messages = {
     halloweenBanner: 'Evento de Halloween: sombrero de bruja, cabeza de calabaza, murciélago y capa gratis en el launcher',
     tiles: [
       { kicker: 'De Vanilla a NeoForge', title: 'Cada versión', img: 'library.png', to: '/download' },
-      { kicker: 'Incluido en cada versión', title: 'Cubiq Client', img: 'emote-wheel.png', to: '/features#client' },
+      { kicker: 'Incluido en cada versión', title: 'Cubiq Client', img: 'redstone-overlay.png', to: '/features#client' },
       { kicker: 'Sodium y compañía con un clic', title: 'FPS boost', img: 'zoom.png', to: '/features#performance' },
-      { kicker: 'Un launcher, dos sistemas', title: 'Windows y Linux', img: 'title-screen.png', to: '/download' },
+      { kicker: 'Un launcher, dos sistemas', title: 'Windows y Linux', img: 'launcher-home.png', to: '/download' },
     ],
     compare: {
       title: 'Comparación',
@@ -2022,9 +2018,7 @@ const es: Messages = {
     ],
     shotsTitle: 'Un vistazo',
     shots: [
-      { src: 'emote-wheel.png', caption: 'La rueda de emotes del Cubiq Client' },
       { src: 'redstone-overlay.png', caption: 'Herramientas de redstone: la señal sobre cada polvo' },
-      { src: 'cape-physics.png', caption: 'Física de capas con vista previa' },
       { src: 'zoom.png', caption: 'Zoom suave' },
     ],
     capesTitle: 'Capas que se mueven',
@@ -2067,8 +2061,8 @@ const es: Messages = {
           'Paquetes de módulos para PvP, redstone, comodidad o un HUD mínimo: un clic, y se puede deshacer',
           'Actualizaciones por su propio canal, sin esperar a una versión del launcher',
         ],
-        img: 'title-screen.png',
-        alt: 'La pantalla de título del Cubiq Client',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -2134,8 +2128,8 @@ const es: Messages = {
         title: 'Emotes de Minecraft y la rueda de emotes',
         text: 'Saluda, baila o celebra: pulsa G para abrir la rueda de emotes y elige uno. Tus amigos que también juegan con el Cubiq Client lo ven en el juego.',
         points: ['Rueda de emotes con tus favoritos', 'Tu rueda te sigue a cada PC con tu cuenta'],
-        img: 'emote-wheel.png',
-        alt: 'La rueda de emotes del Cubiq Client en Minecraft',
+        img: '',
+        alt: '',
         link: null,
       },
       {
@@ -2144,8 +2138,8 @@ const es: Messages = {
         title: 'Capas de Minecraft con física de capas',
         text: 'Las capas Cubiq ondean como tela cuando corres y saltas. Muchas son gratis, algunas animadas o en HD, y otras se desbloquean con códigos.',
         points: ['Capas Cubiq gratis para todos los que usan el Cubiq Launcher', 'Capas animadas y en HD', 'Sube tu propia capa: el equipo la revisa antes de que otros la vean'],
-        img: 'cape-physics.png',
-        alt: 'Una capa Cubiq con física de capas en el Cubiq Client',
+        img: '',
+        alt: '',
         link: { to: '/cosmetics', label: 'Ver todas las capas' },
       },
       {

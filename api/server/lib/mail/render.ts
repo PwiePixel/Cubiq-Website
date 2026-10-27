@@ -11,7 +11,8 @@ import { MAIL_TEXTS, fill, type MailLang } from './texts'
 
 /**
  * Mail-Markup nach dem freigegebenen Entwurf (`mail-design/gen_mail.py`): Tabellen-Layout, Inline-Stile, 600 px,
- * Media Query fürs Handy, `color-scheme: dark`. Überschriften sind Pixel-Bilder vom Server (Alt-Text = Klartext).
+ * Media Query fürs Handy, `color-scheme: dark`. Überschriften: im Cubiq-Look Text in der Systemschrift, in den
+ * Event-Looks Pixel-Bilder vom Server (Alt-Text = Klartext).
  * Keine externen Schriften (kein Google Fonts in Mails), alle Bilder von der eigenen Website.
  */
 
@@ -36,8 +37,15 @@ interface Out {
 const plain = (s: string) => s.replace(/\*/g, '').trim()
 
 function pixelTitle(ctx: AppContext, look: Look, text: string, kind: TitleKind, opts: { w?: number, align?: 'center' } = {}): string {
-  const img = titleImage(ctx, { text, kind, look, ...(opts.w ? { w: opts.w } : {}) })
   const T = THEMES[look]
+  if (look === 'cubiq') {
+    // *Sterne* = Akzentfarbe, wie in den Pixel-Bildern.
+    const html = esc(text).replace(/\*([^*]+)\*/g, `<span style="color:${T.accent2};">$1</span>`).replace(/\*/g, '')
+    const px = kind === 'h1' ? 26 : 18
+    const align = opts.align === 'center' ? 'text-align:center;' : ''
+    return `<div style="font-family:${FONT};font-size:${px}px;line-height:1.25;font-weight:700;letter-spacing:-0.01em;color:${T.text};${align}">${html}</div>`
+  }
+  const img = titleImage(ctx, { text, kind, look, ...(opts.w ? { w: opts.w } : {}) })
   const size = kind === 'h1' ? 22 : kind === 'h2' ? 16 : 18
   const center = opts.align === 'center' ? 'margin:0 auto;' : ''
   return `<img src="${esc(img.url)}" width="${img.width}" height="${img.height}" alt="${esc(plain(text))}" style="display:block;${center}width:${img.width}px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;font-family:${PIXEL};font-size:${size}px;line-height:1.3;color:${T.text};">`
@@ -119,11 +127,11 @@ export function shell(ctx: AppContext, inner: string, o: ShellOpts): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};">
 <tr><td align="center" style="padding:24px 10px;">
 <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${T.card};border:1px solid ${T.line};border-radius:14px;overflow:hidden;">
-  <tr><td style="padding:0;line-height:0;"><img src="${site}/mail/head-${o.look}.png" width="600" alt="" style="display:block;width:100%;height:auto;border:0;image-rendering:pixelated;"></td></tr>
+  <tr><td style="padding:0;line-height:0;"><img src="${site}/mail/head-${o.look}.png" width="600" alt="" style="display:block;width:100%;height:auto;border:0;${o.look === 'cubiq' ? '' : 'image-rendering:pixelated;'}"></td></tr>
   <tr><td class="px" style="padding:18px 32px 6px 32px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
       <td style="vertical-align:middle;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td style="vertical-align:middle;"><img src="${site}/mail/logo.png" width="36" height="36" alt="Cubiq" style="display:block;border-radius:8px;image-rendering:pixelated;"></td>
+        <td style="vertical-align:middle;"><img src="${site}/mail/logo.png" width="36" height="36" alt="Cubiq" style="display:block;border-radius:8px;"></td>
         <td style="vertical-align:middle;padding-left:10px;">${pixelTitle(ctx, o.look, 'Cubiq Launcher', 'logo')}</td>
       </tr></table></td>
       <td align="right" class="hide-m" style="font-family:${FONT};font-size:12px;color:${T.muted};vertical-align:middle;">
@@ -327,7 +335,7 @@ export function creatorInfo(ctx: AppContext, uuid: string): CreatorInfo | null {
     uuid,
   )
   if (!r || !r.name) return null
-  let channel: string | null = null
+  let channel: string | null
   try {
     const list = JSON.parse(r.channels) as { url?: unknown }[]
     const first = list.find((x) => typeof x.url === 'string' && /^https:\/\//.test(x.url))

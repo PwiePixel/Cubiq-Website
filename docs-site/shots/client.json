@@ -2,7 +2,7 @@
   {
     "file": "client/title-screen.png",
     "page": "3.client/01.overview",
-    "what": "Cubiq title screen: own skin on the redstone turntable, lamp buttons, right bar (Wardrobe, Accounts, Social, Clips & Images, Cubiq Settings)",
+    "what": "Cubiq title screen: own skin on the turntable, the menu buttons and the right bar (Wardrobe, Accounts, Social, Clips & Images, Cubiq Settings)",
     "version": "1.21.11",
     "scenario": "Existing autotest 'title' (-PcubiqAutotestOnly=title), shot cubiqclient-title (wide window, no hover)."
   },

@@ -67,7 +67,7 @@ usePageSeo(() => {
         </div>
         <NuxtLink :to="lp('/blog')" class="back-link"><SiteIcon name="back" class="size-4" />{{ b.back }}</NuxtLink>
       </template>
-      <UpdateBanner v-else :kicker="kicker" :title="title" accent="#ffb84d" size="lg" tag="h1">
+      <UpdateBanner v-else :kicker="kicker" :title="title" accent="#88bb45" size="lg" tag="h1">
         <NuxtLink :to="lp('/blog')" class="back-link"><SiteIcon name="back" class="size-4" />{{ b.back }}</NuxtLink>
       </UpdateBanner>
     </header>
@@ -119,7 +119,7 @@ usePageSeo(() => {
   font-size: 0.8125rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
 }
 .back-link {
   position: absolute;

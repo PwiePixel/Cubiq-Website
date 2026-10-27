@@ -71,7 +71,7 @@ async function submit() {
 
     <label class="label mt-5" for="scd-reason">{{ a.sanctions.reasonForChange }} *</label>
     <textarea id="scd-reason" v-model="reason" class="field min-h-20" maxlength="500" autofocus />
-    <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
 
     <template #footer>
       <button type="button" class="btn btn-ghost" @click="emit('close')">{{ a.common.cancel }}</button>

@@ -59,8 +59,8 @@ export function cubiqFrameIndex(now: number, frames: number, frameTimeMs: number
 }
 
 /**
- * Schlichte Schaufensterpuppe als Skin (64×64): Deepslate-grau mit Redstone-Hemd und glimmenden
- * Augen – damit der Umhang im Mittelpunkt steht und kein fremder Skin gezeigt wird.
+ * Schlichte Schaufensterpuppe als Skin (64×64): grau mit Cubiq-grünem Hemd und hellen Augen – damit der
+ * Umhang im Mittelpunkt steht und kein fremder Skin gezeigt wird.
  */
 export function mannequinSkin(): HTMLCanvasElement {
   const c = document.createElement('canvas')
@@ -72,18 +72,18 @@ export function mannequinSkin(): HTMLCanvasElement {
     g.fillRect(x, y, w, h)
   }
   // Kopf (Grundschicht) mit etwas dunklerer Ober- und Unterseite.
-  box(0, 8, 32, 8, '#8b8ba2')
-  box(8, 0, 16, 8, '#6f6f86')
-  // Gesicht: zwei glimmende Augen.
-  box(9, 12, 2, 1, '#ffb84d')
-  box(13, 12, 2, 1, '#ffb84d')
+  box(0, 8, 32, 8, '#869489')
+  box(8, 0, 16, 8, '#5f6d63')
+  // Gesicht: zwei helle Augen.
+  box(9, 12, 2, 1, '#d0f29b')
+  box(13, 12, 2, 1, '#d0f29b')
   // Rechtes Bein, Körper, rechter Arm (Zeile 16–32).
-  box(0, 16, 16, 16, '#4a4a5e')
-  box(16, 16, 24, 16, '#b31a12')
-  box(20, 16, 16, 4, '#8a140e')
-  box(40, 16, 16, 16, '#8b8ba2')
+  box(0, 16, 16, 16, '#3d4a41')
+  box(16, 16, 24, 16, '#71a330')
+  box(20, 16, 16, 4, '#5c8726')
+  box(40, 16, 16, 16, '#869489')
   // Linkes Bein und linker Arm (Zeile 48–64).
-  box(16, 48, 16, 16, '#4a4a5e')
-  box(32, 48, 16, 16, '#8b8ba2')
+  box(16, 48, 16, 16, '#3d4a41')
+  box(32, 48, 16, 16, '#869489')
   return c
 }

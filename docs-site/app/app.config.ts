@@ -1,4 +1,4 @@
-// Aussehen und Verhalten der Doku (Docus + Nuxt UI). Farben: siehe app.css (Paletten redstone, lamp, deepslate).
+// Aussehen und Verhalten der Doku (Docus + Nuxt UI). Farben: siehe app.css (Paletten cubiq, live, moss).
 export default defineAppConfig({
   docus: {
     locale: 'en',
@@ -8,7 +8,7 @@ export default defineAppConfig({
   seo: {
     titleTemplate: '%s · Cubiq Launcher Docs',
     title: 'Cubiq Launcher Docs',
-    description: 'Documentation for Cubiq Launcher, the free redstone Minecraft launcher by PwiePixel, and the Cubiq Client mod.',
+    description: 'Documentation for Cubiq Launcher, the free Minecraft launcher by PwiePixel, and the Cubiq Client mod.',
   },
   header: {
     title: 'Cubiq Launcher Docs',
@@ -31,9 +31,9 @@ export default defineAppConfig({
   },
   ui: {
     colors: {
-      primary: 'redstone',
-      secondary: 'lamp',
-      neutral: 'deepslate',
+      primary: 'cubiq',
+      secondary: 'live',
+      neutral: 'moss',
     },
   },
 })

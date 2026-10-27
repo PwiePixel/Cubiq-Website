@@ -143,7 +143,7 @@ async function submit() {
           <HalloweenHunt v-if="job.purpose === 'creator'" id="web-creator" />
         </div>
         <p v-if="texts?.summary" class="mt-3 text-lg text-base-300">{{ texts.summary }}</p>
-        <p v-if="job.status !== 'open'" class="mt-5 rounded-md border border-lamp-900 bg-lamp-900/20 px-3 py-2 text-sm text-lamp-300">{{ t.job.closed }}</p>
+        <p v-if="job.status !== 'open'" class="mt-5 rounded-md border border-caution-900 bg-caution-900/20 px-3 py-2 text-sm text-caution-300">{{ t.job.closed }}</p>
 
         <section v-if="texts?.description" class="mt-8">
           <h2 class="section-title">{{ t.job.about }}</h2>
@@ -178,7 +178,7 @@ async function submit() {
             <NuxtLink :to="lp('/applications')" class="btn btn-primary mt-4 w-full">{{ t.job.toMine }}</NuxtLink>
           </div>
           <div v-else-if="blockedText" class="mt-4">
-            <p class="text-sm text-lamp-300">{{ blockedText }}</p>
+            <p class="text-sm text-caution-300">{{ blockedText }}</p>
             <NuxtLink :to="lp('/applications')" class="btn btn-ghost mt-4 w-full">{{ t.job.toMine }}</NuxtLink>
           </div>
           <form v-else class="mt-4 space-y-5" novalidate @submit.prevent="submit">
@@ -194,27 +194,27 @@ async function submit() {
             <fieldset class="space-y-4">
               <legend class="text-xs font-semibold tracking-wide text-base-400 uppercase">{{ t.job.standard }}</legend>
               <div>
-                <label class="label" for="f-discord">{{ t.job.discord }} <span class="text-redstone-300">*</span></label>
+                <label class="label" for="f-discord">{{ t.job.discord }} <span class="text-primary-300">*</span></label>
                 <input id="f-discord" v-model="form.discord" class="field" maxlength="40" autocomplete="off" spellcheck="false" :aria-invalid="!!errors.discord" aria-describedby="f-discord-help" />
-                <p id="f-discord-help" class="mt-1 text-xs" :class="errors.discord ? 'text-redstone-300' : 'text-base-400'">{{ errors.discord || t.job.discordHelp }}</p>
+                <p id="f-discord-help" class="mt-1 text-xs" :class="errors.discord ? 'text-danger-300' : 'text-base-400'">{{ errors.discord || t.job.discordHelp }}</p>
               </div>
               <div>
-                <p class="label">{{ t.job.ageGroup }} <span class="text-redstone-300">*</span></p>
+                <p class="label">{{ t.job.ageGroup }} <span class="text-primary-300">*</span></p>
                 <div class="grid grid-cols-2 gap-1.5" role="radiogroup" :aria-label="t.job.ageGroup">
                   <label v-for="g in AGE_GROUPS" :key="g" class="choice" :data-on="form.ageGroup === g">
                     <input v-model="form.ageGroup" type="radio" name="age" :value="g" class="sr-only" />{{ t.job.ages[g] }}
                   </label>
                 </div>
-                <p class="mt-1 text-xs" :class="errors.ageGroup ? 'text-redstone-300' : 'text-base-400'">{{ errors.ageGroup || t.job.ageHint }}</p>
-                <p v-if="form.ageGroup === 'under14' || form.ageGroup === '14-15'" class="mt-1 text-xs text-lamp-300">{{ t.job.under16 }}</p>
+                <p class="mt-1 text-xs" :class="errors.ageGroup ? 'text-danger-300' : 'text-base-400'">{{ errors.ageGroup || t.job.ageHint }}</p>
+                <p v-if="form.ageGroup === 'under14' || form.ageGroup === '14-15'" class="mt-1 text-xs text-caution-300">{{ t.job.under16 }}</p>
               </div>
             </fieldset>
 
             <fieldset v-if="job.form.length" class="space-y-4">
               <legend class="text-xs font-semibold tracking-wide text-base-400 uppercase">{{ t.job.questions }}</legend>
               <div v-for="f in job.form" :key="f.id">
-                <p v-if="f.type === 'single' || f.type === 'multi' || f.type === 'yesno'" class="label">{{ label(f) }} <span v-if="f.required" class="text-redstone-300">*</span><span v-else class="text-base-400"> ({{ t.job.optional }})</span></p>
-                <label v-else class="label" :for="`f-${f.id}`">{{ label(f) }} <span v-if="f.required" class="text-redstone-300">*</span><span v-else class="text-base-400"> ({{ t.job.optional }})</span></label>
+                <p v-if="f.type === 'single' || f.type === 'multi' || f.type === 'yesno'" class="label">{{ label(f) }} <span v-if="f.required" class="text-primary-300">*</span><span v-else class="text-base-400"> ({{ t.job.optional }})</span></p>
+                <label v-else class="label" :for="`f-${f.id}`">{{ label(f) }} <span v-if="f.required" class="text-primary-300">*</span><span v-else class="text-base-400"> ({{ t.job.optional }})</span></label>
 
                 <input v-if="f.type === 'short'" :id="`f-${f.id}`" v-model="form.answers[f.id] as string" class="field" :maxlength="(maxOf(f) ?? 200) + 20" :aria-invalid="!!errors[f.id]" />
                 <textarea v-else-if="f.type === 'long'" :id="`f-${f.id}`" v-model="form.answers[f.id] as string" class="field min-h-28" :maxlength="(maxOf(f) ?? 4000) + 50" :aria-invalid="!!errors[f.id]" />
@@ -232,15 +232,15 @@ async function submit() {
                   </label>
                 </div>
 
-                <p class="mt-1 flex gap-2 text-xs" :class="errors[f.id] ? 'text-redstone-300' : 'text-base-400'">
+                <p class="mt-1 flex gap-2 text-xs" :class="errors[f.id] ? 'text-danger-300' : 'text-base-400'">
                   <span class="flex-1">{{ errors[f.id] || help(f) }}</span>
                   <span v-if="(f.type === 'short' || f.type === 'long') && maxOf(f)" class="tabular-nums">{{ fill(t.job.chars, { n: textLen(form.answers[f.id]), max: maxOf(f)! }) }}</span>
                 </p>
               </div>
             </fieldset>
 
-            <p class="text-xs text-base-400">{{ t.job.privacy }} <NuxtLink :to="`${lp('/privacy')}#${t.job.anchor}`" class="text-redstone-300 hover:underline">{{ t.job.privacyLink }}</NuxtLink></p>
-            <p v-if="failure" role="alert" class="text-sm text-redstone-300">{{ failure }}</p>
+            <p class="text-xs text-base-400">{{ t.job.privacy }} <NuxtLink :to="`${lp('/privacy')}#${t.job.anchor}`" class="text-primary-300 hover:underline">{{ t.job.privacyLink }}</NuxtLink></p>
+            <p v-if="failure" role="alert" class="text-sm text-danger-300">{{ failure }}</p>
             <button type="submit" class="btn btn-primary h-11 w-full" :disabled="busy">{{ busy ? t.job.sending : t.job.submit }}</button>
           </form>
         </div>
@@ -251,14 +251,14 @@ async function submit() {
 
 <style scoped>
 .apply-card {
-  border-top: 3px solid var(--color-redstone-500);
+  border-top: 3px solid var(--color-primary-500);
 }
 .dust {
   width: 0.45rem;
   height: 0.45rem;
   flex-shrink: 0;
-  background: var(--color-redstone-400);
-  box-shadow: 0 0 8px var(--color-redstone-500);
+  background: var(--color-primary-400);
+  box-shadow: 0 0 8px var(--color-primary-500);
 }
 .choice {
   display: flex;
@@ -285,20 +285,20 @@ async function submit() {
   border-radius: 0.2rem;
 }
 .choice-list[data-on='true']::before {
-  border-color: var(--color-redstone-400);
-  background: var(--color-redstone-500);
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-500);
   box-shadow: inset 0 0 0 2px var(--color-base-950);
 }
 .choice:hover {
   border-color: var(--color-base-600);
 }
 .choice[data-on='true'] {
-  border-color: var(--color-redstone-500);
-  background: color-mix(in srgb, var(--color-redstone-600) 18%, transparent);
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-600) 18%, transparent);
   color: var(--color-base-50);
 }
 .choice:focus-within {
-  outline: 2px solid var(--color-redstone-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
 }
 .hp {

@@ -105,7 +105,7 @@ const histLabel = (h: AdminApplicationDetail['history'][number]) => {
 <template>
   <div class="adm-page">
     <NuxtLink to="/admin/applications" class="inline-flex items-center gap-1.5 text-sm text-base-400 hover:text-base-50"><SiteIcon name="back" class="size-4" />{{ t.adm.apps.title }}</NuxtLink>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="!app && !error" class="skeleton mt-4 h-64 rounded-xl" />
 
     <template v-if="app">
@@ -125,7 +125,7 @@ const histLabel = (h: AdminApplicationDetail['history'][number]) => {
         </div>
         <NuxtLink v-if="can('players.view')" :to="`/admin/players/${app.applicant.uuid}`" class="btn btn-ghost"><SiteIcon name="user" class="size-4" />{{ t.adm.apps.openFile }}</NuxtLink>
       </header>
-      <p v-if="actionError" role="alert" class="mt-4 text-sm text-redstone-300">{{ actionError }}</p>
+      <p v-if="actionError" role="alert" class="mt-4 text-sm text-danger-300">{{ actionError }}</p>
 
       <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <section class="min-w-0 space-y-6">
@@ -194,13 +194,13 @@ const histLabel = (h: AdminApplicationDetail['history'][number]) => {
             <div class="flex items-center gap-3">
               <h2 class="section-title flex-1">{{ t.adm.apps.votes }}</h2>
               <span class="flex items-center gap-1 text-ok tabular-nums"><SiteIcon name="thumbUp" class="size-4" />{{ app.votes.up }}</span>
-              <span class="flex items-center gap-1 text-redstone-300 tabular-nums"><SiteIcon name="thumbDown" class="size-4" />{{ app.votes.down }}</span>
+              <span class="flex items-center gap-1 text-primary-300 tabular-nums"><SiteIcon name="thumbDown" class="size-4" />{{ app.votes.down }}</span>
             </div>
             <div class="vote-bar mt-3" :style="{ '--up': app.votes.up + app.votes.down ? app.votes.up / (app.votes.up + app.votes.down) : 0.5 }" aria-hidden="true" />
             <p v-if="!app.voteList.length" class="mt-3 text-xs text-base-400">{{ t.adm.apps.noVotes }}</p>
             <ul v-else class="mt-3 space-y-2">
               <li v-for="v in app.voteList" :key="v.uuid" class="flex gap-2 text-sm">
-                <SiteIcon :name="v.vote === 1 ? 'thumbUp' : 'thumbDown'" class="mt-0.5 size-4 shrink-0" :class="v.vote === 1 ? 'text-ok' : 'text-redstone-300'" />
+                <SiteIcon :name="v.vote === 1 ? 'thumbUp' : 'thumbDown'" class="mt-0.5 size-4 shrink-0" :class="v.vote === 1 ? 'text-ok' : 'text-primary-300'" />
                 <div class="min-w-0">
                   <p class="text-base-100">{{ v.name ?? v.uuid.slice(0, 8) }} <span class="text-xs text-base-400">· {{ rel(v.at) }}</span></p>
                   <p v-if="v.comment" class="adm-note text-xs text-base-300">{{ v.comment }}</p>
@@ -224,7 +224,7 @@ const histLabel = (h: AdminApplicationDetail['history'][number]) => {
           <!-- Strafverlauf (players.view) -->
           <div v-if="app.player" class="card p-5">
             <h2 class="section-title flex items-center gap-2"><SiteIcon name="gavel" class="size-4 text-base-400" />{{ t.adm.apps.sanctions }}</h2>
-            <p v-if="app.player.rank" class="mt-2 text-xs text-lamp-300">{{ fill(t.adm.apps.inTeam, { rank: app.player.rank }) }}</p>
+            <p v-if="app.player.rank" class="mt-2 text-xs text-caution-300">{{ fill(t.adm.apps.inTeam, { rank: app.player.rank }) }}</p>
             <p v-if="!app.player.sanctions.length" class="mt-3 text-sm text-ok">{{ t.adm.apps.noSanctions }}</p>
             <template v-else>
               <p v-if="app.player.active" class="mt-2"><span class="tone tone-danger">{{ fill(t.adm.apps.activeSanctions, { n: app.player.active }) }}</span></p>
@@ -247,7 +247,7 @@ const histLabel = (h: AdminApplicationDetail['history'][number]) => {
 .vote-bar {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-ok) calc(var(--up) * 100%), var(--color-redstone-500) calc(var(--up) * 100%));
+  background: linear-gradient(90deg, var(--color-ok) calc(var(--up) * 100%), var(--color-primary-500) calc(var(--up) * 100%));
   opacity: 0.8;
 }
 </style>

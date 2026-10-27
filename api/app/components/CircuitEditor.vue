@@ -370,7 +370,7 @@ onMounted(() => (editLang.value = (CIRCUIT_LANGS as readonly string[]).includes(
         <CircuitIso v-model:layer="layer" v-model:rotation="rotation" :grid="grid" :height="300" controls markers :highlight="selected" :label="c.adm.preview" />
       </div>
 
-      <div class="rounded-lg border px-3 py-2 text-sm" :class="check.ok ? 'border-ok/40 text-ok' : 'border-redstone-600/60 text-redstone-300'" role="status">
+      <div class="rounded-lg border px-3 py-2 text-sm" :class="check.ok ? 'border-ok/40 text-ok' : 'border-danger-600/60 text-danger-300'" role="status">
         <template v-if="check.ok">{{ fill(c.adm.valid, { n: check.info.blockCount, ...check.info.size }) }}</template>
         <template v-else>
           <p class="font-semibold">{{ c.adm.errors }}</p>
@@ -420,7 +420,7 @@ onMounted(() => (editLang.value = (CIRCUIT_LANGS as readonly string[]).includes(
           <h3 class="section-title">{{ c.adm.texts }}</h3>
           <div class="adm-seg">
             <button v-for="l in CIRCUIT_LANGS" :key="l" type="button" :aria-pressed="editLang === l" @click="editLang = l">
-              {{ l.toUpperCase() }}<span v-if="!texts[l].name" class="text-redstone-300">*</span>
+              {{ l.toUpperCase() }}<span v-if="!texts[l].name" class="text-primary-300">*</span>
             </button>
           </div>
         </div>
@@ -441,8 +441,8 @@ onMounted(() => (editLang.value = (CIRCUIT_LANGS as readonly string[]).includes(
 <style scoped>
 .stage {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 .size-field {
   display: flex;
@@ -485,13 +485,13 @@ onMounted(() => (editLang.value = (CIRCUIT_LANGS as readonly string[]).includes(
   user-select: none;
 }
 .cell:hover {
-  box-shadow: inset 0 0 0 2px var(--color-lamp-400);
+  box-shadow: inset 0 0 0 2px var(--color-primary-400);
 }
 .cell.below {
   background: color-mix(in srgb, var(--color-base-700) 60%, var(--color-base-850));
 }
 .cell.sel {
-  outline: 2px solid var(--color-lamp-400);
+  outline: 2px solid var(--color-primary-400);
   outline-offset: 1px;
   z-index: 1;
 }
@@ -525,9 +525,9 @@ onMounted(() => (editLang.value = (CIRCUIT_LANGS as readonly string[]).includes(
   background: var(--color-base-900);
 }
 .block-btn[aria-pressed='true'] {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-50);
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, var(--color-base-900));
+  background: color-mix(in srgb, var(--color-primary-500) 14%, var(--color-base-900));
 }
 .sw {
   width: 0.75rem;

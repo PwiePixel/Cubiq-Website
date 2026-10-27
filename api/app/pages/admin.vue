@@ -192,10 +192,10 @@ useAdminKeys({
     </div>
 
     <!-- Anmeldung (Microsoft) bzw. kein Team-Mitglied -->
-    <main v-else-if="!session" class="deepslate grid min-h-dvh place-items-center px-4 py-10">
+    <main v-else-if="!session" class="surface grid min-h-dvh place-items-center px-4 py-10">
       <section class="w-full max-w-lg">
         <NuxtLink to="/" class="mb-8 flex items-center gap-2.5 text-base-50">
-          <img src="/icon.png" alt="" width="32" height="32" class="size-8 [image-rendering:pixelated]" />
+          <img src="/icon.png" alt="" width="32" height="32" class="size-8" />
           <HalloweenPumpkin />
           <span class="display text-xl">Cubiq Launcher</span>
         </NuxtLink>
@@ -224,7 +224,7 @@ useAdminKeys({
       <div v-if="sideOpen" class="adm-scrim lg:hidden" @click="sideOpen = false" />
       <aside class="adm-side" :data-open="sideOpen" :aria-label="a.nav.menu">
         <div class="flex h-15 items-center gap-2.5 border-b border-base-800 px-4">
-          <img src="/icon.png" alt="" width="28" height="28" class="size-7 [image-rendering:pixelated]" />
+          <img src="/icon.png" alt="" width="28" height="28" class="size-7" />
           <HalloweenPumpkin />
           <div class="leading-tight">
             <p class="display text-lg text-base-50">Cubiq</p>

@@ -584,8 +584,8 @@ function rubberDuck() {
   const SHINE = hex('#fffbe6')
   return paintModel(tpl, (p) => {
     const c = tpl.cubes[p.cube]
-    const [x0, y0, z0] = c.from
-    const [x1, y1, z1] = c.to
+    const [, y0, z0] = c.from
+    const [, y1, z1] = c.to
     const n = noise(p.i, p.j, 71 + p.cube * 7 + p.face.length)
     // 0 unten … 1 oben, und wie nah am Rand der Fläche (für „runde“ Kanten)
     const up = (p.y - y0) / (y1 - y0)

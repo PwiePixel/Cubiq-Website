@@ -18,7 +18,7 @@ usePageSeo(() => ({
 <template>
   <div class="mx-auto max-w-4xl px-4 pt-14 sm:px-6">
     <header class="max-w-2xl">
-      <p class="text-xs font-semibold tracking-[0.2em] text-redstone-400 uppercase">{{ n.page.kicker }}</p>
+      <p class="text-xs font-semibold tracking-[0.2em] text-primary-400 uppercase">{{ n.page.kicker }}</p>
       <h1 class="display mt-2 text-5xl leading-tight text-base-50">{{ n.page.title }}</h1>
       <p class="mt-4 text-lg leading-relaxed text-base-300">{{ n.page.lead }}</p>
     </header>
@@ -44,6 +44,6 @@ usePageSeo(() => ({
 
 <style scoped>
 .nl-card {
-  background-image: radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--color-redstone-600) 18%, transparent), transparent 60%);
+  background-image: radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--color-primary-600) 18%, transparent), transparent 60%);
 }
 </style>

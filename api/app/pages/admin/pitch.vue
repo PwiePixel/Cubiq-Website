@@ -223,14 +223,14 @@ function lifeText(l: PitchLink): string {
         </a>
         <span class="text-xs text-base-500">{{ p.previewHint }}</span>
       </div>
-      <p v-if="error" role="alert" class="text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-sm text-danger-300">{{ error }}</p>
     </form>
 
     <section v-if="fresh" class="pl-fresh card mt-6 p-5" aria-live="polite">
       <div class="flex flex-wrap items-start gap-5">
         <div class="min-w-0 flex-[1_1_18rem]">
           <h2 class="text-lg font-semibold text-base-50">{{ fill(p.freshTitle, { label: fresh.link.label }) }}</h2>
-          <p class="mt-1 text-sm text-lamp-300">{{ p.freshHint }}</p>
+          <p class="mt-1 text-sm text-caution-300">{{ p.freshHint }}</p>
           <label class="sr-only" for="pl-url">URL</label>
           <input id="pl-url" ref="urlInput" class="field mt-3 w-full font-mono text-sm" :value="fresh.url" readonly @focus="urlInput?.select()" />
           <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -245,7 +245,7 @@ function lifeText(l: PitchLink): string {
             </button>
             <button type="button" class="btn btn-ghost ml-auto" @click="fresh = null">{{ p.done }}</button>
           </div>
-          <p v-if="copyError" role="alert" class="mt-2 text-sm text-redstone-300">{{ copyError }}</p>
+          <p v-if="copyError" role="alert" class="mt-2 text-sm text-danger-300">{{ copyError }}</p>
         </div>
         <svg
           v-if="qr"
@@ -304,7 +304,7 @@ function lifeText(l: PitchLink): string {
             </button>
             <button
               type="button"
-              class="btn-icon text-redstone-300"
+              class="btn-icon text-danger-300"
               :aria-label="p.delete"
               :title="p.delete"
               :disabled="busy === `delete:${l.id}`"
@@ -315,7 +315,7 @@ function lifeText(l: PitchLink): string {
           </div>
         </div>
         <p v-if="fresh?.link.id !== l.id" class="mt-2 text-xs text-base-500">{{ p.copyGone }}</p>
-        <p v-if="rowMsg[l.id]" role="status" class="mt-2 text-sm text-redstone-300">{{ rowMsg[l.id] }}</p>
+        <p v-if="rowMsg[l.id]" role="status" class="mt-2 text-sm text-primary-300">{{ rowMsg[l.id] }}</p>
       </li>
     </ul>
 
@@ -333,8 +333,8 @@ function lifeText(l: PitchLink): string {
 
 <style scoped>
 .pl-fresh {
-  border-color: var(--color-redstone-600);
-  box-shadow: 0 0 0 1px var(--color-redstone-600), 0 0 24px -8px var(--color-redstone-500);
+  border-color: var(--color-primary-600);
+  box-shadow: 0 0 0 1px var(--color-primary-600), 0 0 24px -8px var(--color-primary-500);
 }
 .pl-qr {
   width: 11rem;
@@ -344,6 +344,6 @@ function lifeText(l: PitchLink): string {
   image-rendering: pixelated;
 }
 .pl-new {
-  border-color: var(--color-redstone-700);
+  border-color: var(--color-primary-700);
 }
 </style>

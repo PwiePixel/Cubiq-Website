@@ -40,7 +40,7 @@ function dateLine(p: AdminBlogListItem): string {
       </div>
       <NuxtLink v-if="canWrite" to="/admin/blog/new" class="btn btn-primary" data-testid="blog-new"><SiteIcon name="plus" class="size-4" />{{ b.adm.new }}</NuxtLink>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading" class="skeleton mt-6 h-40 rounded-xl" />
     <div v-else-if="!posts.length" class="adm-empty mt-6"><SiteIcon name="book" class="size-6" />{{ b.adm.empty }}</div>
     <ul v-else class="mt-6 space-y-2">

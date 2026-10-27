@@ -130,7 +130,7 @@ const peopleList = computed(() => [...new Set(props.people)].slice(0, 8))
             <IssueStatus v-if="menu.k === 'status'" :status="o.v as never" />
             <IssuePriority v-else-if="menu.k === 'priority'" :priority="o.v === 'none' ? null : (o.v as never)" />
             <IssueArea v-else-if="menu.k === 'area'" :area="o.v as never" />
-            <span v-else class="inline-flex items-center gap-1.5"><SiteIcon :name="o.v === 'bug' ? 'bug' : 'bolt'" class="size-3.5" :class="o.v === 'bug' ? 'text-redstone-300' : 'text-lamp-300'" />{{ o.label }}</span>
+            <span v-else class="inline-flex items-center gap-1.5"><SiteIcon :name="o.v === 'bug' ? 'bug' : 'bolt'" class="size-3.5" :class="o.v === 'bug' ? 'text-danger-300' : 'text-caution-300'" />{{ o.label }}</span>
           </label>
         </div>
       </div>
@@ -155,7 +155,7 @@ const peopleList = computed(() => [...new Set(props.people)].slice(0, 8))
       <slot />
       <button v-if="text" type="button" class="ml-1 text-xs text-base-400 underline-offset-4 hover:text-base-100 hover:underline" @click="reset">{{ it.filter.reset }}</button>
     </div>
-    <p v-if="errors.length" class="mt-2 text-xs text-lamp-300" role="status">{{ fill(it.filter.errors, { list: errors.join(', ') }) }}</p>
+    <p v-if="errors.length" class="mt-2 text-xs text-caution-300" role="status">{{ fill(it.filter.errors, { list: errors.join(', ') }) }}</p>
   </div>
 </template>
 
@@ -202,14 +202,14 @@ const peopleList = computed(() => [...new Set(props.people)].slice(0, 8))
   color: var(--color-base-50);
 }
 .drop.on {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 60%, transparent);
-  background: color-mix(in srgb, var(--color-redstone-500) 10%, var(--color-base-900));
+  border-color: color-mix(in srgb, var(--color-primary-500) 60%, transparent);
+  background: color-mix(in srgb, var(--color-primary-500) 10%, var(--color-base-900));
 }
 .n {
   min-width: 1.1rem;
   padding: 0 0.3rem;
   border-radius: 999px;
-  background: var(--color-redstone-500);
+  background: var(--color-primary-500);
   font-size: 10px;
   line-height: 1rem;
   text-align: center;
@@ -236,7 +236,7 @@ const peopleList = computed(() => [...new Set(props.people)].slice(0, 8))
 .help-pop code {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .opt {
   display: flex;
@@ -252,6 +252,6 @@ const peopleList = computed(() => [...new Set(props.people)].slice(0, 8))
   background: var(--color-base-800);
 }
 .opt input {
-  accent-color: var(--color-redstone-500);
+  accent-color: var(--color-primary-500);
 }
 </style>

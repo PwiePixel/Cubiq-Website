@@ -1,6 +1,6 @@
 import type { PostShot } from '~/utils/changelog'
 import type { FeaturedPack } from '~/utils/featured'
-import { docsPageUrl } from '#shared/docs'
+import { docsPageUrl, WIKI_URL } from '#shared/docs'
 import { DISCORD_URL as SITE_DISCORD_URL } from '#shared/seo'
 
 // Daten der Website aus der eigenen API (/v1/site/…); serverseitig gerendert und im Browser weiterverwendet.
@@ -54,12 +54,21 @@ export const REPO_URL = 'https://github.com/PwiePixel/Cubiq-launcher'
 export const RELEASES_URL = `${REPO_URL}/releases`
 /** Discord-Einladung (shared/seo.ts); leer = keine Discord-Links. */
 export const DISCORD_URL = SITE_DISCORD_URL
+/** Adresse der Doku-Domain (WIKI_URL des Servers, Standard docs.<Host von SITE_URL>; im Browser aus dem Zustand). */
+export function useWikiUrl(): string {
+  const state = useState<string>('wiki-url', () => {
+    const fromServer = import.meta.server ? (useRequestEvent()?.context.wikiUrl as string | undefined) : undefined
+    return fromServer || WIKI_URL
+  })
+  return state.value
+}
+
 /**
- * Dokumentation (docs-site, eigene Domain https://docs.cubiq-launcher.invalid) – Startseite in der Sprache der Website.
+ * Dokumentation (docs-site, eigene Domain, `useWikiUrl()`) – Startseite in der Sprache der Website.
  * Außerhalb dieser Nuxt-App: als normalen Link öffnen (`<a href>` bzw. NuxtLink mit `external`), nicht über den Router.
  */
-export function docsUrl(lang: Lang): string {
-  return docsPageUrl(lang)
+export function docsUrl(lang: Lang, wikiUrl: string): string {
+  return docsPageUrl(lang, '/', wikiUrl)
 }
 export const IMPRINT_URL = '/imprint'
 

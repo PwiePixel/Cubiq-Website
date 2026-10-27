@@ -31,7 +31,7 @@ const cards = computed(() =>
         <NuxtLink :to="c.to" class="card card-hover flex h-full flex-col p-5">
           <span class="font-semibold text-base-50">{{ c.name }}</span>
           <span class="mt-2 flex-1 text-sm leading-relaxed text-base-400">{{ c.teaser }}</span>
-          <span class="mt-4 inline-flex items-center gap-1.5 text-sm text-redstone-300">
+          <span class="mt-4 inline-flex items-center gap-1.5 text-sm text-primary-300">
             {{ texts.common.learnMore }} <SiteIcon name="arrow" class="size-4" />
           </span>
         </NuxtLink>

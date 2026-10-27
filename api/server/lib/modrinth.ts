@@ -9,7 +9,7 @@ import type { AppContext } from './context'
  */
 
 const API = 'https://api.modrinth.com/v2'
-const UA = 'PwiePixel/Cubiq-launcher (cubiq-launcher.invalid)'
+const UA = 'PwiePixel/Cubiq-launcher (github.com/PwiePixel/Cubiq-launcher)'
 const TTL_MS = 24 * 60 * 60 * 1000
 /** Nach einem Fehler von Modrinth eine Weile nicht erneut fragen. */
 const RETRY_MS = 5 * 60 * 1000

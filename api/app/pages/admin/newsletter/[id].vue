@@ -413,19 +413,19 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   <div class="adm-page nl-editor">
     <NuxtLink to="/admin/newsletter" class="inline-flex items-center gap-1.5 text-sm text-base-400 hover:text-base-50"><SiteIcon name="back" class="size-4" />{{ e.back }}</NuxtLink>
     <div v-if="loading" class="skeleton mt-4 h-96 rounded-xl" />
-    <p v-else-if="!campaign" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-else-if="!campaign" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <template v-else>
       <header class="mt-3 flex flex-wrap items-center gap-3">
         <input v-model="draft.name" class="field nl-name min-w-0 flex-1" maxlength="100" :aria-label="e.name" :disabled="!editable" />
         <span class="tone" :class="campaign.status === 'sent' ? 'tone-ok' : campaign.status === 'scheduled' ? 'tone-info' : campaign.status === 'sending' ? 'tone-warn' : 'tone-muted'">{{ t.statuses[campaign.status] }}</span>
-        <span v-if="dirty && editable" class="text-xs text-lamp-300">{{ e.unsaved }}</span>
+        <span v-if="dirty && editable" class="text-xs text-caution-300">{{ e.unsaved }}</span>
         <button v-if="editable" type="button" class="btn btn-primary" :disabled="busy === 'save' || !dirty" data-testid="nl-save" @click="save">{{ busy === 'save' ? e.saving : e.save }}</button>
       </header>
       <p class="mt-1 text-xs text-base-500">{{ fill(t.editedBy, { date: when(campaign.updatedAt), name: campaign.updatedBy.kind === 'key' ? `${campaign.updatedBy.name} (API)` : campaign.updatedBy.name }) }}</p>
       <p v-if="!editable && canManage" class="nl-info mt-3">{{ e.locked }} <span v-if="campaign.status === 'sending' || campaign.status === 'sent'">{{ fill(t.progress, { sent: num(campaign.sent), total: num(campaign.total), failed: num(campaign.failed) }) }}</span></p>
       <p v-if="campaign.status === 'scheduled' && campaign.scheduledAt" class="nl-info mt-3">{{ fill(t.scheduledFor, { date: when(campaign.scheduledAt) }) }}</p>
       <p v-if="sources && !sources.mailAvailable" class="nl-info nl-warn mt-3">{{ t.mailOff }}</p>
-      <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
       <p v-else-if="notice" role="status" class="mt-3 text-sm text-base-300">{{ notice }}</p>
 
       <div class="nl-grid mt-5">
@@ -475,12 +475,12 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
             >
               <div class="nb-head">
                 <span v-if="editable" class="nb-grip" draggable="true" role="img" :aria-label="e.dragHint" @dragstart="onDragStart($event, i)" @dragend="onDragEnd"><SiteIcon name="grip" class="size-4" /></span>
-                <SiteIcon :name="BLOCK_ICONS[b.type]" class="size-4 text-redstone-400" />
+                <SiteIcon :name="BLOCK_ICONS[b.type]" class="size-4 text-primary-400" />
                 <span class="text-sm font-semibold text-base-100">{{ e.types[b.type] }}</span>
                 <div v-if="editable" class="ml-auto flex gap-1">
                   <button type="button" class="btn-icon size-8" :disabled="i === 0" :aria-label="e.moveUp" :title="e.moveUp" @click="move(i, -1)"><SiteIcon name="up" class="size-4" /></button>
                   <button type="button" class="btn-icon size-8" :disabled="i === draft.content.blocks.length - 1" :aria-label="e.moveDown" :title="e.moveDown" @click="move(i, 1)"><SiteIcon name="chevron" class="size-4" /></button>
-                  <button type="button" class="btn-icon size-8 text-redstone-300" :aria-label="e.remove" :title="e.remove" @click="removeBlock(i)"><SiteIcon name="trash" class="size-4" /></button>
+                  <button type="button" class="btn-icon size-8 text-danger-300" :aria-label="e.remove" :title="e.remove" @click="removeBlock(i)"><SiteIcon name="trash" class="size-4" /></button>
                 </div>
               </div>
               <fieldset class="nb-body" :disabled="!editable">
@@ -531,7 +531,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
                       <label class="label">{{ f.caption }}<input v-model="img.caption![editLang]" class="field mt-1" maxlength="160" :placeholder="hint(img.caption)" /></label>
                       <label class="label">{{ f.alt }}<input v-model="img.alt![editLang]" class="field mt-1" maxlength="160" :placeholder="hint(img.alt)" /></label>
                     </div>
-                    <button v-if="b.images.length > 1" type="button" class="btn btn-ghost w-fit text-redstone-300" @click="b.images.splice(k, 1)">{{ f.removeImage }}</button>
+                    <button v-if="b.images.length > 1" type="button" class="btn btn-ghost w-fit text-danger-300" @click="b.images.splice(k, 1)">{{ f.removeImage }}</button>
                   </div>
                   <button v-if="b.images.length < 2" type="button" class="btn btn-ghost w-fit" @click="b.images.push({ src: '', alt: {}, caption: {} })"><SiteIcon name="plus" class="size-4" />{{ f.addImage }}</button>
                   <p class="text-xs text-base-500">{{ e.imagesHint }}</p>
@@ -593,7 +593,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
           <section v-if="campaign && (canManage || canSend)" class="card mt-6 grid gap-3 p-4">
             <div class="flex flex-wrap gap-2">
               <button v-if="canManage" type="button" class="btn btn-ghost" :disabled="busy === 'test'" data-testid="nl-test" @click="sendTest"><SiteIcon name="mail" class="size-4" />{{ e.test }}</button>
-              <button v-if="canSend && (campaign.status === 'scheduled' || campaign.status === 'sending')" type="button" class="btn btn-ghost text-redstone-300" :disabled="busy === 'cancel'" @click="cancelSend">{{ e.cancelSend }}</button>
+              <button v-if="canSend && (campaign.status === 'scheduled' || campaign.status === 'sending')" type="button" class="btn btn-ghost text-primary-300" :disabled="busy === 'cancel'" @click="cancelSend">{{ e.cancelSend }}</button>
             </div>
             <template v-if="canSend && editable">
               <fieldset class="flex flex-wrap items-center gap-3 text-sm text-base-200">
@@ -627,7 +627,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
             <span v-if="previewBusy" class="text-xs text-base-500">{{ e.refreshing }}</span>
           </div>
           <p v-if="previewSubject" class="nl-subject mt-2"><b>{{ e.subject }}:</b> {{ previewSubject }}</p>
-          <p v-if="previewError" class="mt-2 text-xs text-redstone-300">{{ previewError }}</p>
+          <p v-if="previewError" class="mt-2 text-xs text-danger-300">{{ previewError }}</p>
           <div class="nl-frame-wrap mt-2" :data-device="device">
             <iframe
               ref="frame"
@@ -687,7 +687,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   color: var(--color-base-200);
 }
 .nl-warn {
-  border-color: color-mix(in srgb, #ffb84d 40%, transparent);
+  border-color: color-mix(in srgb, var(--color-caution-400) 40%, transparent);
   color: #ffd48a;
 }
 .nl-seg {
@@ -707,8 +707,8 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   color: var(--color-base-400);
 }
 .nl-seg button[aria-pressed='true'] {
-  background: var(--color-redstone-600);
-  color: var(--color-base-50);
+  background: var(--color-primary-500);
+  color: var(--color-on-primary);
 }
 .nl-missing {
   margin-left: 0.25rem;
@@ -738,8 +738,8 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   right: 0.5rem;
   height: 3px;
   border-radius: 999px;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 8px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 8px var(--color-primary-500);
 }
 .nb-block.line-before::before {
   top: -0.45rem;
@@ -786,7 +786,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   gap: 0.4rem;
   padding: 0.65rem 0.8rem;
   border-radius: 0.6rem;
-  border: 1px dashed var(--color-redstone-600);
+  border: 1px dashed var(--color-primary-600);
 }
 .nb-add-item {
   display: flex;
@@ -801,7 +801,7 @@ const lookLabel = (l: CampaignLook) => (l === 'auto' && sources.value ? `${t.val
   color: var(--color-base-200);
 }
 .nb-add-item:hover:not(:disabled) {
-  border-color: var(--color-redstone-600);
+  border-color: var(--color-primary-600);
   color: var(--color-base-50);
 }
 .nb-add-item:disabled {

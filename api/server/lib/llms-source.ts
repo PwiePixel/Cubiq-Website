@@ -9,10 +9,11 @@ import type { LlmsSource } from './llms'
 import { blogPosts } from './site'
 
 /** Quelle für /llms.txt und /llms-full.txt: die englischen Texte der Seiten plus die neuesten Versionen. */
-export async function llmsSource(siteUrl: string): Promise<LlmsSource> {
+export async function llmsSource(siteUrl: string, wikiUrl: string): Promise<LlmsSource> {
   const posts = await blogPosts().catch(() => [])
   return {
     siteUrl,
+    wikiUrl,
     m: messages.en,
     landing: landingTexts.en,
     pages: {

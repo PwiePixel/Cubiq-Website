@@ -1,6 +1,6 @@
 #!/bin/bash
-# Cubiq API auf Pterodactyl: .env laden, Cloudflare-Tunnel im selben Container
-# starten, API nur lokal (127.0.0.1) – von außen erreichbar ausschließlich über den Tunnel.
+# Cubiq-Website auf Pterodactyl: .env laden, Cloudflare-Tunnel im selben Container
+# starten, Website nur lokal (127.0.0.1) – von außen erreichbar ausschließlich über den Tunnel.
 set -euo pipefail
 cd /home/container
 

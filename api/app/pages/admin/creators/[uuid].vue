@@ -60,7 +60,7 @@ const stateTone = (s: StatState) => (s === 'active' ? 'tone-ok' : s === 'banned'
     <NuxtLink to="/admin/creators?tab=stats" class="inline-flex items-center gap-1.5 text-sm text-base-400 hover:text-base-50">
       <SiteIcon name="back" class="size-4" />{{ t.back }}
     </NuxtLink>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <p v-if="missing" class="adm-empty mt-6"><SiteIcon name="crown" class="size-6" />{{ t.notFound }}</p>
     <div v-else-if="!data" class="skeleton mt-6 h-96 rounded-xl" />
     <template v-else-if="c">
@@ -71,7 +71,7 @@ const stateTone = (s: StatState) => (s === 'active' ? 'tone-ok' : s === 'banned'
           <p class="mt-1 flex flex-wrap items-center gap-2 text-xs text-base-400">
             <span class="tone tone-info">{{ ct.tiers[c.tier] }}</span>
             <span class="tone" :class="stateTone(c.state)">{{ ct.states[c.state] }}</span>
-            <span v-if="c.mainCode">{{ ct.code }}: <code class="text-lamp-300">{{ c.mainCode }}</code></span>
+            <span v-if="c.mainCode">{{ ct.code }}: <code class="text-primary-300">{{ c.mainCode }}</code></span>
             <span>{{ fill(ct.since, { date: day(c.since) }) }}</span>
             <span>· {{ fill(t.generated, { time: when(data.generatedAt) }) }}</span>
           </p>

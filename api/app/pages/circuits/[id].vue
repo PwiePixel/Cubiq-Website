@@ -97,7 +97,7 @@ async function sendReport() {
         </div>
 
         <p v-if="desc" class="mt-6 text-base leading-relaxed whitespace-pre-line text-base-200">{{ desc }}</p>
-        <div v-if="note" class="mt-5 flex gap-3 rounded-lg border border-lamp-400/40 bg-lamp-900/40 px-4 py-3 text-sm text-lamp-300">
+        <div v-if="note" class="mt-5 flex gap-3 rounded-lg border border-caution-400/40 bg-caution-900/40 px-4 py-3 text-sm text-caution-300">
           <SiteIcon name="warn" class="mt-0.5 size-4 shrink-0" />
           <p><strong class="font-semibold">{{ c.detail.serverNote }}:</strong> {{ note }}</p>
         </div>
@@ -157,7 +157,7 @@ async function sendReport() {
         <select id="report-reason" v-model="reason" class="field">
           <option v-for="(label, key) in c.detail.reasons" :key="key" :value="key">{{ label }}</option>
         </select>
-        <p v-if="reportErr" role="alert" class="mt-3 text-sm text-redstone-300">{{ reportErr }}</p>
+        <p v-if="reportErr" role="alert" class="mt-3 text-sm text-danger-300">{{ reportErr }}</p>
         <div class="mt-5 flex justify-end gap-2">
           <button type="button" class="btn btn-ghost" @click="reporting = false">{{ m.common.close }}</button>
           <button type="submit" class="btn btn-danger" :disabled="reportBusy"><SiteIcon name="flag" class="size-4" />{{ c.detail.reportSend }}</button>
@@ -170,8 +170,8 @@ async function sendReport() {
 <style scoped>
 .stage {
   background-color: var(--color-base-950);
-  background-image: var(--deepslate);
-  background-size: 48px 48px;
+  background-image: var(--cube-grid);
+  background-size: 34px 20px;
 }
 .facts {
   display: grid;
@@ -201,12 +201,12 @@ async function sendReport() {
   color: var(--color-ok);
 }
 .diff[data-d='2'] {
-  background: color-mix(in srgb, var(--color-lamp-400) 16%, transparent);
-  color: var(--color-lamp-300);
+  background: color-mix(in srgb, var(--color-caution-400) 16%, transparent);
+  color: var(--color-caution-300);
 }
 .diff[data-d='3'] {
-  background: color-mix(in srgb, var(--color-redstone-500) 18%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-danger-500) 18%, transparent);
+  color: var(--color-danger-300);
 }
 .confirm-backdrop {
   position: fixed;

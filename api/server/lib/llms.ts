@@ -18,6 +18,8 @@ export interface LlmsLatest {
 
 export interface LlmsSource {
   siteUrl: string
+  /** Adresse der Doku-Domain (WIKI_URL des Servers); fehlt sie, gilt die Vorgabe aus shared/docs.ts. */
+  wikiUrl?: string
   /** Englische Texte der Website. */
   m: Messages
   landing: LandingTexts
@@ -47,9 +49,13 @@ function latestLine(r: LlmsLatest | undefined): string | null {
   return `Latest version: ${r.version}${r.name ? ` – “${r.name}”` : ''}${r.date ? ` (released ${r.date})` : ''}.`
 }
 
+/** Doku-Adresse ohne `/` am Ende. */
+function wiki(s: LlmsSource): string {
+  return (s.wikiUrl ?? WIKI_URL).replace(/\/+$/, '')
+}
+
 /** Abschnitt „Documentation“: die Doku auf eigener Domain mit eigener llms.txt (docs-site, Docus). */
-function documentationSection(): string[] {
-  const d = WIKI_URL
+function documentationSection(d: string): string[] {
   return [
     '## Documentation',
     '',
@@ -87,7 +93,7 @@ export function buildLlmsTxt(s: LlmsSource): string {
     '',
     ...LANDING_IDS.map((id) => `- [${landing.pages[id].name}](${u}${landingPath(id)}): ${line(landing.pages[id].seo.description)}`),
     '',
-    ...documentationSection(),
+    ...documentationSection(wiki(s)),
     '',
     '## Community',
     '',
@@ -174,8 +180,8 @@ export function buildLlmsFullTxt(s: LlmsSource): string {
   out.push(`- Windows: ${line(m.download.windowsText)} ${line(m.download.smartText)}`)
   out.push(`- Linux: ${line(m.download.linuxText)} AppImage (${line(m.download.appimageText)}), ${m.download.deb}, ${m.download.rpm}, ${m.download.aur}: yay -S cubiq-launcher-bin. Flatpak: ${line(m.download.flatpakSoon)}`)
   out.push(`- ${m.download.requirementsTitle}: ${m.download.requirements.map(line).join('; ')}`)
-  out.push(`- ${m.download.mobile.android}: ${line(m.download.mobile.androidText)} Guide: ${docsPageUrl('en', '/getting-started/android')}`)
-  out.push(`- ${m.download.mobile.ios}: ${line(m.download.mobile.iosText)} ${line(m.download.mobile.jitText)} AltStore/SideStore source: ${REPO_URL}/releases/download/mobile/altstore.json. Guide: ${docsPageUrl('en', '/getting-started/iphone-ipad')}`)
+  out.push(`- ${m.download.mobile.android}: ${line(m.download.mobile.androidText)} Guide: ${docsPageUrl('en', '/getting-started/android', wiki(s))}`)
+  out.push(`- ${m.download.mobile.ios}: ${line(m.download.mobile.iosText)} ${line(m.download.mobile.jitText)} AltStore/SideStore source: ${REPO_URL}/releases/download/mobile/altstore.json. Guide: ${docsPageUrl('en', '/getting-started/iphone-ipad', wiki(s))}`)
   out.push(`- All files and checksums: ${REPO_URL}/releases`, '')
 
   out.push('## Frequently asked questions', '', `Page: ${u}/faq`, '')
@@ -190,7 +196,7 @@ export function buildLlmsFullTxt(s: LlmsSource): string {
     `- Features: ${u}/features`,
     ...LANDING_IDS.map((id) => `- ${landing.pages[id].name}: ${u}${landingPath(id)}`),
     `- Download: ${u}/download`,
-    `- Documentation: ${WIKI_URL}/en (LLM index: ${WIKI_URL}/llms.txt, full text: ${WIKI_URL}/llms-full.txt)`,
+    `- Documentation: ${wiki(s)}/en (LLM index: ${wiki(s)}/llms.txt, full text: ${wiki(s)}/llms-full.txt)`,
     `- FAQ: ${u}/faq`,
     `- Blog: ${u}/blog`,
     `- Issue tracker: ${u}/issues`,

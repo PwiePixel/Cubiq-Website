@@ -55,12 +55,12 @@ useHead({ title: () => it.value.seo.mine, meta: [{ name: 'robots', content: 'noi
         <button type="button" role="tab" class="tab-btn" :aria-selected="tab === 'following'" @click="tab = 'following'">{{ it.mine.following }} <span class="text-base-400">{{ data?.following.length ?? 0 }}</span></button>
         <button type="button" role="tab" class="tab-btn" :aria-selected="tab === 'created'" @click="tab = 'created'">{{ it.mine.created }} <span class="text-base-400">{{ data?.created.length ?? 0 }}</span></button>
       </div>
-      <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
       <p v-if="!list.length" class="mt-8 text-base-400">{{ tab === 'created' ? it.mine.emptyCreated : it.mine.emptyFollowing }}</p>
       <ul v-else class="card mt-4 divide-y divide-base-800">
         <li v-for="i in list" :key="i.number" class="flex flex-wrap items-center gap-3 px-4 py-3">
-          <SiteIcon :name="i.type === 'bug' ? 'bug' : 'bolt'" class="size-4.5 shrink-0" :class="i.type === 'bug' ? 'text-redstone-300' : 'text-lamp-300'" />
-          <NuxtLink :to="lp(`/issues/${i.number}`)" class="min-w-0 flex-1 font-medium text-base-50 hover:text-redstone-300">
+          <SiteIcon :name="i.type === 'bug' ? 'bug' : 'bolt'" class="size-4.5 shrink-0" :class="i.type === 'bug' ? 'text-danger-300' : 'text-caution-300'" />
+          <NuxtLink :to="lp(`/issues/${i.number}`)" class="min-w-0 flex-1 font-medium text-base-50 hover:text-primary-300">
             {{ i.title }} <span class="text-base-400">#{{ i.number }}</span>
           </NuxtLink>
           <IssueStatus :status="i.status" />
@@ -83,6 +83,6 @@ useHead({ title: () => it.value.seo.mine, meta: [{ name: 'robots', content: 'noi
 }
 .tab-btn[aria-selected='true'] {
   color: var(--color-base-50);
-  border-bottom-color: var(--color-redstone-500);
+  border-bottom-color: var(--color-primary-500);
 }
 </style>

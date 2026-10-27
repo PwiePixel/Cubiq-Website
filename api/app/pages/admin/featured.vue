@@ -288,7 +288,7 @@ const LANGS = [
           <SiteIcon name="plus" class="size-4" />{{ busy === 'add' ? f.adding : f.add }}
         </button>
       </div>
-      <p v-if="error" role="alert" class="mt-3 text-sm text-redstone-300">{{ error }}</p>
+      <p v-if="error" role="alert" class="mt-3 text-sm text-danger-300">{{ error }}</p>
       <p v-else-if="notice" role="status" class="mt-3 text-sm text-base-300">{{ notice }}</p>
     </form>
 
@@ -403,12 +403,12 @@ const LANGS = [
                 {{ fill(f.view, { platform: SOURCE_NAMES[p.source] }) }} <SiteIcon name="external" class="size-4" />
               </a>
               <a v-if="p.active" href="/#featured-packs" target="_blank" rel="noopener" class="btn btn-ghost">{{ f.preview }}</a>
-              <button type="button" class="btn btn-ghost ml-auto text-redstone-300" :disabled="busy === `d:${p.id}`" @click="removing = p">
+              <button type="button" class="btn btn-ghost ml-auto text-danger-300" :disabled="busy === `d:${p.id}`" @click="removing = p">
                 <SiteIcon name="trash" class="size-4" />{{ f.delete }}
               </button>
             </div>
             <p class="text-xs text-base-500">
-              <span v-if="dirty(p)" class="text-lamp-300">{{ f.unsaved }} · </span>{{ fill(f.refreshedAt, { date: when(p.refreshedAt) }) }}
+              <span v-if="dirty(p)" class="text-caution-300">{{ f.unsaved }} · </span>{{ fill(f.refreshedAt, { date: when(p.refreshedAt) }) }}
             </p>
             <p v-if="rowMsg[p.id]" role="status" class="text-sm text-base-300">{{ rowMsg[p.id] }}</p>
           </form>
@@ -444,8 +444,8 @@ const LANGS = [
   right: 0.5rem;
   height: 3px;
   border-radius: 999px;
-  background: var(--color-redstone-500);
-  box-shadow: 0 0 8px var(--color-redstone-500);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 8px var(--color-primary-500);
 }
 .fp-row.line-before::before {
   top: -0.45rem;
@@ -468,8 +468,8 @@ const LANGS = [
   background: var(--color-base-800);
 }
 .btn-icon.fp-pin-on {
-  background: var(--color-redstone-600);
-  color: var(--color-base-50);
+  background: var(--color-primary-500);
+  color: var(--color-on-primary);
 }
 .fp-grip:active {
   cursor: grabbing;

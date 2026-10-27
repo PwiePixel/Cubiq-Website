@@ -355,7 +355,7 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
             <span v-if="state === 'scheduled' && post?.publishAt">{{ fill(b.adm.scheduledFor, { date: when(post.publishAt) }) }}</span>
             <span v-else-if="state === 'published' && post?.publishAt">{{ fill(b.adm.publishedAt, { date: when(post.publishAt) }) }}</span>
             <span v-if="post">{{ fill(b.adm.updated, { date: when(post.updatedAt), name: post.updatedBy.name ?? '—' }) }}</span>
-            <span v-if="dirty" class="text-lamp-300">● {{ b.adm.unsaved }}</span>
+            <span v-if="dirty" class="text-caution-300">● {{ b.adm.unsaved }}</span>
             <span v-else-if="notice" class="text-ok">{{ notice }}</span>
           </p>
         </div>
@@ -370,8 +370,8 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
         </div>
       </header>
 
-      <p v-if="error" role="alert" class="mt-4 rounded-md border border-redstone-600/60 bg-redstone-900/40 px-3 py-2 text-sm text-base-200">{{ error }}</p>
-      <p v-if="!editable" class="mt-4 flex items-center gap-2 text-sm text-lamp-300"><SiteIcon name="key" class="size-4" />{{ b.adm.needPublish }}</p>
+      <p v-if="error" role="alert" class="mt-4 rounded-md border border-danger-600/60 bg-danger-900/40 px-3 py-2 text-sm text-base-200">{{ error }}</p>
+      <p v-if="!editable" class="mt-4 flex items-center gap-2 text-sm text-caution-300"><SiteIcon name="key" class="size-4" />{{ b.adm.needPublish }}</p>
 
       <div class="editor-grid mt-5">
         <!-- Bearbeiten -->
@@ -512,7 +512,7 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
                   <h2 class="display mt-1 text-3xl leading-tight preview-title">{{ previewText.title || b.adm.untitled }}</h2>
                 </div>
               </template>
-              <UpdateBanner v-else :kicker="`${b.kind.news} · ${date(post?.publishAt ?? new Date().toISOString())}`" :title="previewText.title || b.adm.untitled" accent="#ffb84d" size="md" tag="h2" />
+              <UpdateBanner v-else :kicker="`${b.kind.news} · ${date(post?.publishAt ?? new Date().toISOString())}`" :title="previewText.title || b.adm.untitled" accent="#88bb45" size="md" tag="h2" />
             </div>
             <div class="p-5">
               <p class="flex items-center gap-2 border-b border-base-800 pb-3 text-xs text-base-400">
@@ -608,7 +608,7 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
   background: var(--color-ok);
 }
 .dot-need {
-  background: var(--color-redstone-400);
+  background: var(--color-primary-400);
 }
 .dot-empty {
   background: var(--color-base-600);
@@ -637,8 +637,8 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
   background: var(--color-base-950);
 }
 .media.is-cover {
-  border-color: var(--color-lamp-400);
-  box-shadow: 0 0 0 1px var(--color-lamp-400);
+  border-color: var(--color-caution-400);
+  box-shadow: 0 0 0 1px var(--color-caution-400);
 }
 .media-actions {
   position: absolute;
@@ -658,7 +658,7 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
   color: #f3f3f8;
 }
 .media-actions button:not(:disabled):hover {
-  background: var(--color-redstone-600);
+  background: var(--color-primary-600);
 }
 .preview-banner {
   height: 13rem;
@@ -675,7 +675,7 @@ const titleShown = computed(() => draft.value.texts[lang.value as BlogLang]?.tit
   font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .preview-text {
   font-size: 1rem;

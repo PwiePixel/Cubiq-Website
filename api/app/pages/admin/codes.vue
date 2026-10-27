@@ -111,7 +111,7 @@ const cosmeticName = (id: string | null) => cosmetics.value.find((c) => c.id ===
       <h1 class="adm-title">{{ a.nav.codes }}</h1>
       <p v-if="!can('codes')" class="adm-lead">{{ a.nav.adminOnly }}</p>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div class="mt-6 grid gap-6" :class="can('codes') ? 'lg:grid-cols-[22rem_1fr]' : ''">
       <form v-if="can('codes')" class="card h-fit p-5" @submit.prevent="createCodes">
         <h2 class="section-title">{{ m.admin.codes.create }}</h2>
@@ -139,7 +139,7 @@ const cosmeticName = (id: string | null) => cosmetics.value.find((c) => c.id ===
         <input id="code-note" v-model="form.note" class="field" maxlength="200" />
         <button type="submit" class="btn btn-primary mt-4 w-full" :disabled="busy === 'codes' || !form.target">{{ m.admin.codes.create }}</button>
         <div v-if="created.length" class="mt-5 border-t border-base-800 pt-4">
-          <p class="text-xs text-lamp-300">{{ m.admin.codes.created }}</p>
+          <p class="text-xs text-caution-300">{{ m.admin.codes.created }}</p>
           <pre class="codes-out mt-2 select-all">{{ created.join('\n') }}</pre>
           <button type="button" class="btn btn-ghost mt-2 w-full" @click="copyCodes">
             <SiteIcon :name="copied ? 'check' : 'copy'" class="size-4" />{{ copied ? m.common.copied : m.common.copy }}
@@ -190,7 +190,7 @@ const cosmeticName = (id: string | null) => cosmetics.value.find((c) => c.id ===
   border-radius: 0.375rem;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  color: var(--color-lamp-300);
+  color: var(--color-primary-300);
   background: var(--color-base-950);
 }
 </style>

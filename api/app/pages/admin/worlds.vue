@@ -50,7 +50,7 @@ const { active } = useListKeys(rooms)
       </div>
       <button type="button" class="btn btn-ghost" @click="load"><SiteIcon name="refresh" class="size-4" />{{ a.common.refresh }}</button>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading && !rooms.length" class="mt-6 grid gap-3 md:grid-cols-2">
       <div v-for="i in 4" :key="i" class="skeleton h-28 rounded-xl" />
     </div>

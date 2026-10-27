@@ -499,7 +499,7 @@ onMounted(() => {
         <button v-for="x in tabs" :key="x" type="button" :aria-pressed="tab === x" @click="tab = x">{{ t.tabs[x] }}</button>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <p v-if="notice" class="mt-4 text-sm text-ok" role="status">{{ notice }}</p>
     <div v-if="loading" class="skeleton mt-6 h-40 rounded-xl" />
 
@@ -536,7 +536,7 @@ onMounted(() => {
               <ul v-if="item.profile.links.length" class="mt-3 space-y-1 text-xs">
                 <li v-for="l in item.profile.links" :key="l.url" class="flex gap-2">
                   <span class="w-20 shrink-0 font-semibold text-base-300">{{ l.type }}</span>
-                  <a :href="l.url" target="_blank" rel="noopener noreferrer nofollow" class="break-all text-lamp-300 hover:underline">{{ l.url }}</a>
+                  <a :href="l.url" target="_blank" rel="noopener noreferrer nofollow" class="break-all text-primary-300 hover:underline">{{ l.url }}</a>
                 </li>
               </ul>
             </div>
@@ -583,10 +583,10 @@ onMounted(() => {
               </p>
               <p class="mt-0.5 flex flex-wrap gap-x-3 text-xs text-base-400">
                 <span>{{ t.roster.fans }}: {{ num(c.fans) }}</span>
-                <span v-if="c.mainCode">{{ t.roster.code }}: <code class="text-lamp-300">{{ c.mainCode }}</code></span>
+                <span v-if="c.mainCode">{{ t.roster.code }}: <code class="text-primary-300">{{ c.mainCode }}</code></span>
                 <span>{{ fill(t.roster.since, { date: day(c.since) }) }}</span>
               </p>
-              <p v-if="c.reason" class="mt-1 text-xs text-redstone-300">{{ c.reason }}</p>
+              <p v-if="c.reason" class="mt-1 text-xs text-primary-300">{{ c.reason }}</p>
             </div>
             <template v-if="manage">
               <template v-if="c.state === 'active'">
@@ -630,7 +630,7 @@ onMounted(() => {
             </p>
             <p v-if="r.data.channelUrl" class="mt-1 text-sm">
               {{ t.requests.channel }}:
-              <a :href="r.data.channelUrl" target="_blank" rel="noopener noreferrer nofollow" class="text-lamp-300 hover:underline">{{ r.data.channelUrl }}</a>
+              <a :href="r.data.channelUrl" target="_blank" rel="noopener noreferrer nofollow" class="text-primary-300 hover:underline">{{ r.data.channelUrl }}</a>
               <span v-if="r.data.followers !== undefined" class="text-base-400"> · {{ fill(t.requests.followers, { n: num(r.data.followers) }) }}</span>
             </p>
             <p v-if="r.data.note || r.data.text" class="mt-1 whitespace-pre-line text-sm text-base-300">{{ r.data.note || r.data.text }}</p>
@@ -694,8 +694,8 @@ onMounted(() => {
                 </p>
                 <p class="mt-1 text-xs text-base-400">{{ fill(pt.month, { used: num(x.quota.used), limit: num(x.quota.limit) }) }}</p>
                 <p class="text-xs text-base-500">{{ fill(pt.by, { date: day(x.pet.assignedAt), name: x.assignedBy.name || x.assignedBy.uuid }) }}</p>
-                <p v-if="!x.pet.available" class="mt-1 text-xs text-redstone-300">{{ pt.unavailable }}</p>
-                <button type="button" class="mt-2 text-xs text-redstone-300 underline" @click="removingPet = x">{{ pt.remove }}</button>
+                <p v-if="!x.pet.available" class="mt-1 text-xs text-caution-300">{{ pt.unavailable }}</p>
+                <button type="button" class="mt-2 text-xs text-danger-300 underline" @click="removingPet = x">{{ pt.remove }}</button>
               </div>
             </li>
           </ul>
@@ -776,7 +776,7 @@ onMounted(() => {
             <li v-for="p in previews" :key="p.id" class="card flex flex-wrap items-start gap-3 p-4">
               <div class="min-w-0 flex-1">
                 <p class="font-semibold text-base-50">{{ t.previews.products[p.product] }} {{ p.version }} <span class="text-xs font-normal text-base-400">· {{ day(p.publishedAt) }}</span></p>
-                <p class="truncate text-xs"><a :href="p.url" target="_blank" rel="noopener noreferrer nofollow" class="text-lamp-300 hover:underline">{{ p.url }}</a></p>
+                <p class="truncate text-xs"><a :href="p.url" target="_blank" rel="noopener noreferrer nofollow" class="text-primary-300 hover:underline">{{ p.url }}</a></p>
                 <p class="truncate font-mono text-[11px] text-base-500">{{ p.sha256 }}</p>
                 <p v-if="p.notes" class="mt-1 whitespace-pre-line text-sm text-base-300">{{ p.notes }}</p>
               </div>
@@ -987,7 +987,7 @@ onMounted(() => {
   padding: 0.8rem 0.95rem;
 }
 .profile-new {
-  border-left: 3px solid var(--color-lamp-400);
+  border-left: 3px solid var(--color-caution-400);
 }
 .profile-label {
   font-size: 0.65rem;

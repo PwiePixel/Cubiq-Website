@@ -312,7 +312,7 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
       </div>
       <button v-if="manage" type="button" class="btn btn-primary" @click="edit()"><SiteIcon name="plus" class="size-4" />{{ t.adm.jobs.new }}</button>
     </header>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <div v-if="loading" class="skeleton mt-6 h-40 rounded-xl" />
     <div v-else-if="!jobs.length" class="adm-empty mt-6"><SiteIcon name="briefcase" class="size-6" />{{ t.adm.jobs.empty }}</div>
     <ul v-else class="mt-6 space-y-2">
@@ -379,10 +379,10 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
         <div class="adm-seg">
           <button v-for="l in LANG_LIST" :key="l" type="button" :aria-pressed="editLang === l" @click="editLang = l">
             <span class="font-mono uppercase">{{ l }}</span>
-            <span v-if="!draft.texts[l].title.trim()" class="ml-1 text-lamp-300">•</span>
+            <span v-if="!draft.texts[l].title.trim()" class="ml-1 text-caution-300">•</span>
           </button>
         </div>
-        <p v-if="!draft.texts[editLang].title.trim()" class="text-xs text-lamp-300">{{ t.adm.jobs.missingLang }}</p>
+        <p v-if="!draft.texts[editLang].title.trim()" class="text-xs text-caution-300">{{ t.adm.jobs.missingLang }}</p>
       </div>
       <div class="mt-3 grid gap-3 md:grid-cols-2">
         <div>
@@ -404,7 +404,7 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
       <h3 class="section-title mt-6">{{ t.adm.jobs.form }}</h3>
       <p class="mt-1 text-xs text-base-400">{{ t.adm.jobs.standard }}</p>
       <ol class="mt-3 space-y-3">
-        <li v-for="(f, i) in draft.form" :key="f.key" class="field-card rounded-lg border bg-base-950 p-3" :class="badFields.has(Number(i)) ? 'border-redstone-600 has-error' : 'border-base-800'">
+        <li v-for="(f, i) in draft.form" :key="f.key" class="field-card rounded-lg border bg-base-950 p-3" :class="badFields.has(Number(i)) ? 'border-danger-600 has-error' : 'border-base-800'">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-mono text-xs text-base-400">{{ Number(i) + 1 }}.</span>
             <select :value="f.type" class="field adm-select w-auto py-1 text-sm" :aria-label="t.adm.jobs.type" @change="setType(f, ($event.target as HTMLSelectElement).value as FieldType)">
@@ -414,7 +414,7 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
             <span class="ml-auto flex gap-1">
               <button type="button" class="btn-icon size-8" :aria-label="t.adm.jobs.up" :disabled="i === 0" @click="move(i, -1)"><SiteIcon name="chevron" class="size-4 rotate-180" /></button>
               <button type="button" class="btn-icon size-8" :aria-label="t.adm.jobs.down" :disabled="i === draft.form.length - 1" @click="move(i, 1)"><SiteIcon name="chevron" class="size-4" /></button>
-              <button type="button" class="btn-icon size-8 text-redstone-300" :aria-label="t.adm.jobs.remove" @click="draft.form.splice(i, 1)"><SiteIcon name="trash" class="size-4" /></button>
+              <button type="button" class="btn-icon size-8 text-danger-300" :aria-label="t.adm.jobs.remove" @click="draft.form.splice(i, 1)"><SiteIcon name="trash" class="size-4" /></button>
             </span>
           </div>
           <div class="mt-2 grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_9rem]">
@@ -453,13 +453,13 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
       <div class="mt-3 flex flex-wrap gap-1.5">
         <button v-for="ty in TYPES" :key="ty" type="button" class="btn btn-ghost px-2.5 py-1 text-xs" :disabled="draft.form.length >= 30" @click="addField(ty)"><SiteIcon name="plus" class="size-3.5" />{{ t.adm.jobs.types[ty] }}</button>
       </div>
-      <div v-if="draftErrors.length" role="alert" class="mt-3 rounded-lg border border-redstone-600 bg-redstone-900/50 px-3 py-2 text-sm text-base-50">
+      <div v-if="draftErrors.length" role="alert" class="mt-3 rounded-lg border border-danger-600 bg-danger-900/50 px-3 py-2 text-sm text-base-50">
         <p class="font-semibold">{{ t.adm.jobs.errorsIntro }}</p>
         <ul class="mt-1 list-disc space-y-0.5 pl-5">
           <li v-for="(e, k) in draftErrors" :key="k">{{ e }}</li>
         </ul>
       </div>
-      <p v-if="draftError" role="alert" class="mt-3 text-sm text-redstone-300">{{ draftError }}</p>
+      <p v-if="draftError" role="alert" class="mt-3 text-sm text-danger-300">{{ draftError }}</p>
       <template #footer>
         <span v-if="draft.roleId && roleOf(draft.roleId)" class="mr-auto"><RoleBadge :role="roleOf(draft.roleId)!" /></span>
         <button type="button" class="btn btn-ghost" @click="draft = null">{{ a.common.cancel }}</button>
@@ -484,10 +484,10 @@ const minMaxLabel = (f: FieldDraft) => (f.type === 'number' ? t.value.adm.jobs.m
 
 <style scoped>
 .field-card {
-  border-left: 3px solid var(--color-redstone-600);
+  border-left: 3px solid var(--color-primary-600);
 }
 .field-card :deep([aria-invalid='true']) {
-  border-color: var(--color-redstone-500);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-redstone-500) 45%, transparent);
+  border-color: var(--color-danger-500);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-danger-500) 45%, transparent);
 }
 </style>

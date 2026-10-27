@@ -23,10 +23,10 @@ withDefaults(defineProps<{ uuid: string, name: string, skin: string | null, tier
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .creator-avatar[data-tier='top'] {
-  --ring: var(--color-lamp-400);
+  --ring: var(--color-primary-400);
 }
 .creator-avatar[data-tier='partner'] {
-  --ring: var(--color-redstone-500);
+  --ring: var(--color-primary-500);
 }
 .face {
   display: block;

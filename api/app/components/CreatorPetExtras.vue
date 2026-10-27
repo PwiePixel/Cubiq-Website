@@ -73,15 +73,15 @@ const scaleText = (n: number) => fill(x.value.scale, { n: String(n).replace('.',
         </span>
         <span class="mt-1 block max-w-[80px] text-center text-xs leading-tight text-base-200">{{ p.name }}</span>
         <span v-if="p.petScale !== 1" class="block text-center text-[11px] text-base-400">{{ scaleText(p.petScale) }}</span>
-        <span v-if="!p.available" class="block text-center text-[11px] text-lamp-300">{{ x.unavailable }}</span>
+        <span v-if="!p.available" class="block text-center text-[11px] text-caution-300">{{ x.unavailable }}</span>
       </li>
     </ul>
     <label class="mt-4 flex items-center gap-2 text-sm text-base-200">
-      <input type="checkbox" class="accent-redstone-500" :checked="props.show" :disabled="busy || props.helper" @change="toggle(($event.target as HTMLInputElement).checked)" />
+      <input type="checkbox" class="accent-primary-500" :checked="props.show" :disabled="busy || props.helper" @change="toggle(($event.target as HTMLInputElement).checked)" />
       {{ x.toggle }}
     </label>
     <p class="mt-1 text-xs text-base-500">{{ props.helper ? x.helper : x.hint }}</p>
-    <p v-if="error" class="mt-2 text-xs text-redstone-300" role="alert">{{ error }}</p>
+    <p v-if="error" class="mt-2 text-xs text-danger-300" role="alert">{{ error }}</p>
   </div>
 </template>
 

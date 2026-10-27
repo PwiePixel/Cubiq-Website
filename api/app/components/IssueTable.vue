@@ -160,12 +160,12 @@ tr.closed .title {
   flex-shrink: 0;
   margin-top: 0.1rem;
   border-radius: 0.4rem;
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+  color: var(--color-primary-300);
 }
 .type[data-t='feature'] {
-  background: color-mix(in srgb, var(--color-lamp-400) 14%, transparent);
-  color: var(--color-lamp-300);
+  background: color-mix(in srgb, var(--color-caution-400) 14%, transparent);
+  color: var(--color-caution-300);
 }
 .title {
   font-weight: 600;
@@ -173,7 +173,7 @@ tr.closed .title {
   overflow-wrap: anywhere;
 }
 .title:hover {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 .sub {
   display: flex;
@@ -188,8 +188,8 @@ tr.closed .title {
   margin-left: 0.3rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-redstone-500) 20%, transparent);
-  color: var(--color-redstone-300);
+  background: color-mix(in srgb, var(--color-primary-500) 20%, transparent);
+  color: var(--color-primary-300);
   font-weight: 600;
 }
 .tag {

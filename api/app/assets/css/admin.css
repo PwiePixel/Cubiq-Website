@@ -59,7 +59,7 @@
 .adm-nav-link.router-link-active {
   color: var(--color-base-50);
   background: var(--color-base-800);
-  box-shadow: inset 3px 0 0 var(--color-redstone-500);
+  box-shadow: inset 3px 0 0 var(--color-primary-500);
 }
 .adm-nav-link.adm-exact:not(.router-link-exact-active) {
   color: var(--color-base-400);
@@ -76,11 +76,11 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
   color: var(--color-base-950);
-  background: var(--color-lamp-400);
+  background: var(--color-caution-400);
 }
 .adm-nav-count.hot {
   color: #fff;
-  background: var(--color-redstone-500);
+  background: var(--color-danger-500);
 }
 
 /* ---------------------------------------------------------------- Kopfzeile */
@@ -186,17 +186,17 @@
   background: var(--color-base-850);
 }
 .adm-row[data-active="true"] {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 70%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-redstone-500) 40%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary-500) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 40%, transparent);
 }
 .adm-row[data-selected="true"] {
-  background: color-mix(in srgb, var(--color-redstone-900) 45%, var(--color-base-900));
+  background: color-mix(in srgb, var(--color-primary-900) 45%, var(--color-base-900));
 }
 .adm-check {
   width: 1rem;
   height: 1rem;
   margin-top: 0.2rem;
-  accent-color: var(--color-redstone-500);
+  accent-color: var(--color-primary-500);
   flex-shrink: 0;
 }
 .adm-bulkbar {
@@ -229,10 +229,10 @@
   color: var(--color-base-400);
 }
 .adm-stat.warn {
-  border-color: color-mix(in srgb, var(--color-lamp-400) 55%, transparent);
+  border-color: color-mix(in srgb, var(--color-caution-400) 55%, transparent);
 }
 .adm-stat.hot {
-  border-color: color-mix(in srgb, var(--color-redstone-500) 60%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger-500) 60%, transparent);
 }
 .adm-dl {
   display: grid;
@@ -395,8 +395,8 @@
   border-color: var(--color-base-700);
 }
 .adm-option[aria-pressed="true"] {
-  border-color: var(--color-redstone-500);
-  background: color-mix(in srgb, var(--color-redstone-900) 55%, var(--color-base-950));
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-900) 55%, var(--color-base-950));
   color: var(--color-base-50);
 }
 .adm-option:disabled {
@@ -412,9 +412,9 @@
   background: var(--color-base-900);
 }
 .adm-chip-btn[aria-pressed="true"] {
-  border-color: var(--color-redstone-500);
+  border-color: var(--color-primary-500);
   color: var(--color-base-50);
-  background: color-mix(in srgb, var(--color-redstone-900) 60%, var(--color-base-900));
+  background: color-mix(in srgb, var(--color-primary-900) 60%, var(--color-base-900));
 }
 .adm-chip-btn:disabled {
   opacity: 0.4;
@@ -423,10 +423,10 @@
 
 /* Kleine Grafik (inline SVG). */
 .adm-chart rect.bar {
-  fill: color-mix(in srgb, var(--color-redstone-500) 80%, transparent);
+  fill: color-mix(in srgb, var(--color-primary-500) 80%, transparent);
 }
 .adm-chart rect.bar:hover {
-  fill: var(--color-redstone-400);
+  fill: var(--color-primary-400);
 }
 .adm-chart line.grid {
   stroke: var(--color-base-800);

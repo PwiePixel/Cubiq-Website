@@ -187,7 +187,7 @@ const { active } = useListKeys(items, {
         </select>
       </div>
     </div>
-    <p v-if="error" role="alert" class="mt-4 text-sm text-redstone-300">{{ error }}</p>
+    <p v-if="error" role="alert" class="mt-4 text-sm text-danger-300">{{ error }}</p>
     <p v-if="notice" class="mt-4 text-sm text-ok" role="status">{{ notice }}</p>
 
     <div v-if="loading && !items.length" class="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">

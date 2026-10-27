@@ -32,7 +32,7 @@ export function usePageSeo(input: () => Omit<PageSeo, 'siteUrl' | 'lang'>) {
 type HeadInput = Parameters<typeof useHead>[0]
 
 /** Eigene Screenshots in public/shots (Ersatz, wenn der neueste Beitrag keine hat). */
-const SITE_SHOTS = ['/shots/library.png', '/shots/title-screen.png', '/shots/emote-wheel.png', '/shots/redstone-overlay.png', '/shots/cape-physics.png', '/shots/zoom.png']
+const SITE_SHOTS = ['/shots/library.png', '/shots/launcher-home.png', '/shots/redstone-overlay.png', '/shots/zoom.png']
 
 /** SoftwareApplication-Knoten mit Version und Screenshots des neuesten Updates. */
 export function launcherLd(

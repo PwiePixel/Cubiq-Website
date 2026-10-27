@@ -46,7 +46,7 @@ function onBlock(e: MouseEvent, nr: number) {
     @click="onBlock($event, issue.number)"
   >
     <div class="top">
-      <SiteIcon :name="issue.type === 'bug' ? 'bug' : 'bolt'" class="size-4 shrink-0" :class="issue.type === 'bug' ? 'text-redstone-300' : 'text-lamp-300'" :title="it.types[issue.type]" />
+      <SiteIcon :name="issue.type === 'bug' ? 'bug' : 'bolt'" class="size-4 shrink-0" :class="issue.type === 'bug' ? 'text-danger-300' : 'text-caution-300'" :title="it.types[issue.type]" />
       <IssueArea :area="issue.area" />
       <IssuePriority v-if="issue.priority" :priority="issue.priority" />
       <span class="nr">#{{ issue.number }}</span>
@@ -169,7 +169,7 @@ function onBlock(e: MouseEvent, nr: number) {
   font-variant-numeric: tabular-nums;
 }
 .stat[data-v='1'] {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 .fixed-in {
   display: inline-flex;
@@ -199,12 +199,12 @@ function onBlock(e: MouseEvent, nr: number) {
 }
 .claim:hover:not(:disabled) {
   border-style: solid;
-  border-color: var(--color-lamp-400);
-  background: color-mix(in srgb, var(--color-lamp-400) 12%, transparent);
-  color: var(--color-lamp-300);
+  border-color: var(--color-caution-400);
+  background: color-mix(in srgb, var(--color-caution-400) 12%, transparent);
+  color: var(--color-caution-300);
 }
 .claim:focus-visible {
-  outline: 2px solid var(--color-redstone-400);
+  outline: 2px solid var(--color-primary-400);
 }
 .claim:disabled {
   cursor: progress;
@@ -214,7 +214,7 @@ function onBlock(e: MouseEvent, nr: number) {
   width: auto;
   height: auto;
   padding: 0.1rem;
-  border: 1px solid color-mix(in srgb, var(--color-lamp-400) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-caution-400) 55%, transparent);
 }
 .claim.mine .badge {
   position: absolute;
@@ -223,14 +223,14 @@ function onBlock(e: MouseEvent, nr: number) {
   padding: 1px;
   border-radius: 999px;
   background: var(--color-base-900);
-  color: var(--color-lamp-300);
+  color: var(--color-caution-300);
 }
 .claim.mine:hover:not(:disabled) {
-  border-color: var(--color-redstone-400);
-  background: color-mix(in srgb, var(--color-redstone-500) 14%, transparent);
+  border-color: var(--color-primary-400);
+  background: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
 }
 .claim.mine:hover:not(:disabled) .badge {
-  color: var(--color-redstone-300);
+  color: var(--color-primary-300);
 }
 @media (pointer: coarse) {
   .card-i.movable {
