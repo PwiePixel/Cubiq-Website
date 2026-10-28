@@ -1,56 +1,5 @@
 [
   {
-    "id": "cubiq_cap",
-    "name": "Cubiq-Cap",
-    "format": 2,
-    "unlock": "free",
-    "frames": 1,
-    "glowFrames": 12,
-    "glowFrameTimeMs": 150
-  },
-  {
-    "id": "lamp_helmet",
-    "name": "Redstone-Lampen-Helm",
-    "format": 2,
-    "unlock": "free",
-    "frames": 1,
-    "glowFrames": 12,
-    "glowFrameTimeMs": 160
-  },
-  {
-    "id": "top_hat",
-    "name": "Zylinder",
-    "format": 2,
-    "unlock": "free",
-    "frames": 1,
-    "glowFrames": 12,
-    "glowFrameTimeMs": 150
-  },
-  {
-    "id": "witch_hat",
-    "name": "Hexenhut",
-    "format": 2,
-    "unlock": {
-      "type": "event",
-      "event": "halloween"
-    },
-    "frames": 1,
-    "glowFrames": 12,
-    "glowFrameTimeMs": 160
-  },
-  {
-    "id": "pumpkin_head",
-    "name": "Kürbiskopf",
-    "format": 2,
-    "unlock": {
-      "type": "event",
-      "event": "halloween"
-    },
-    "frames": 1,
-    "glowFrames": 12,
-    "glowFrameTimeMs": 120
-  },
-  {
     "id": "bat_buddy",
     "name": "Fledermaus-Begleiter",
     "format": 2,
@@ -83,18 +32,6 @@
     "animated": false,
     "frames": 1,
     "emissive": false
-  },
-  {
-    "id": "redstone_aura",
-    "name": "Redstone-Partikel-Aura",
-    "template": "orbit",
-    "file": "redstone_aura.png",
-    "unlock": "free",
-    "scale": 2,
-    "animated": true,
-    "frames": 4,
-    "frameTimeMs": 150,
-    "emissive": true
   },
   {
     "id": "footprints",
@@ -152,5 +89,90 @@
     "frames": 1,
     "glowFrames": 12,
     "glowFrameTimeMs": 260
+  },
+  {
+    "id": "cubi",
+    "name": "Cubi",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150,
+    "petScale": 1
+  },
+  {
+    "id": "waddle_penguin",
+    "name": "Watschelpinguin",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 0,
+    "petScale": 1
+  },
+  {
+    "id": "fox_kit",
+    "name": "Füchschen",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 0,
+    "petScale": 1
+  },
+  {
+    "id": "axolotl",
+    "name": "Axolotl",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 160,
+    "petScale": 1
+  },
+  {
+    "id": "snowman",
+    "name": "Schneemännchen",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 180,
+    "petScale": 1
+  },
+  {
+    "id": "firefly",
+    "name": "Glühwürmchen",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 140,
+    "petScale": 1
+  },
+  {
+    "id": "aurora_wings",
+    "name": "Polarlichtflügel",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 160
+  },
+  {
+    "id": "shooting_star",
+    "name": "Sternschnuppe",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150
+  },
+  {
+    "id": "mini_cubi",
+    "name": "Mini-Cubi",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150
   }
 ]

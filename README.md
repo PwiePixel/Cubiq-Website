@@ -24,7 +24,13 @@ bei einem öffentlichen Repository den Header weglassen.) Das Skript installiert
 Cloudflare öffnest du nur einen Link und klickst auf deine Domain – Tunnel und DNS-Einträge legt das Skript selbst an
 (vorher die Domain in Cloudflare hinzufügen und die Nameserver beim Domain-Anbieter umstellen). Dann startet es die
 Website und richtet nächtliche Sicherungen und auf Wunsch tägliche Updates ein. Danach: `sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh
-status | update | restart | backup | logs`.
+status | update | restart | backup | logs | login`.
+
+**Anmelden ohne Microsoft:** Solange Microsoft die App noch nicht freigegeben hat, klappt die Anmeldung mit Microsoft
+für niemanden. `sudo bash /opt/cubiq/Cubiq-Website/deploy/cubiq-server.sh login` gibt dann einen Einmal-Link aus, der
+deinen Browser als erstes Konto aus `ADMIN_UUIDS` anmeldet (oder `… login <Spielername>` für ein anderes Konto) – 10
+Minuten gültig, nur einmal, nie weitergeben. Erzeugen kann ihn nur, wer Zugriff auf den Server hat (Details:
+[api/API.md §41](api/API.md)).
 
 ## Von Hand
 

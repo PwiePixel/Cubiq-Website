@@ -840,7 +840,8 @@ const cosmetics = [
     frames: range(8).map((f) => redstoneWings(f, 8)), frameTimeMs: 120, view: 'back', win: [-19, 19, 6, 34], previewFrame: 2 },
   { id: 'dragon_wings', name: 'Drachenflügel', template: 'wings', unlock: 'free', frames: [dragonWings()], view: 'back', win: [-19, 19, 6, 34] },
   { id: 'backpack', name: 'Rucksack', template: 'backpack', unlock: 'free', frames: [backpack()], view: 'back', win: [-10, 10, 8, 34] },
-  { id: 'redstone_aura', name: 'Redstone-Partikel-Aura', template: 'orbit', unlock: 'free', emissive: true,
+  // Ausgemustert (Oktober 2026): Bild bleibt im Repository, kommt aber nicht mehr in den Katalog (Migration 39 legt es ab).
+  { id: 'redstone_aura', name: 'Redstone-Partikel-Aura', template: 'orbit', unlock: 'free', emissive: true, retired: true,
     frames: range(4).map(redstoneAura), frameTimeMs: 150, view: 'front', win: [-17, 17, -2, 36] },
   { id: 'footprints', name: 'Fußspuren', template: 'trail', unlock: 'free', frames: [footprints()], view: 'top' },
   // Versteckt: erscheint nur bei denen, die den Code eingelöst haben.
@@ -855,6 +856,7 @@ mkdirSync(join(PRIV, 'cosmetic-previews'), { recursive: true })
 const catalog = []
 const privateV1 = []
 for (const c of cosmetics) {
+  if (c.retired) continue
   const tpl = TEMPLATES[c.template]
   if (!tpl) throw new Error(`unknown template ${c.template}`)
   for (const f of c.frames) {

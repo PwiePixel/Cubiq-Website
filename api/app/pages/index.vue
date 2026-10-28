@@ -50,6 +50,9 @@ useHead({ link: [{ rel: 'preconnect', href: 'https://raw.githubusercontent.com' 
 const capes = computed(() => capeData.value?.capes ?? [])
 const showcase = computed(() => capes.value.slice(0, 8))
 const preview = ref<SiteCape | null>(null)
+// Umhang am eigenen Skin: gemerkter Name (Kosmetik-Seite) bzw. angemeldet der eigene Skin, sonst die Puppe.
+const { skin, restore: restoreSkin } = useCapeSkin()
+onMounted(() => void restoreSkin())
 watchEffect(() => {
   if (!preview.value && capes.value.length) preview.value = capes.value.find((c) => c.frames > 1) ?? capes.value[0]!
 })
@@ -319,7 +322,7 @@ const powered = ref(false)
             </NuxtLink>
           </div>
           <div class="viewer-stage">
-            <ClientOnly><CapeViewer :cape="preview" :height="340" /></ClientOnly>
+            <ClientOnly><CapeViewer :cape="preview" :skin="skin" :height="340" /></ClientOnly>
             <p v-if="preview" class="absolute inset-x-0 bottom-3 text-center text-sm font-medium text-base-200">{{ preview.name }}</p>
           </div>
         </div>

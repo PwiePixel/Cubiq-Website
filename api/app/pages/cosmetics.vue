@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { breadcrumbLd } from '#shared/seo'
 
-// Kosmetik: oben die Cubiq-Umhänge (wie früher /capes), darunter Kopf-Kosmetik im Format v2 mit 3D-Vorschau
-// (derselbe Renderer wie Studio-Werkbank und Launcher). /capes leitet per 301 hierher (server/middleware).
+// Kosmetik: oben die Cubiq-Umhänge (wie früher /capes) – auf Wunsch am eigenen Skin (Spielername) –, darunter
+// Kosmetik im Format v2 mit 3D-Vorschau (derselbe Renderer wie Studio-Werkbank und Launcher). Leere Abschnitte
+// (z. B. Kopf-Kosmetik seit Oktober 2026) bleiben ausgeblendet. /capes leitet per 301 hierher (server/middleware).
 const { lang, m, fill } = useLang()
+const { skin } = useCapeSkin()
 const [{ data, error }, { data: hatData, error: hatError }] = await Promise.all([useCapes(), useHats()])
 const capes = computed(() => data.value?.capes ?? [])
 const hats = computed(() => hatData.value?.hats ?? [])
@@ -45,7 +47,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 pt-14 sm:px-6">
+  <div class="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:px-6">
     <header class="max-w-2xl">
       <h1 class="display text-5xl leading-tight text-base-50">{{ m.cosmetics.title }}</h1>
       <p class="mt-3 text-lg text-base-400">{{ m.cosmetics.lead }}</p>
@@ -77,7 +79,7 @@ onMounted(() => {
               <span class="block truncate text-sm font-semibold text-base-50">{{ c.name }}</span>
               <span class="mt-1.5 flex flex-wrap justify-center gap-1">
                 <span class="badge" :class="unlockClass(c)">{{ unlockLabel(c) }}</span>
-                <span v-if="c.scale > 1" class="badge bg-base-800 text-base-200">HD</span>
+                <span v-if="c.scale > 1" class="badge bg-base-800 text-base-200">{{ c.scale >= 16 ? 'Ultra HD' : 'HD' }}</span>
                 <span v-if="c.frames > 1" class="badge bg-primary-900 text-primary-300">{{ m.capes.animated }}</span>
               </span>
             </button>
@@ -87,13 +89,17 @@ onMounted(() => {
         <aside class="lg:sticky lg:top-24 lg:self-start">
           <div class="card overflow-hidden">
             <div class="stage relative">
-              <ClientOnly><CapeViewer :cape="selected" :height="400" /></ClientOnly>
+              <ClientOnly><CapeViewer :cape="selected" :skin="skin" :height="400" /></ClientOnly>
               <p class="absolute top-3 left-4 text-xs tracking-[0.18em] text-base-400 uppercase">{{ m.capes.preview }}</p>
               <p class="absolute right-4 bottom-3 text-xs text-base-600">{{ m.capes.dragHint }}</p>
             </div>
             <div v-if="selected" class="border-t border-base-800 p-5">
               <p class="display text-2xl text-base-50">{{ selected.name }}</p>
               <span class="badge mt-2" :class="unlockClass(selected)">{{ unlockLabel(selected) }}</span>
+            </div>
+            <div class="border-t border-base-800 p-5">
+              <h3 class="mb-3 font-semibold text-base-50">{{ m.capes.skin.title }}</h3>
+              <ClientOnly><CapeSkinField /></ClientOnly>
             </div>
           </div>
           <div class="mt-5 p-1">
@@ -104,11 +110,12 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Trennlinie: Redstone-Leitung mit Lampe in der Mitte -->
-    <div class="divider my-16" role="separator" aria-hidden="true"><span /></div>
+    <!-- Trennlinie: Redstone-Leitung mit Lampe in der Mitte (nur vor Abschnitten mit Teilen) -->
+    <div v-if="hats.length || hatError" class="divider my-16" role="separator" aria-hidden="true"><span /></div>
 
     <!-- Kopf-Kosmetik -->
     <CosmeticSection
+      v-if="hats.length || hatError"
       id="hats"
       v-model:night="night"
       v-model:animate="animate"
@@ -121,10 +128,11 @@ onMounted(() => {
       :how-text="m.cosmetics.howText"
     />
 
-    <div class="divider my-16" role="separator" aria-hidden="true"><span /></div>
+    <div v-if="companions.length || hatError" class="divider my-16" role="separator" aria-hidden="true"><span /></div>
 
-    <!-- Begleiter am Kopf (slot companion), zusätzlich zum Hut -->
+    <!-- Begleiter am Kopf (slot companion) -->
     <CosmeticSection
+      v-if="companions.length || hatError"
       id="companions"
       v-model:night="night"
       v-model:animate="animate"
@@ -137,10 +145,11 @@ onMounted(() => {
       :how-text="m.cosmetics.companionsHowText"
     />
 
-    <div class="divider my-16" role="separator" aria-hidden="true"><span /></div>
+    <div v-if="wings.length || hatError" class="divider my-16" role="separator" aria-hidden="true"><span /></div>
 
     <!-- Flügel (slot wings, am Rumpf) -->
     <CosmeticSection
+      v-if="wings.length || hatError"
       id="wings"
       v-model:night="night"
       v-model:animate="animate"
@@ -153,10 +162,11 @@ onMounted(() => {
       :how-text="m.cosmetics.wingsHowText"
     />
 
-    <div class="divider my-16" role="separator" aria-hidden="true"><span /></div>
+    <div v-if="pets.length || hatError" class="divider my-16" role="separator" aria-hidden="true"><span /></div>
 
     <!-- Begleiter am Boden (slot pet, z. B. der Pinguin) -->
     <CosmeticSection
+      v-if="pets.length || hatError"
       id="pets"
       v-model:night="night"
       v-model:animate="animate"
@@ -167,7 +177,6 @@ onMounted(() => {
       :empty="m.cosmetics.petsEmpty"
       :how-title="m.cosmetics.petsHowTitle"
       :how-text="m.cosmetics.petsHowText"
-      last
     />
   </div>
 </template>

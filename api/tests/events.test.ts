@@ -31,7 +31,23 @@ import { ADMIN, login, makeEnv, type TestEnv } from './helpers'
 const ASSETS = join(__dirname, '..', 'assets')
 const OWNER = ownerStaff(ADMIN)
 
-async function seedBundled(env: TestEnv) {
+/**
+ * Ausgemusterte Event-Teile (Oktober 2026: Hexenhut, Kürbiskopf, Halloween-Umhang, dazu ein freier Hut und Umhang). Ihre
+ * Dateien liegen weiter im Repository – hier als Fixture für die Event-Mechanik (abholen, Katalog, Website), die für
+ * künftige Event-Teile gleich bleibt.
+ */
+const ARCHIVED_COSMETICS = [
+  { id: 'cubiq_cap', name: 'Cubiq-Cap', format: 2, unlock: 'free', frames: 1, glowFrames: 12, glowFrameTimeMs: 150 },
+  { id: 'witch_hat', name: 'Hexenhut', format: 2, unlock: { type: 'event', event: 'halloween' }, frames: 1, glowFrames: 12, glowFrameTimeMs: 160 },
+  { id: 'pumpkin_head', name: 'Kürbiskopf', format: 2, unlock: { type: 'event', event: 'halloween' }, frames: 1, glowFrames: 12, glowFrameTimeMs: 120 },
+]
+const ARCHIVED_CAPES = [
+  { id: 'redstone', name: 'Redstone', file: 'redstone.png', unlock: 'free', scale: 2, animated: false, frames: 1 },
+  { id: 'halloween', name: 'Halloween', file: 'halloween.png', unlock: { type: 'event', event: 'halloween' }, scale: 8, animated: true, frames: 4, frameTimeMs: 220 },
+]
+
+/** Mitgelieferte Kataloge einspielen; `archive` = dazu die ausgemusterten Event-Teile (siehe oben). */
+async function seedBundled(env: TestEnv, opts: { archive?: boolean } = {}) {
   const readFile = (dir: string) => async (name: string) => {
     try {
       return readFileSync(join(ASSETS, dir, name))
@@ -39,9 +55,9 @@ async function seedBundled(env: TestEnv) {
       return null
     }
   }
-  const json = (dir: string) => async () => JSON.parse(readFileSync(join(ASSETS, dir, 'catalog.json'), 'utf8'))
-  seedBuiltinCosmetics(env.ctx, await loadBuiltinCosmetics(json('cosmetics'), readFile('cosmetics')))
-  seedBuiltins(env.ctx, await loadBuiltins(json('capes'), readFile('capes')))
+  const json = (dir: string, extra: unknown[]) => async () => [...(opts.archive ? extra : []), ...JSON.parse(readFileSync(join(ASSETS, dir, 'catalog.json'), 'utf8'))]
+  seedBuiltinCosmetics(env.ctx, await loadBuiltinCosmetics(json('cosmetics', ARCHIVED_COSMETICS), readFile('cosmetics')))
+  seedBuiltins(env.ctx, await loadBuiltins(json('capes', ARCHIVED_CAPES), readFile('capes')))
 }
 
 const auth = (token: string) => ({ authorization: `Bearer ${token}`, 'content-type': 'application/json' })
@@ -88,15 +104,15 @@ CREATE TABLE user_cosmetics (uuid TEXT NOT NULL REFERENCES users(uuid) ON DELETE
 CREATE TABLE user_capes (uuid TEXT NOT NULL REFERENCES users(uuid) ON DELETE CASCADE, cape_id TEXT NOT NULL REFERENCES capes(id) ON DELETE CASCADE, source TEXT NOT NULL CHECK (source IN ('code', 'admin')), granted_at INTEGER NOT NULL, PRIMARY KEY (uuid, cape_id));
 CREATE TABLE equipped_cosmetics (uuid TEXT NOT NULL REFERENCES users(uuid) ON DELETE CASCADE, slot TEXT NOT NULL CHECK (slot IN ('hat', 'wings', 'back', 'aura')), cosmetic_id TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE, PRIMARY KEY (uuid, slot));
 `)
-    run(db, "INSERT INTO user_cosmetics VALUES (?, 'cubiq_cap', 'code', 5)", u)
-    run(db, "INSERT INTO user_capes VALUES (?, 'redstone', 'admin', 6)", u)
-    run(db, "INSERT INTO equipped_cosmetics VALUES (?, 'hat', 'cubiq_cap')", u)
+    run(db, "INSERT INTO user_cosmetics VALUES (?, 'dragon_wings', 'code', 5)", u)
+    run(db, "INSERT INTO user_capes VALUES (?, 'cubiq_black', 'admin', 6)", u)
+    run(db, "INSERT INTO equipped_cosmetics VALUES (?, 'wings', 'dragon_wings')", u)
     migrateEvents(db)
-    expect(all(db, 'SELECT * FROM user_cosmetics')).toEqual([{ uuid: u, cosmetic_id: 'cubiq_cap', source: 'code', granted_at: 5 }])
-    expect(all(db, 'SELECT * FROM user_capes')).toEqual([{ uuid: u, cape_id: 'redstone', source: 'admin', granted_at: 6 }])
-    expect(all(db, 'SELECT * FROM equipped_cosmetics')).toEqual([{ uuid: u, slot: 'hat', cosmetic_id: 'cubiq_cap' }])
-    run(db, "INSERT INTO user_cosmetics VALUES (?, 'witch_hat', 'event', 7)", u)
-    run(db, "INSERT INTO user_capes VALUES (?, 'halloween', 'event', 7)", u)
+    expect(all(db, 'SELECT * FROM user_cosmetics')).toEqual([{ uuid: u, cosmetic_id: 'dragon_wings', source: 'code', granted_at: 5 }])
+    expect(all(db, 'SELECT * FROM user_capes')).toEqual([{ uuid: u, cape_id: 'cubiq_black', source: 'admin', granted_at: 6 }])
+    expect(all(db, 'SELECT * FROM equipped_cosmetics')).toEqual([{ uuid: u, slot: 'wings', cosmetic_id: 'dragon_wings' }])
+    run(db, "INSERT INTO user_cosmetics VALUES (?, 'bat_buddy', 'event', 7)", u)
+    run(db, "INSERT INTO user_capes VALUES (?, 'cubiq_white', 'event', 7)", u)
     run(db, "INSERT INTO equipped_cosmetics VALUES (?, 'companion', 'bat_buddy')", u)
     expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([])
   })
@@ -349,9 +365,22 @@ describe('event cosmetics: catalog, claim, companion', () => {
   const claim = (env: TestEnv, tok: string, id: string) => callRoute(env, claimRoute, { method: 'POST', url: `/v1/me/cosmetics/${id}/claim`, params: { id }, headers: auth(tok) })
   const claimCape = (env: TestEnv, tok: string, id: string) => callRoute(env, claimCapeRoute, { method: 'POST', url: `/v1/me/capes/${id}/claim`, params: { id }, headers: auth(tok) })
 
-  it('bundled event items load as format 2 / animated cape with the event field', async () => {
+  it('bundled catalogs since October 2026: no event hats and no event cape, the bat companion stays', async () => {
     const env = makeEnv()
     await seedBundled(env)
+    const u = (await login(env, 'Steve')).user.uuid
+    setEventEnabled(env.ctx, ADMIN, 'halloween', true)
+    expect(cosmeticCatalog(env.ctx, u).filter((c) => c.event).map((c) => [c.id, c.slot])).toEqual([['bat_buddy', 'companion']])
+    expect(catalog(env.ctx, u).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])
+    expect(publicHats(env.ctx)).toEqual([])
+    // Event-Begleiter; die freien Begleiter (scripts/generate-cosmetics-v2.mjs) stehen immer in der Liste
+    expect(publicCompanions(env.ctx).filter((h) => h.event).map((h) => h.id)).toEqual(['bat_buddy'])
+    expect(publicCapes(env.ctx).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])
+  })
+
+  it('bundled event items load as format 2 / animated cape with the event field', async () => {
+    const env = makeEnv()
+    await seedBundled(env, { archive: true })
     const row = (id: string) => one<{ event: string | null, unlock: string }>(env.ctx.db, 'SELECT event, unlock FROM cosmetics WHERE id = ?', id)!
     for (const id of ['witch_hat', 'pumpkin_head', 'bat_buddy']) expect(row(id)).toEqual({ event: 'halloween', unlock: 'admin' })
     expect(one(env.ctx.db, "SELECT event, frames, frame_time_ms, width, height FROM capes WHERE id = 'halloween'"))
@@ -360,7 +389,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('catalog shows event items only while active (or when owned) and as unlock "event"', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     const u = (await login(env, 'Steve')).user.uuid
     expect(cosmeticCatalog(env.ctx, u).map((c) => c.id)).not.toContain('witch_hat')
     expect(catalog(env.ctx, u).map((c) => c.id)).not.toContain('halloween')
@@ -373,7 +402,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('claim: 403 event_inactive, then 200 owned (idempotent), kept after the event ends', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     const s = await login(env, 'Steve')
     const u = s.user.uuid
     expect((await claim(env, s.token, 'witch_hat')).error).toMatchObject({ status: 403, code: 'event_inactive' })
@@ -395,7 +424,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('claim rejects unknown and non-event items and anonymous calls', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     const s = await login(env, 'Steve')
     expect((await claim(env, s.token, 'nope_item')).error?.code).toBe('cosmetic_not_found')
     expect((await claim(env, s.token, 'cubiq_cap')).error?.code).toBe('not_claimable')
@@ -407,7 +436,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('PUT /v1/me/cosmetics takes companion (only owned, only the companion slot), together with a hat', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     setEventEnabled(env.ctx, ADMIN, 'halloween', true)
     const s = await login(env, 'Steve')
     const put = (body: unknown) => callRoute(env, putCosmetics, { method: 'PUT', url: '/v1/me/cosmetics', body: JSON.stringify(body), headers: auth(s.token) })
@@ -432,7 +461,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('other players see the companion of someone else (lookup)', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     const [a, b] = await players(env, 'Alice', 'Bob')
     run(env.ctx.db, "INSERT INTO user_cosmetics VALUES (?, 'bat_buddy', 'event', 1)", a!.uuid)
     equipCosmetics(env.ctx, a!.uuid, { companion: 'bat_buddy' })
@@ -441,17 +470,17 @@ describe('event cosmetics: catalog, claim, companion', () => {
 
   it('website lists show event items only while globally active, companions separately', async () => {
     const env = makeEnv()
-    await seedBundled(env)
+    await seedBundled(env, { archive: true })
     expect(publicHats(env.ctx).map((h) => h.id)).not.toContain('witch_hat')
-    expect(publicCompanions(env.ctx)).toEqual([])
+    expect(publicCompanions(env.ctx).filter((h) => h.event)).toEqual([])
     expect(publicCapes(env.ctx).map((c) => c.id)).not.toContain('halloween')
     // Nur Einzelfreigabe → die anonyme Website bleibt neutral.
     const u = (await login(env, 'Steve')).user.uuid
     run(env.ctx.db, "INSERT INTO event_players (event_id, player_uuid, player_name, added_at) VALUES ('halloween', ?, 'S', 1)", u)
-    expect(publicCompanions(env.ctx)).toEqual([])
+    expect(publicCompanions(env.ctx).filter((h) => h.event)).toEqual([])
     setEventEnabled(env.ctx, ADMIN, 'halloween', true)
     expect(publicHats(env.ctx).filter((h) => h.event).map((h) => [h.id, h.slot, h.unlock])).toEqual([['witch_hat', 'hat', 'event'], ['pumpkin_head', 'hat', 'event']])
-    expect(publicCompanions(env.ctx).map((h) => [h.id, h.slot, h.unlock, h.event])).toEqual([['bat_buddy', 'companion', 'event', 'halloween']])
+    expect(publicCompanions(env.ctx).filter((h) => h.event).map((h) => [h.id, h.slot, h.unlock, h.event])).toEqual([['bat_buddy', 'companion', 'event', 'halloween']])
     expect(publicCapes(env.ctx).find((c) => c.id === 'halloween')).toMatchObject({ unlock: 'event', event: 'halloween', frames: 4, scale: 8 })
   })
 })

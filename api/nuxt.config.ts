@@ -90,6 +90,8 @@ export default defineNuxtConfig({
     '/admin/**': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow' } },
     // Anmeldung und eigene Bewerbungen: persönlich, nie indexieren (Inhalt lädt erst im Browser).
     '/login': { headers: { 'X-Robots-Tag': 'noindex, nofollow' } },
+    // Einmal-Anmeldelink (§41): Token im Fragment, Seite nur im Browser, nie indexieren, Adresse nicht weiterreichen.
+    '/login-link': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store' } },
     '/applications': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow' } },
     // Creator-Dashboard (§35.11): persönlich, nur im Browser, nie indexieren.
     '/creator': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow' } },

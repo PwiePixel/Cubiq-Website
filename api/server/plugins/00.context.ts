@@ -22,6 +22,7 @@ import { seedCircuits, sweepCircuitSubmissions } from '../lib/circuits'
 import { sweepHosting } from '../lib/hosting'
 import { setWebpWasmLoader } from '../lib/images'
 import { sweepIssues, sweepOrphanIssueFiles } from '../lib/issues'
+import { ensureInternalSecret, sweepLoginLinks } from '../lib/loginlink'
 import { rotateReportKeys, sweepModeration } from '../lib/moderation'
 import { sweepExpiredPacks, sweepOrphanPackFiles } from '../lib/packs'
 import { budgetPerTick, processOutbox, recoverOutbox, sweepOutbox } from '../lib/mail/outbox'
@@ -54,6 +55,8 @@ export default defineNitroPlugin((nitroApp) => {
   mkdirSync(capeDir, { recursive: true })
   mkdirSync(cosmeticDir, { recursive: true })
   const db = openDb(join(config.dataDir, 'cubiq.db'))
+  // Geheimnis für interne Routen (Einmal-Anmeldelink, §41): `<DATA_DIR>/internal.secret`, 0600, beim ersten Start erzeugt.
+  ensureInternalSecret(config.dataDir)
   const mojang = createMojangClient(config.mojangSessionUrl, fetch, config.mojangApiUrl)
   const ctx = createContext({ config, db, mojang, capeDir, cosmeticDir })
   mkdirSync(join(ctx.chatDir, 'evidence'), { recursive: true })
@@ -248,6 +251,7 @@ export default defineNitroPlugin((nitroApp) => {
     every(60_000, () => ctx.limiter.sweep()),
     every(10 * 60_000, () => {
       sweepExpired(ctx)
+      sweepLoginLinks(ctx)
       sweepExpiredShares(ctx)
       sweepExpiredPacks(ctx)
       // Issues (§28): lose Bilder, gelöschte Issues nach 90 Tagen, Tagesprotokoll.

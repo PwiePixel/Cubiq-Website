@@ -1,5 +1,6 @@
-// Erzeugt die offiziellen Cubiq-Umhänge als HD-Pixel-Art (128×64 je Bild, also
-// doppelte Vanilla-Auflösung). Animierte Umhänge sind senkrechte Bildstreifen.
+// Erzeugt die offiziellen Cubiq-Umhänge: Pixel-Art (128×64 je Bild, also doppelte Vanilla-Auflösung) und die
+// Logo-Umhänge „Cubiq Schwarz“/„Cubiq Weiß“ in Ultra HD (Faktor 16 = 1024×512, das Cubiq-Logo aus
+// api/public/logo.png). Animierte Umhänge sind senkrechte Bildstreifen.
 //
 //   node api/scripts/generate-capes.mjs [--private <ordner>]
 //
@@ -7,12 +8,13 @@
 // Vorschauen in api/assets/previews/. Code-/Team-Umhänge (cubiq, team, tester)
 // und studio.private.json landen in PRIVATE_ASSETS_DIR (Standard
 // E:/ai/cubiq-private-assets), nicht im Repository.
-// Keine Abhängigkeiten: PNG wird mit node:zlib selbst geschrieben.
+// Ausgemusterte Umhänge (RETIRED) bleiben als PNG im Repository, kommen aber nicht in den Katalog.
+// Keine Abhängigkeiten: PNG wird mit node:zlib selbst gelesen und geschrieben.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { deflateSync } from 'node:zlib'
+import { deflateSync, inflateSync } from 'node:zlib'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets')
 const OUT = join(ROOT, 'capes')
@@ -97,12 +99,18 @@ class Img {
 }
 
 /** Ein Bereich des Umhangs in HD-Pixeln – Zeichnen in lokalen Koordinaten. */
-function area(img, name) {
-  const [x, y, w, h] = REGION[name].map((v) => v * SCALE)
+function area(img, name, scale = SCALE) {
+  return rectArea(img, REGION[name], scale)
+}
+
+/** Rechteck (x, y, w, h in Vanilla-Pixeln) als Zeichenfläche in HD-Pixeln. */
+function rectArea(img, rect, scale) {
+  const [x, y, w, h] = rect.map((v) => v * scale)
   return {
     w,
     h,
     set: (px, py, c) => px >= 0 && py >= 0 && px < w && py < h && img.set(x + px, y + py, c),
+    get: (px, py) => img.get(x + px, y + py),
     fill: (fn) => {
       for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) img.set(x + i, y + j, fn(i, j))
     },
@@ -118,6 +126,12 @@ const FONT = {
   M: ['#.#', '###', '###', '#.#', '#.#'],
   S: ['.##', '#..', '.#.', '..#', '##.'],
   R: ['##.', '#.#', '##.', '#.#', '#.#'],
+  // „Cubiq“ (privater Code-Umhang)
+  C: ['.##', '#..', '#..', '#..', '.##'],
+  u: ['...', '#.#', '#.#', '#.#', '.##'],
+  b: ['#..', '##.', '#.#', '#.#', '##.'],
+  i: ['.#.', '...', '.#.', '.#.', '.#.'],
+  q: ['...', '.##', '#.#', '.##', '..#'],
 }
 
 function text(a, str, cx, y, color, shadow) {
@@ -335,6 +349,225 @@ function testerCape() {
   return img
 }
 
+// --- Cubiq-Logo in Ultra HD --------------------------------------------------------
+
+/**
+ * Faktor der Logo-Umhänge: 1024×512 – das Höchste, was Server (BUILTIN_MAX_SCALE), Website, Launcher und Cubiq Client
+ * (CapeInfo.MAX_SCALE) laden (API.md §5.1). Ältere Clients (bis Faktor 8) zeigen solche Umhänge nicht.
+ */
+const HD = 16
+const LOGO_FILE = join(ROOT, '..', 'public', 'logo.png')
+
+/** Liest eine 8-Bit-PNG (RGB oder RGBA, ohne Interlacing) als RGBA – genug für das Logo. */
+function readPng(buf) {
+  let off = 8
+  let w = 0
+  let h = 0
+  let type = 0
+  const idat = []
+  while (off < buf.length) {
+    const len = buf.readUInt32BE(off)
+    const kind = buf.toString('latin1', off + 4, off + 8)
+    const data = buf.subarray(off + 8, off + 8 + len)
+    if (kind === 'IHDR') {
+      w = data.readUInt32BE(0)
+      h = data.readUInt32BE(4)
+      type = data[9]
+      if (data[8] !== 8 || (type !== 2 && type !== 6) || data[12] !== 0) throw new Error('logo.png: nur 8-Bit-RGB/RGBA ohne Interlacing')
+    } else if (kind === 'IDAT') idat.push(data)
+    else if (kind === 'IEND') break
+    off += 12 + len
+  }
+  const bpp = type === 6 ? 4 : 3
+  const stride = w * bpp
+  const raw = inflateSync(Buffer.concat(idat))
+  const px = new Uint8Array(w * h * 4)
+  let prev = new Uint8Array(stride)
+  for (let y = 0; y < h; y++) {
+    const filter = raw[y * (stride + 1)]
+    const line = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1))
+    const cur = new Uint8Array(stride)
+    for (let i = 0; i < stride; i++) {
+      const a = i >= bpp ? cur[i - bpp] : 0
+      const b = prev[i]
+      const c = i >= bpp ? prev[i - bpp] : 0
+      let p = 0
+      if (filter === 1) p = a
+      else if (filter === 2) p = b
+      else if (filter === 3) p = (a + b) >> 1
+      else if (filter === 4) {
+        const pa = Math.abs(b - c)
+        const pb = Math.abs(a - c)
+        const pc = Math.abs(a + b - 2 * c)
+        p = pa <= pb && pa <= pc ? a : pb <= pc ? b : c
+      } else if (filter !== 0) throw new Error(`logo.png: unbekannter Filter ${filter}`)
+      cur[i] = (line[i] + p) & 255
+    }
+    for (let x = 0; x < w; x++) {
+      for (let k = 0; k < 3; k++) px[(y * w + x) * 4 + k] = cur[x * bpp + k]
+      px[(y * w + x) * 4 + 3] = bpp === 4 ? cur[x * bpp + 3] : 255
+    }
+    prev = cur
+  }
+  return { w, h, px }
+}
+
+/**
+ * Logo auf `size` × `size` verkleinert (Flächenmittel um einen ganzen Faktor, vormultipliziertes Alpha – so bleiben
+ * die Kanten sauber und es entstehen keine dunklen Säume). Werte 0…1, vormultipliziert.
+ */
+function logoAt(size) {
+  const logo = readPng(readFileSync(LOGO_FILE))
+  if (logo.w !== logo.h || logo.w % size !== 0) throw new Error(`logo.png: ${logo.w}×${logo.h} lässt sich nicht glatt auf ${size} verkleinern`)
+  const f = logo.w / size
+  const out = new Float64Array(size * size * 4)
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const sum = [0, 0, 0, 0]
+      for (let j = 0; j < f; j++) {
+        for (let i = 0; i < f; i++) {
+          const k = ((y * f + j) * logo.w + x * f + i) * 4
+          const a = logo.px[k + 3] / 255
+          for (let c = 0; c < 3; c++) sum[c] += (logo.px[k + c] / 255) * a
+          sum[3] += a
+        }
+      }
+      for (let c = 0; c < 4; c++) out[(y * size + x) * 4 + c] = sum[c] / (f * f)
+    }
+  }
+  return out
+}
+
+/** Würfel in der Logo-Mitte ganz in Cubiq-Grün: oben hell, links das Logo-Grün, rechts dunkler (statt Grün-Schwarz-Verlauf). */
+const CUBE_FACES = { top: hex('#8cc63f'), left: hex('#71a330'), right: hex('#557d24') }
+
+/**
+ * Färbt den Würfel in der Mitte des (vormultiplizierten) Logos um. Der Würfel ist die zusammenhängende Fläche um
+ * seine vordere Ecke (logo.png 512×512: etwa 232/222), rundum durch eine durchsichtige Lücke vom Rahmen getrennt.
+ * Welche Seite ein Pixel ist, ergibt sich aus der Lage zur vorderen Ecke: Die Kanten zur linken und rechten Ecke
+ * steigen um 40 auf 74 Pixel an – darüber liegt die Oberseite.
+ */
+function greenCube(logo, size) {
+  const cx = size * (232 / 512)
+  const cy = size * (222 / 512)
+  const start = Math.floor(cy) * size + Math.floor(cx)
+  const seen = new Uint8Array(size * size)
+  const stack = [start]
+  let count = 0
+  seen[start] = 1
+  while (stack.length) {
+    const k = stack.pop()
+    const x = k % size
+    const y = (k - x) / size
+    // Läuft die Füllung bis an den Rand, wäre die Lücke um den Würfel weg – dann lieber abbrechen als das Logo verfärben.
+    if (x < size * 0.2 || x > size * 0.8 || y < size * 0.15 || y > size * 0.8) throw new Error('logo.png: Würfel nicht vom Rahmen getrennt')
+    const alpha = logo[k * 4 + 3]
+    const dx = x + 0.5 - cx
+    const dy = y + 0.5 - cy
+    const face = -dy >= Math.abs(dx) * (40 / 74) ? CUBE_FACES.top : dx < 0 ? CUBE_FACES.left : CUBE_FACES.right
+    for (let c = 0; c < 3; c++) logo[k * 4 + c] = (face[c] / 255) * alpha
+    count++
+    for (const n of [k - 1, k + 1, k - size, k + size]) {
+      if (n < 0 || n >= size * size || seen[n] || logo[n * 4 + 3] <= 0.02) continue
+      seen[n] = 1
+      stack.push(n)
+    }
+  }
+  return count
+}
+
+/** Sichtbarer Teil des Logos (Pixel mit Deckkraft), damit es nach dem echten Motiv mittig sitzt, nicht nach dem Bildrand. */
+function logoBox(logo, size) {
+  let x0 = size
+  let y0 = size
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (logo[(y * size + x) * 4 + 3] <= 0.02) continue
+      x0 = Math.min(x0, x)
+      y0 = Math.min(y0, y)
+      x1 = Math.max(x1, x)
+      y1 = Math.max(y1, y)
+    }
+  }
+  return { x0, y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }
+}
+
+/** Legt das (vormultiplizierte) Logo deckend über den Bereich ab (x0, y0). */
+function placeLogo(a, logo, size, x0, y0) {
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const o = (y * size + x) * 4
+      const alpha = logo[o + 3]
+      if (alpha <= 0) continue
+      const cur = a.get(x0 + x, y0 + y)
+      const rgb = [0, 1, 2].map((c) => Math.round(Math.min(1, logo[o + c] + (cur[c] / 255) * (1 - alpha)) * 255))
+      a.set(x0 + x, y0 + y, [...rgb, 255])
+    }
+  }
+}
+
+const LOGO_LOOKS = {
+  // Schwarz: grüne Kanten, ruhige dunkelgrüne Innenseite, leichter grüner Schein hinter dem Würfel.
+  black: { base: hex('#0b0b0d'), inner: hex('#1a201c'), edge: hex('#5f8f29'), line: hex('#71a330'), glow: 0.16 },
+  // Weiß: dieselben Grüntöne, helle Salbei-Innenseite, kein Schein (der Würfel ist auf Weiß kräftig genug).
+  white: { base: hex('#f6f7f5'), inner: hex('#e3e9df'), edge: hex('#6c9e2f'), line: hex('#71a330'), glow: 0 },
+}
+
+/**
+ * Außenfläche (Rücken, von hinten sichtbar): Grundfarbe, schmale grüne Linie als Rahmen und das Logo genau in der Mitte
+ * (waagerecht und senkrecht). Gleich für die Außenseite des Umhangs und der Elytra.
+ */
+function logoFace(a, look, logo, size) {
+  a.fill(() => look.base)
+  // Rahmen: 4 px breit, 10 px vom Rand.
+  const inset = 10
+  const width = 4
+  for (let j = 0; j < a.h; j++) {
+    for (let i = 0; i < a.w; i++) {
+      const inOuter = i >= inset && i < a.w - inset && j >= inset && j < a.h - inset
+      const inInner = i >= inset + width && i < a.w - inset - width && j >= inset + width && j < a.h - inset - width
+      if (inOuter && !inInner) a.set(i, j, look.line)
+    }
+  }
+  const box = logoBox(logo, size)
+  const x0 = Math.round((a.w - box.w) / 2) - box.x0
+  const top = Math.round((a.h - box.h) / 2) - box.y0
+  if (look.glow > 0) {
+    // Mitte des Würfels im Logo (logo.png 512×512: etwa 232/222).
+    const cx = x0 + Math.round(size * 0.453)
+    const cy = top + Math.round(size * 0.434)
+    const r = Math.round(size * 0.36)
+    for (let j = -r; j <= r; j++) {
+      for (let i = -r; i <= r; i++) {
+        const d = Math.hypot(i, j) / r
+        if (d < 1) a.set(cx + i, cy + j, mix(a.get(cx + i, cy + j), look.line, (1 - d) ** 2 * look.glow))
+      }
+    }
+  }
+  placeLogo(a, logo, size, x0, top)
+}
+
+/** „Cubiq Schwarz“ bzw. „Cubiq Weiß“: alle sechs Flächen des Umhangs (und die Elytra) in Faktor 16. */
+function cubiqLogoCape(lookName) {
+  const look = LOGO_LOOKS[lookName]
+  const img = new Img(64 * HD, 32 * HD)
+  const logo = logoAt(128)
+  greenCube(logo, 128)
+  for (const name of ['top', 'bottom', 'left', 'right']) area(img, name, HD).fill(() => look.edge)
+  // Innenseite: ruhig, nach unten ganz leicht zur Grundfarbe hin.
+  const inner = area(img, 'inner', HD)
+  inner.fill((i, j) => mix(look.inner, look.base, 0.2 * (j / inner.h)))
+  logoFace(area(img, 'outer', HD), look, logo, 128)
+  // Elytra (Box 10×20×2 bei 22,0): Ränder grün, Außenseite wie der Umhang, Innenseite ruhig.
+  area(img, 'elytra', HD).fill(() => look.edge)
+  logoFace(rectArea(img, [24, 2, 10, 20], HD), look, logo, 128)
+  const back = rectArea(img, [36, 2, 10, 20], HD)
+  back.fill((i, j) => mix(look.inner, look.base, 0.2 * (j / back.h)))
+  return img
+}
+
 // --- PNG ------------------------------------------------------------------------
 
 const CRC = new Int32Array(256).map((_, n) => {
@@ -376,17 +609,18 @@ function png(img) {
 
 /** Senkrechter Streifen aus mehreren Bildern (animierter Umhang). */
 function strip(frames) {
-  const out = new Img(W, H * frames.length)
-  frames.forEach((f, k) => out.blit(f, 0, k * H))
+  const { w, h } = frames[0]
+  const out = new Img(w, h * frames.length)
+  frames.forEach((f, k) => out.blit(f, 0, k * h))
   return out
 }
 
-/** Vorschau: Außen- (von hinten sichtbar) und Innenseite nebeneinander, ×8 vergrößert. */
-function preview(img) {
-  const [ox, oy, ow, oh] = REGION.outer.map((v) => v * SCALE)
-  const [ix, iy] = REGION.inner.map((v) => v * SCALE)
-  const zoom = 8
-  const gap = 4
+/** Vorschau: Außen- (von hinten sichtbar) und Innenseite nebeneinander, immer 352 px breit (Faktor 2: ×8 vergrößert). */
+function preview(img, scale = SCALE) {
+  const [ox, oy, ow, oh] = REGION.outer.map((v) => v * scale)
+  const [ix, iy] = REGION.inner.map((v) => v * scale)
+  const zoom = 16 / scale
+  const gap = 2 * scale
   const out = new Img((ow * 2 + gap) * zoom, oh * zoom)
   for (let y = 0; y < oh; y++) {
     for (let x = 0; x < ow; x++) {
@@ -408,6 +642,8 @@ mkdirSync(join(PRIV, 'previews'), { recursive: true })
 const TEAM_ON = [0, 0, 0, 1, 1, 0.9, 0.45, 0.1]
 
 const capes = [
+  { id: 'cubiq_black', name: 'Cubiq Schwarz', unlock: 'free', scale: HD, img: cubiqLogoCape('black') },
+  { id: 'cubiq_white', name: 'Cubiq Weiß', unlock: 'free', scale: HD, img: cubiqLogoCape('white') },
   { id: 'redstone', name: 'Redstone', unlock: 'free', img: redstoneCape() },
   { id: 'lamp', name: 'Redstone-Lampe', unlock: 'free', img: lampCape() },
   { id: 'deepslate', name: 'Deepslate', unlock: 'free', img: deepslateCape() },
@@ -419,19 +655,34 @@ const capes = [
   { id: 'tester', name: 'Tester', unlock: 'admin', img: testerCape() },
 ]
 
+/**
+ * Ausgemustert (Oktober 2026): im Katalog bleiben nur Kirschblüte und die Logo-Umhänge. Die Bilder bleiben im
+ * Repository – Generator-Umhänge werden nicht neu geschrieben, Studio-Einträge bleiben in studio.json. Der Server
+ * mustert fehlende Einträge aus, Migration 39 legt sie bei ihren Trägern einmalig ab (Besitz bleibt).
+ * Zurückholen: ID hier streichen und `pnpm capes` laufen lassen.
+ */
+const RETIRED = new Set([
+  'redstone', 'lamp', 'deepslate', 'lapis', 'emerald', 'amethyst',
+  'phoenix', 'nether', 'ender', 'ozean', 'wald', 'frost', 'drache', 'sonne', 'halloween',
+  'halloween_night_violet', 'halloween_moon_silver', 'halloween_ghost_white', 'halloween_poison_green',
+  'halloween_blood_moon', 'halloween_pumpkin_glow', 'halloween_hunter_2026',
+])
+
 const catalog = []
 const privateCatalog = []
 for (const c of capes) {
+  if (RETIRED.has(c.id)) continue
+  const scale = c.scale ?? SCALE
   const frames = c.frames ?? [c.img]
   const tex = png(frames.length > 1 ? strip(frames) : frames[0])
   // Vorschau mit leuchtender Lampe (bei animierten das hellste Bild)
-  const previewPng = png(preview(frames[Math.min(3, frames.length - 1)]))
+  const previewPng = png(preview(frames[Math.min(3, frames.length - 1)], scale))
   const entry = {
     id: c.id,
     name: c.name,
     file: `${c.id}.png`,
     unlock: c.unlock,
-    scale: SCALE,
+    scale,
     animated: frames.length > 1,
     frames: frames.length,
     ...(frames.length > 1 ? { frameTimeMs: c.frameTimeMs } : {}),
@@ -450,7 +701,7 @@ for (const c of capes) {
 // Code-/Team-Umhänge stehen in studio.private.json und dürfen nicht zurück in den öffentlichen Katalog.
 const studioFile = join(OUT, 'studio.json')
 if (existsSync(studioFile)) {
-  catalog.push(...JSON.parse(readFileSync(studioFile, 'utf8')).filter((e) => !STUDIO_PRIVATE.has(e.id) && !Object.prototype.hasOwnProperty.call(PRIVATE_SORT, e.id)))
+  catalog.push(...JSON.parse(readFileSync(studioFile, 'utf8')).filter((e) => !STUDIO_PRIVATE.has(e.id) && !RETIRED.has(e.id) && !Object.prototype.hasOwnProperty.call(PRIVATE_SORT, e.id)))
 }
 const studioPriv = join(PRIV, 'capes', 'studio.private.json')
 if (existsSync(studioPriv)) {

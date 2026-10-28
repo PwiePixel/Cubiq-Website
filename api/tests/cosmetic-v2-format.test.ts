@@ -31,9 +31,10 @@ import {
   type Vec3,
 } from '../app/utils/cosmetic-v2/format'
 import { applyDayNight, createCosmetic, frameHead } from '../app/utils/cosmetic-v2/view'
+import { ITEMS } from '../scripts/generate-cosmetics-v2.mjs'
 
 const V2 = join(__dirname, '..', 'assets', 'cosmetics', 'v2')
-const IDS = ['cubiq_cap', 'lamp_helmet', 'top_hat', 'witch_hat', 'pumpkin_head', 'bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings']
+const IDS = ['cubiq_cap', 'lamp_helmet', 'top_hat', 'witch_hat', 'pumpkin_head', 'bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings', ...ITEMS.map((i) => i.id)]
 const model = (id: string): CosmeticModel => JSON.parse(readFileSync(join(V2, `${id}.json`), 'utf8'))
 const pngSize = (file: string) => {
   const b = readFileSync(file)

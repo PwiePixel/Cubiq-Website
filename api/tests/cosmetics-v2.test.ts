@@ -26,13 +26,31 @@ import cardRoute from '../server/routes/v1/cosmetics/[id]/card.png.get'
 import glowRoute from '../server/routes/v1/cosmetics/[id]/glow.png.get'
 import modelRoute from '../server/routes/v1/cosmetics/[id]/model.json.get'
 import { ADMIN, fixtureCosmetics, login, makeEnv, solidPng, templatePng, type TestEnv } from './helpers'
+import { ITEMS } from '../scripts/generate-cosmetics-v2.mjs'
 
 const ASSETS = join(__dirname, '..', 'assets', 'cosmetics')
-/** Öffentliche Hüte ohne Event (Event aus → nicht in der Website-Liste). */
+/** Per Code gebaute Teile (Haustiere, Flügel, Begleiter; scripts/generate-cosmetics-v2.mjs), hinten im Katalog. */
+const GENERATED = ITEMS.map((i) => i.id)
+/**
+ * Ausgemusterte Hüte (Oktober 2026): nicht mehr im Katalog, ihre Dateien liegen weiter in assets/cosmetics/v2. Für die
+ * Tests des Platzes `hat` (private Teile, Uploads) und als Beleg, dass sie zurück in den Katalog könnten.
+ */
+const RETIRED_HATS = [
+  { id: 'cubiq_cap', name: 'Cubiq-Cap', format: 2, unlock: 'free', frames: 1, glowFrames: 12, glowFrameTimeMs: 150 },
+  { id: 'lamp_helmet', name: 'Redstone-Lampen-Helm', format: 2, unlock: 'free', frames: 1, glowFrames: 12, glowFrameTimeMs: 160 },
+  { id: 'top_hat', name: 'Zylinder', format: 2, unlock: 'free', frames: 1, glowFrames: 12, glowFrameTimeMs: 150 },
+  { id: 'witch_hat', name: 'Hexenhut', format: 2, unlock: { type: 'event', event: 'halloween' }, frames: 1, glowFrames: 12, glowFrameTimeMs: 160 },
+  { id: 'pumpkin_head', name: 'Kürbiskopf', format: 2, unlock: { type: 'event', event: 'halloween' }, frames: 1, glowFrames: 12, glowFrameTimeMs: 120 },
+]
+/** Ausgemusterte Hüte ohne Event (Event aus → nicht in der Website-Liste). */
 const V2_IDS = ['cubiq_cap', 'lamp_helmet', 'top_hat']
-/** Alle öffentlichen Format-2-Teile, in Katalogreihenfolge. */
-const V2_ALL = [...V2_IDS, 'witch_hat', 'pumpkin_head', 'bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings']
+/** Öffentliche Format-2-Teile im Katalog, in Katalogreihenfolge (keine Hüte mehr). */
+const V2_PUBLIC = ['bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings', ...GENERATED]
+/** Alle Format-2-Teile mit Dateien im Repository (Archiv-Katalog: ausgemusterte Hüte + öffentliche Teile). */
+const V2_ALL = [...V2_IDS, 'witch_hat', 'pumpkin_head', ...V2_PUBLIC]
 const readCatalog = async () => JSON.parse(readFileSync(join(ASSETS, 'catalog.json'), 'utf8'))
+/** Öffentlicher Katalog plus die ausgemusterten Hüte (vorne, wie früher). */
+const readArchive = async () => [...RETIRED_HATS, ...(await readCatalog())]
 const readAsset = async (name: string) => {
   try {
     return readFileSync(join(ASSETS, name))
@@ -50,8 +68,9 @@ function code(fn: () => unknown): string {
   return 'ok'
 }
 
+/** Archiv-Katalog einspielen (mit den ausgemusterten Hüten, siehe RETIRED_HATS). */
 async function seeded(env: TestEnv) {
-  const list = await loadBuiltinCosmetics(readCatalog, readAsset)
+  const list = await loadBuiltinCosmetics(readArchive, readAsset)
   seedBuiltinCosmetics(env.ctx, list)
   return list
 }
@@ -83,8 +102,17 @@ function syntheticV2(id: string, unlock: 'free' | 'code' | 'admin'): AnyBuiltinC
 }
 
 describe('format v2: bundled models', () => {
-  it('every public format-2 item is valid against its images and matches the catalog', async () => {
+  it('the public catalog has no head cosmetics any more (retired October 2026)', async () => {
     const list = await loadBuiltinCosmetics(readCatalog, readAsset)
+    expect(list.filter((c) => c.format === 2).map((c) => c.id)).toEqual(V2_PUBLIC)
+    for (const id of [...RETIRED_HATS.map((h) => h.id), 'redstone_aura']) expect(list.some((c) => c.id === id)).toBe(false)
+    const env = makeEnv()
+    seedBuiltinCosmetics(env.ctx, list)
+    expect(publicHats(env.ctx)).toEqual([])
+  })
+
+  it('every format-2 item with files (public and retired) is valid against its images and matches its entry', async () => {
+    const list = await loadBuiltinCosmetics(readArchive, readAsset)
     const v2 = list.filter((c) => c.format === 2)
     expect(v2.map((c) => c.id)).toEqual(V2_ALL)
     for (const c of v2) {
@@ -236,7 +264,7 @@ describe('format v2: catalog, equip, lookup', () => {
     for (const k of ['model', 'texture', 'glow', 'card', 'cardNight'] as const) expect(cap[k]).toMatch(/^\/v1\/cosmetics\//)
     expect(hats.some((h) => h.id === 'rubber_duck')).toBe(false)
     // Ein verstecktes v2-Teil taucht nicht auf.
-    const list = await loadBuiltinCosmetics(readCatalog, readAsset)
+    const list = await loadBuiltinCosmetics(readArchive, readAsset)
     const secret = list.map((c) => (c.id === 'top_hat' ? { ...c, unlock: 'code' as const, hidden: true } : c))
     seedBuiltinCosmetics(env.ctx, secret)
     expect(publicHats(env.ctx).some((h) => h.id === 'top_hat')).toBe(false)

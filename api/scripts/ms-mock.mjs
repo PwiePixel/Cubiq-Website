@@ -7,6 +7,7 @@
  *   const mock = await startMsMock({ clientId, clientSecret, accounts: [{ name: 'Steve', uuid: '…' }] })
  *   // MS_AUTHORITY_URL=mock.authority, XBOX_USER_AUTH_URL=mock.xbl, XBOX_XSTS_URL=mock.xsts, MINECRAFT_SERVICES_URL=mock.minecraft
  *
+ * `approved: false` spielt eine App, die Microsoft noch nicht für Minecraft freigegeben hat (`login_with_xbox` → 403).
  * Konto-Auswahl: `/authorize` zeigt eine kleine Seite mit allen Konten (Klick = Anmeldung). Automatisch geht es mit
  * `mock.next = 'Steve'` (einmalig) oder `?login_hint=Steve`. Fehlerfälle je Konto: `xerr` (XSTS-Fehler, z. B.
  * 2148916238 = Kinderkonto), `noGame` (Profil 404), `denied` (Nutzer bricht ab → `error=access_denied`).
@@ -15,7 +16,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { createServer } from 'node:http'
 import { URLSearchParams } from 'node:url'
 
-export async function startMsMock({ clientId, clientSecret, accounts, port = 0 }) {
+export async function startMsMock({ clientId, clientSecret, accounts, port = 0, approved = true }) {
   const codes = new Map()
   const state = { next: null, calls: [] }
   const byName = (n) => accounts.find((a) => a.name.toLowerCase() === String(n ?? '').toLowerCase())
@@ -99,6 +100,8 @@ export async function startMsMock({ clientId, clientSecret, accounts, port = 0 }
       const m = /^XBL3\.0 x=uhs(\d+);xsts\.(.+)$/.exec(body?.identityToken ?? '')
       const account = m ? byName(m[2]) : null
       if (!account || Number(m[1]) !== account.name.length) return json(401, { error: 'UNAUTHORIZED' })
+      // Wie bei einer neuen Azure-App, die Microsoft noch nicht freigegeben hat.
+      if (!approved) return json(403, { path: '/authentication/login_with_xbox', errorMessage: 'Invalid app registration, see https://aka.ms/AppRegInfo for more information' })
       return json(200, { username: 'x', access_token: `mc.${account.name}`, token_type: 'Bearer', expires_in: 86400 })
     }
 

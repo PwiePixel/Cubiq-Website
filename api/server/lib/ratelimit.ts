@@ -120,9 +120,17 @@ export const RULES = {
   emoteUser: { limit: 1, windowMs: 2000 },
   skinChangedUser: { limit: 6, windowMs: MIN },
   skinLookupUser: OFF,
+  /** Skin-Abfragen ohne Konto (Website: Umhang am eigenen Skin, §14), je IP. */
+  skinLookupIp: { limit: 20, windowMs: MIN },
   /** Ausgehende Mojang-Profilabfragen insgesamt (nur Cache-Fehlschläge). */
   mojangGlobal: { limit: 100, windowMs: MIN },
+  /** Davon höchstens so viele für anonyme Website-Abfragen (der Rest bleibt Launcher und Client). */
+  mojangWeb: { limit: 40, windowMs: MIN },
   playerEventsUser: OFF,
+  /** Einmal-Anmeldelink (§41): erzeugen (nur aus dem Container, insgesamt), prüfen und einlösen (je IP). */
+  loginLinkCreate: { limit: 10, windowMs: 10 * MIN },
+  loginLinkPeekIp: { limit: 30, windowMs: 10 * MIN },
+  loginLinkUseIp: { limit: 10, windowMs: 10 * MIN },
   /** Website-Login mit Microsoft (§24.1): Weiterleitung starten bzw. Rücksprung, je IP. */
   msLoginIp: { limit: 20, windowMs: 10 * MIN },
   msCallbackIp: { limit: 30, windowMs: 10 * MIN },

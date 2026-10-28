@@ -9,6 +9,10 @@
 #   sudo bash cubiq-server.sh backup     Datenbank sichern (nach /opt/cubiq/backups)
 #   sudo bash cubiq-server.sh status     Zustand anzeigen
 #   sudo bash cubiq-server.sh logs       Logs ansehen (Strg+C beendet)
+#   sudo bash cubiq-server.sh login [Name]
+#                                        Einmal-Link zum Anmelden auf der Website (ohne Microsoft), z. B. solange
+#                                        Microsoft die App noch nicht freigegeben hat. Ohne Name: das erste Konto aus
+#                                        ADMIN_UUIDS. 10 Minuten gültig, nur einmal – nie weitergeben.
 #
 # Was beim Einrichten passiert:
 # 1. Docker, git und Helfer installieren (bei wenig Arbeitsspeicher eine Auslagerungsdatei fürs Bauen).
@@ -433,6 +437,7 @@ summary() {
   echo "    Website:       $site"
   echo "    Doku:          $docs"
   echo "    Team-Bereich:  $site/admin   (als PixelCST mit Microsoft anmelden)"
+  echo "    Ohne Microsoft: sudo bash $SRC/deploy/cubiq-server.sh login   (Einmal-Link, 10 Minuten gültig)"
   echo "    Sicherungen:   $BACKUPS (jede Nacht um 4:30)"
   echo "    Einstellungen: $ENV_FILE   – danach: sudo bash $SRC/deploy/cubiq-server.sh restart"
   echo
@@ -461,6 +466,64 @@ install() {
   summary
 }
 
+# ---------------------------------------------------------------- Anmeldung ohne Microsoft
+#
+# Einmal-Link, der einen Browser als ein Konto anmeldet (api/API.md §41). Erzeugt wird er IM Container: Die interne Route
+# antwortet nur über dessen eigene Loopback-Verbindung und nur mit dem Geheimnis aus /data/internal.secret (0600) – von
+# außen (Tunnel) ist sie nicht erreichbar. Der Token steht hinter „#“ im Link und landet in keinem Log.
+
+read -r -d '' LOGIN_JS <<'JS' || true
+const fs = require('node:fs')
+const dir = process.env.DATA_DIR || '/data'
+let secret = ''
+try {
+  secret = fs.readFileSync(dir + '/internal.secret', 'utf8').trim()
+} catch {
+  console.error('Fehler: ' + dir + '/internal.secret fehlt – die Website einmal neu starten (restart) und erneut versuchen.')
+  process.exit(1)
+}
+const name = process.env.CUBIQ_LOGIN_NAME || ''
+fetch('http://127.0.0.1:' + (process.env.PORT || '3000') + '/v1/internal/login-link', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-cubiq-internal': secret },
+  body: JSON.stringify(name ? { name } : {}),
+}).then(async (res) => {
+  const body = await res.json().catch(() => null)
+  if (!res.ok || !body || !body.link) {
+    const e = (body && body.error) || { code: 'HTTP ' + res.status, message: '' }
+    const why = {
+      player_not_found: 'Diesen Minecraft-Namen gibt es nicht.',
+      banned: 'Dieses Konto ist gesperrt.',
+      no_admin: 'Kein Name angegeben und ADMIN_UUIDS ist leer.',
+      upstream_unavailable: 'Mojang ist gerade nicht erreichbar – gleich noch einmal versuchen.',
+      rate_limited: 'Zu viele Links in kurzer Zeit – in ein paar Minuten noch einmal versuchen.',
+      invalid_request: 'Ungültiger Name.',
+    }[e.code]
+    console.error('Fehler: ' + (why || e.code + (e.message ? ' – ' + e.message : '')))
+    process.exit(1)
+  }
+  console.log('Einmal-Link für ' + body.name + ' (' + body.uuid + ') – 10 Minuten gültig (bis ' + body.expiresAt.slice(11, 16) + ' UTC), nur einmal:')
+  console.log('')
+  console.log('    ' + body.link)
+  console.log('')
+  console.log('Im Browser öffnen, prüfen, dass dort ' + body.name + ' steht, und auf „Anmelden“ klicken.')
+  console.log('Nicht weitergeben: Wer den Link hat, ist als dieses Konto angemeldet. Ein neuer Link macht den alten ungültig.')
+}).catch((err) => {
+  console.error('Fehler: Die Website im Container antwortet nicht (' + err.message + ').')
+  process.exit(1)
+})
+JS
+
+login_link() {
+  [ -f "$ENV_FILE" ] || die "Noch nicht eingerichtet – zuerst ohne Zusatz starten: sudo bash $0"
+  local name=${1:-}
+  if [ -n "$name" ] && ! [[ $name =~ ^[A-Za-z0-9_]{1,16}$ ]]; then
+    die "„$name“ ist kein Minecraft-Name (1–16 Zeichen: A–Z, a–z, 0–9, _)."
+  fi
+  compose exec -T -e CUBIQ_LOGIN_NAME="$name" api node -e "$LOGIN_JS" ||
+    die "Kein Link erzeugt (Grund oben). Läuft die Website? sudo bash $0 status"
+}
+
 # Nur ausführen, wenn das Skript gestartet (nicht mit „source“ eingelesen) wird.
 [ "${BASH_SOURCE[0]}" = "$0" ] || return 0
 
@@ -474,5 +537,6 @@ case "${1:-install}" in
     curl -fsS --max-time 15 "$(env_get SITE_URL)/v1/health" && echo
     ;;
   logs) compose logs -f --tail 100 ;;
-  *) die "Unbekannter Befehl „$1“ – erlaubt: install, update, restart, backup, status, logs" ;;
+  login) login_link "${2:-}" ;;
+  *) die "Unbekannter Befehl „$1“ – erlaubt: install, update, restart, backup, status, logs, login [Name]" ;;
 esac

@@ -422,8 +422,12 @@ export interface MountOptions {
   drivers?: readonly Driver[] | null
 }
 
-/** Boden-Anker (attach `ground`) wie die Studio-Werkbank: neben dem rechten Fuß des Spielers, leicht zur Kamera gedreht. */
-export const GROUND_ANCHOR = { position: [13, -24, 7] as const, rotationY: 0.35 }
+/**
+ * Boden-Anker (attach `ground`): neben dem Fuß des Spielers, leicht zur Kamera gedreht. Die Füße des skinview3d-Spielers
+ * liegen bei y = −16 (Beine −24…−12 im `skin`, `skin` bei +8) – der Begleiter steht auf derselben Höhe wie im Spiel und
+ * wie im Launcher (`PET_ANCHOR`).
+ */
+export const GROUND_ANCHOR = { position: [13, -16, 7] as const, rotationY: 0.35 }
 
 /**
  * Anker-Gruppe für einen Anhängepunkt am skinview3d-Spieler (wie die Werkbank): `head` = `skin.head` (Ursprung Nacken),

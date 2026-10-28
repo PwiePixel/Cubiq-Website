@@ -87,3 +87,53 @@ export function mannequinSkin(): HTMLCanvasElement {
   box(32, 48, 16, 16, '#869489')
   return c
 }
+
+/** Höchstens so viele Farben gelten als Palette bzw. Pixel-Art (wie im Cubiq Client). */
+const MAX_PIXEL_ART_COLORS = 256
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b)
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false
+  for (let d = 2; d * d <= n; d++) if (n % d === 0) return false
+  return true
+}
+
+/** Farbe eines Pixels als Zahl; ganz durchsichtige Pixel zählen unabhängig von ihrer Farbe als gleich. */
+function pixelKey(d: Uint8ClampedArray, i: number): number {
+  const a = d[i * 4 + 3]!
+  return a === 0 ? -1 : ((d[i * 4]! << 24) | (d[i * 4 + 1]! << 16) | (d[i * 4 + 2]! << 8) | a) >>> 0
+}
+
+/** Besteht das Bild aus einfarbigen `b × b`-Blöcken (pixelgenau hochskalierte Pixel-Art)? */
+function blockUniform(img: { width: number, height: number, data: Uint8ClampedArray }, b: number): boolean {
+  const { width, height, data } = img
+  for (let y = 0; y < height; y++) {
+    const top = (y - (y % b)) * width
+    for (let x = 0; x < width; x++) {
+      if (pixelKey(data, y * width + x) !== pixelKey(data, top + x - (x % b))) return false
+    }
+  }
+  return true
+}
+
+/**
+ * Soll ein Umhang-Bild (ein Frame) weich gefiltert werden? Regel wie im Cubiq Client (CapeFilter.looksSmooth): Pixel-Art
+ * ist höchstens 64 breit, hat höchstens 256 Farben oder besteht aus einfarbigen Blöcken (≥ 2) – alles andere (Logos,
+ * Fotos, gemalte Bilder) ist HD und flimmert verkleinert ohne Mipmaps.
+ */
+export function capeLooksSmooth(img: { width: number, height: number, data: Uint8ClampedArray }): boolean {
+  const { width, height, data } = img
+  if (width <= 64) return false
+  if (width % 64 !== 0) return true
+  const colors = new Set<number>()
+  for (let i = 0; i < width * height && colors.size <= MAX_PIXEL_ART_COLORS; i++) colors.add(pixelKey(data, i))
+  if (colors.size <= MAX_PIXEL_ART_COLORS) return false
+  const g = gcd(width, height)
+  for (let p = 2; p <= g; p++) {
+    if (g % p === 0 && isPrime(p) && blockUniform(img, p)) return false
+  }
+  return true
+}

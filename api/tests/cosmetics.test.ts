@@ -26,6 +26,7 @@ import { lookupPlayers } from '../server/lib/lookup'
 import { deleteUser, getUser, updateSettings } from '../server/lib/users'
 import { cubeFaces, mergeTemplates, parseTemplateEntry, parseTemplates, usedMask } from '../server/lib/templates'
 import { ADMIN, bundledTemplates, fixtureCosmetics, login, makeEnv, seedCosmeticFixtures, solidPng, templatePng, type TestEnv } from './helpers'
+import { ITEMS } from '../scripts/generate-cosmetics-v2.mjs'
 
 function code(fn: () => unknown): string {
   try {
@@ -110,10 +111,12 @@ describe('bundled cosmetics', () => {
       async (name) => readFileSync(join(ASSETS, name)),
     )
     const ids = list.map((c) => c.id)
-    expect(ids).toEqual(expect.arrayContaining([
-      'cubiq_cap', 'lamp_helmet', 'top_hat', 'dragon_wings', 'backpack', 'redstone_aura', 'footprints',
-    ]))
+    expect(ids).toEqual(expect.arrayContaining(['dragon_wings', 'backpack', 'footprints', 'bat_buddy']))
     for (const id of ['redstone_crown', 'team_crown', 'halo', 'redstone_wings', 'rubber_duck']) expect(ids).not.toContain(id)
+    // Ausgemustert (Oktober 2026): alle Kopf-Kosmetik und die Redstone-Partikel-Aura – die Dateien bleiben im Repository.
+    for (const id of ['cubiq_cap', 'lamp_helmet', 'top_hat', 'witch_hat', 'pumpkin_head', 'redstone_aura']) expect(ids).not.toContain(id)
+    expect(existsSync(join(ASSETS, 'redstone_aura.png'))).toBe(true)
+    for (const id of ['cubiq_cap', 'lamp_helmet', 'top_hat', 'witch_hat', 'pumpkin_head']) expect(existsSync(join(ASSETS, 'v2', `${id}.json`))).toBe(true)
     seedBuiltinCosmetics(env.ctx, list)
     for (const c of list) {
       if (c.format === 2) continue // 3D-Modelle: eigene Tests (cosmetics-v2.test.ts)
@@ -121,14 +124,12 @@ describe('bundled cosmetics', () => {
       expect(c.png.readUInt32BE(16)).toBe(t.textureWidth * c.scale)
       expect(c.png.readUInt32BE(20)).toBe(t.textureHeight * c.scale * c.frames)
     }
-    expect(list.find((c) => c.id === 'cubiq_cap')!.unlock).toBe('free')
-    // Öffentliche Hüte sind Format v2; Code- und Team-Teile liegen nicht im Repository.
-    expect(list.filter((c) => c.format === 2).map((c) => c.id).sort()).toEqual(['bat_buddy', 'bat_wings', 'cubiq_cap', 'demon_wings', 'ghost_wings', 'lamp_helmet', 'pumpkin_head', 'raven_wings', 'top_hat', 'witch_hat'])
-    expect(list.filter((c) => c.format !== 2 && c.frames > 1).map((c) => c.id)).toEqual(['redstone_aura'])
+    // Format v2 nur noch Begleiter, Flügel und (per Code gebaute) Haustiere; Code- und Team-Teile liegen nicht im Repository.
+    expect(list.filter((c) => c.format === 2).map((c) => c.id).sort()).toEqual(['bat_buddy', 'bat_wings', 'demon_wings', 'ghost_wings', 'raven_wings', ...ITEMS.map((i) => i.id)].sort())
     const u = await login(env, 'Steve')
     const cat = cosmeticCatalog(env.ctx, u.user.uuid)
-    expect(cat.find((c) => c.id === 'cubiq_cap')).toMatchObject({ owned: true, slot: 'hat', unlock: 'free' })
-    expect(cat.find((c) => c.id === 'redstone_aura')!.texture).toMatchObject({ scale: 2, frames: 4, animated: true })
+    expect(cat.find((c) => c.id === 'dragon_wings')).toMatchObject({ owned: true, slot: 'wings', unlock: 'free' })
+    expect(cat.some((c) => c.slot === 'hat')).toBe(false)
   })
 
   it('rejects wrong sizes, unknown templates and id clashes with emotes', () => {
