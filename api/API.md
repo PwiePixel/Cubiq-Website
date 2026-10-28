@@ -1397,6 +1397,20 @@ A **format-2** CosmeticView has `template: null`, `emissive: false` and these ex
 | `penguin_beanie` | Pinguin mit Mütze | **format 2** (**pet**) | **admin**, **hidden** (entourage) | like `penguin` |
 | `penguin_shades` | Pinguin mit Sonnenbrille | **format 2** (**pet**) | **admin**, **hidden** (entourage) | like `penguin` |
 | `penguin_heist` | Schwarzes Schaf | **format 2** (**pet**) | code (listed with the code badge); can also be an entourage extra | like `penguin` + `sneak`/`grab`/`flee`/`handsup` (9 animations) |
+| `cubi` | Cubi | **format 2** (**pet**) | free | glow 12 × 150 ms; idle (3 layers)/walk (hops)/slide (rolls)/swim/air/sneak/handsup |
+| `waddle_penguin` | Watschelpinguin | **format 2** (**pet**) | free | idle (3 layers)/walk/slide/swim/air/sneak/handsup; **option `scarf`** (default on) |
+| `fox_kit` | Füchschen | **format 2** (**pet**) | free | idle (sits)/walk/slide (gallop)/swim/air/sneak/**grab** (pounce, 2.6 s)/**flee**/handsup (10 animations) |
+| `axolotl` | Axolotl | **format 2** (**pet**) | free | glow 12 × 160 ms, 6 halos; idle (3 layers)/walk/slide/swim/air/sneak/handsup |
+| `snowman` | Schneemännchen | **format 2** (**pet**) | free | glow 12 × 180 ms; idle (3 layers)/walk/slide/swim/air/sneak/handsup; **options `hat`, `scarf`** |
+| `firefly` | Glühwürmchen | **format 2** (**pet**, hovers) | free | glow 12 × 140 ms, emissive lantern + halos; idle/walk/slide/swim/air/sneak/handsup |
+| `aurora_wings` | Polarlichtflügel | **format 2** (wings) | free | glow 12 × 160 ms, translucent curtains, halos; idle/air/sneak |
+| `shooting_star` | Sternschnuppe | **format 2** (**companion**) | free | glow 12 × 150 ms, halos, orbit animation |
+
+The last eight are **built as code** instead of in Cubiq Studio: `node api/scripts/generate-cosmetics-v2.mjs [--only <id,…>]
+[--check]` writes model, texture and glow strip to `assets/cosmetics/v2/` and their entries to the end of `catalog.json`
+(the items live in `api/scripts/cosmetics-v2/items/`, the toolkit in `lib.mjs`); `node api/scripts/render-cosmetic-cards.mjs
+[--only <id,…>] [--review <dir>]` renders the cards with the website renderer in headless Chromium (needs Playwright).
+`tests/cosmetics-v2-generated.test.ts` checks that the files match the generator byte for byte.
 
 **Retired (October 2026):** all public head cosmetics – `cubiq_cap`, `lamp_helmet`, `top_hat`, `witch_hat`,
 `pumpkin_head` – and `redstone_aura`. They are no longer in the catalog (`retired`: not listed, not wearable, codes
