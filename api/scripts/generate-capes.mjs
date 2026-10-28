@@ -438,6 +438,44 @@ function logoAt(size) {
   return out
 }
 
+/** Würfel in der Logo-Mitte ganz in Cubiq-Grün: oben hell, links das Logo-Grün, rechts dunkler (statt Grün-Schwarz-Verlauf). */
+const CUBE_FACES = { top: hex('#8cc63f'), left: hex('#71a330'), right: hex('#557d24') }
+
+/**
+ * Färbt den Würfel in der Mitte des (vormultiplizierten) Logos um. Der Würfel ist die zusammenhängende Fläche um
+ * seine vordere Ecke (logo.png 512×512: etwa 232/222), rundum durch eine durchsichtige Lücke vom Rahmen getrennt.
+ * Welche Seite ein Pixel ist, ergibt sich aus der Lage zur vorderen Ecke: Die Kanten zur linken und rechten Ecke
+ * steigen um 40 auf 74 Pixel an – darüber liegt die Oberseite.
+ */
+function greenCube(logo, size) {
+  const cx = size * (232 / 512)
+  const cy = size * (222 / 512)
+  const start = Math.floor(cy) * size + Math.floor(cx)
+  const seen = new Uint8Array(size * size)
+  const stack = [start]
+  let count = 0
+  seen[start] = 1
+  while (stack.length) {
+    const k = stack.pop()
+    const x = k % size
+    const y = (k - x) / size
+    // Läuft die Füllung bis an den Rand, wäre die Lücke um den Würfel weg – dann lieber abbrechen als das Logo verfärben.
+    if (x < size * 0.2 || x > size * 0.8 || y < size * 0.15 || y > size * 0.8) throw new Error('logo.png: Würfel nicht vom Rahmen getrennt')
+    const alpha = logo[k * 4 + 3]
+    const dx = x + 0.5 - cx
+    const dy = y + 0.5 - cy
+    const face = -dy >= Math.abs(dx) * (40 / 74) ? CUBE_FACES.top : dx < 0 ? CUBE_FACES.left : CUBE_FACES.right
+    for (let c = 0; c < 3; c++) logo[k * 4 + c] = (face[c] / 255) * alpha
+    count++
+    for (const n of [k - 1, k + 1, k - size, k + size]) {
+      if (n < 0 || n >= size * size || seen[n] || logo[n * 4 + 3] <= 0.02) continue
+      seen[n] = 1
+      stack.push(n)
+    }
+  }
+  return count
+}
+
 /** Sichtbarer Teil des Logos (Pixel mit Deckkraft), damit es nach dem echten Motiv mittig sitzt, nicht nach dem Bildrand. */
 function logoBox(logo, size) {
   let x0 = size
@@ -516,6 +554,7 @@ function cubiqLogoCape(lookName) {
   const look = LOGO_LOOKS[lookName]
   const img = new Img(64 * HD, 32 * HD)
   const logo = logoAt(128)
+  greenCube(logo, 128)
   for (const name of ['top', 'bottom', 'left', 'right']) area(img, name, HD).fill(() => look.edge)
   // Innenseite: ruhig, nach unten ganz leicht zur Grundfarbe hin.
   const inner = area(img, 'inner', HD)
