@@ -93,6 +93,9 @@ const PATHS: Record<string, string> = {
   instagram: 'M7.5 3.5h9a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-9a4 4 0 0 1-4-4v-9a4 4 0 0 1 4-4zM12 8.4a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 0 1 0-7.2zM17.2 6.8h.01',
   xsocial: 'M4.5 4h4.2L19.5 20h-4.2zM19.2 4l-6.4 7M4.8 20l6.4-7',
   hand: 'M8 12V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V12M17 9.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1.4a6 6 0 0 1-4.5-2.1l-2.9-3.4a1.5 1.5 0 0 1 2.2-2L8 15.2V12',
+  // Begleiter-Vorschau: Streicheln (Herz) und Füttern (angebissener Keks)
+  heart: 'M12 19.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.4-7.5 10-7.5 10z',
+  cookie: 'M12 3.5a8.5 8.5 0 1 0 8.5 8.5 2.8 2.8 0 0 1-3-2.8 2.8 2.8 0 0 1-2.8-2.9A2.8 2.8 0 0 1 12 3.5zM9 10h.01M14.5 15h.01M9.5 15.5h.01',
 }
 
 // Marken als ausgefüllte Formen.

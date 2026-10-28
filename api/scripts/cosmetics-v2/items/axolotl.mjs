@@ -2,8 +2,10 @@
 // Kiemenäste mit flauschigen Spitzen, die nachts nacheinander rosa aufleuchten, durchscheinende Rücken- und
 // Schwanzflosse, kurze Beinchen mit Zehen. Läuft wie ein Salamander (Körper schlängelt), rutscht auf dem Bauch,
 // schwimmt mit kräftigem Schwanzschlag, spreizt in der Luft alle Viere, kriecht geduckt und richtet sich zum Winken auf.
+// Gestreichelt hebt es den Kopf in die Hand, fächert die Kiemen und wedelt (Herzen); gefüttert schnappt es mit weit
+// offenem Maul dreimal zu (Krümel) und wackelt zufrieden mit den Kiemen.
 
-import { ModelBuilder, blink, bump, cell, curve, ell, hash, hex, mix, mul, smoothstep, wave } from '../lib.mjs'
+import { ModelBuilder, TAU, blink, bump, cell, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave } from '../lib.mjs'
 
 const C = {
   skin: hex('#f6b3c6'),
@@ -327,6 +329,67 @@ function build() {
       ...gills(t, { fan: 18, amp: 12, period: 300 }),
       ...face({ jaw: 9 + 4 * wave(t, 600) }),
     }), { lift: (t) => 0.3 * Math.abs(wave(t, 600)) }),
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head', hearts: 3 })
+
+  // Streicheln: Kopf in die Hand heben, Kiemen fächern und flattern, Augen zu, Schwanz wedelt, Vorderbeine strampeln
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 420, life: 900, from: { bone: 'head', at: [0.5, 7.25, 4] }, rise: 3.2, sway: 0.5, size: 1.35 },
+      { at: 750, life: 900, from: { bone: 'head', at: [-2.5, 6.75, 4] }, rise: 3.6, sway: 0.55, size: 1.15, phase: 0.35 },
+      { at: 1080, life: 880, from: { bone: 'head', at: [2.75, 6.5, 4] }, rise: 3, sway: 0.4, size: 1.25, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 300, 1750, 2050],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const lean = curve(t, [[0, 0], [300, 1], [1750, 1], [2050, 0], [PET, 0]])
+      const rub = lean * Math.sin((TAU * (t - 300)) / 1000)
+      return {
+        body: { r: [-5 * lean, 6 * rub, 0] },
+        head: { r: [-16 * lean, -8 * rub, 10 * rub] },
+        tail: { r: [4 * lean, 24 * lean * wave(t, 520), 0] },
+        tail_tip: { r: [0, 28 * lean * wave(t, 520, 0.85), 0] },
+        leg_fl: { r: [0, 0, 24 * lean * Math.max(0, wave(t, 420))] },
+        leg_fr: { r: [0, 0, -24 * lean * Math.max(0, wave(t, 420, 0.5))] },
+        ...gills(t, { fan: 18 * lean, amp: 12 * lean, period: 360 }),
+        ...face({ lid: 1 - 0.7 * curve(t, [[0, 0], [200, 1], [1900, 1], [2100, 0], [PET, 0]]), jaw: 8 * lean }),
+      }
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Kopf hoch, dreimal das Maul weit auf und schnappen (Krümel), dann zufriedenes Kiemen-Wackeln. Der Schwanz
+  // kippt gegen das Aufrichten des Körpers und bleibt waagerecht: sonst sinkt die durchscheinende Schwanzflosse unter die
+  // Hinterbeine, trägt das Axolotl und hebt alle vier Beine vom Boden ab.
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 420, from: { bone: 'head', at: [0, 1.5, 6.25] }, fall: 1.6, vel: [(i - 1) * 0.8, 1.6, 2], size: 1.2 })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 80), 300, 2050, 2350],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [300, 1], [2050, 1], [2350, 0], [EAT, 0]])
+      let open = 0
+      let snap = 0
+      for (const b of BITES) {
+        open = Math.max(open, bump(t, b - 80, 120))
+        snap = Math.max(snap, bump(t, b + 40, 110))
+      }
+      const happy = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      return {
+        root: { p: [0, 0, 0.6 * snap] },
+        body: { r: [-4 * up, 6 * happy * wave(t, 500), 0] },
+        head: { r: [-18 * up + 10 * snap, -8 * happy * wave(t, 500), 0] },
+        tail: { r: [4 * up, 18 * up * wave(t, 600), 0] },
+        tail_tip: { r: [0, 22 * up * wave(t, 600, 0.85), 0] },
+        ...gills(t, { fan: 10 * up + 8 * happy, amp: 4 * up + 10 * happy, period: 320, back: 18 * snap }),
+        ...face({ lid: 1 - 0.7 * happy, jaw: 34 * open + 6 * happy * Math.abs(wave(t, 240)), wide: 1 + 0.1 * open }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }

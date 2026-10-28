@@ -33,4 +33,6 @@ export interface SiteHat {
   petScale?: number
   /** Nur Begleiter am Boden: Zustände mit eigener Animation (Reihenfolge wie PET_STATES, `idle` immer zuerst). */
   states?: string[]
+  /** Nur Begleiter am Boden: Aktionen des Modells (`pet` = Streicheln, `eat` = Füttern, Reihenfolge wie ACTION_DRIVERS). */
+  actions?: string[]
 }

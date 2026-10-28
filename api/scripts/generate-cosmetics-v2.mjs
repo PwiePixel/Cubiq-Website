@@ -86,7 +86,7 @@ function main() {
       else catalog.push(entry)
     }
     const kb = (b) => (b ? `${(b.length / 1024).toFixed(0)} KB` : '–')
-    console.log(`${item.id}: ${out.model.cubes.length} cubes, ${out.model.bones.length} bones, ${out.model.animations.length} animations, texture ${out.size.width}×${out.size.height} (${kb(out.texture)}), glow ${kb(out.glow)}, model ${kb(Buffer.from(out.json))}`)
+    console.log(`${item.id}: ${out.model.cubes.length} cubes, ${out.model.bones.length} bones, ${out.model.animations.length} animations, ${out.model.actions?.length ?? 0} actions, texture ${out.size.width}×${out.size.height} (${kb(out.texture)}), glow ${kb(out.glow)}, model ${kb(Buffer.from(out.json))}`)
   }
   if (check) {
     if (stale) process.exit(1)

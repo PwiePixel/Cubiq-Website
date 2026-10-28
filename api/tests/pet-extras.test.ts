@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { PET_STATES, validateModel } from '../app/utils/cosmetic-v2/format'
-import { cosmeticEntrySchema } from '../server/lib/builtin'
+import { cosmeticEntrySchema, loadBuiltinCosmetics } from '../server/lib/builtin'
 import { cosmeticCatalog, equipCosmetics, equippedView, grantCosmetic, seedBuiltinCosmetics, type AnyBuiltinCosmetic } from '../server/lib/cosmetics'
 import { buildV2Cosmetic } from '../server/lib/cosmetics-v2'
 import { adminAssignPet, creatorPetState } from '../server/lib/creator-pets'
@@ -11,7 +13,7 @@ import { lookupPlayers } from '../server/lib/lookup'
 import { migratePetExtras } from '../server/lib/migrations'
 import { adminPetExtrasOverview, adminSetPetExtras, setShowPetExtras } from '../server/lib/pet-extras'
 import type { PlayerEvent } from '../server/lib/watch'
-import { publicPets } from '../server/lib/site'
+import { publicCompanions, publicPets } from '../server/lib/site'
 import { ownerStaff } from '../server/lib/team'
 import adminExtrasGet from '../server/routes/v1/admin/creators/pet-extras/index.get'
 import adminExtrasPut from '../server/routes/v1/admin/creators/[uuid]/pet-extras.put'
@@ -309,5 +311,23 @@ describe('pet states sneak/grab/flee/handsup (format, website)', () => {
     expect(list.find((p) => p.id === 'test_heist')).toMatchObject({ unlock: 'code', states: ['idle', 'walk', 'sneak', 'grab', 'handsup'], petScale: 1 })
     // Versteckte Team-Begleiter erscheinen nicht.
     expect(list.find((p) => p.id === BIG)).toBeUndefined()
+  })
+
+  it('website pets list their actions: the free companions can be petted and fed, models without actions get none', async () => {
+    const env = makeEnv()
+    const card = solidPng(8, 8)
+    const heist = buildV2Cosmetic({
+      id: 'test_heist', name: 'Schwarzes Schaf', unlock: 'code', sort: 0, frames: 1, frameTimeMs: null, glowFrames: 0, glowFrameTimeMs: null,
+      files: { modelJson: Buffer.from(JSON.stringify(model([anim('w', 'walk')]))), texture: solidPng(16, 16), glow: null, card, cardNight: card },
+    })
+    const assets = join(__dirname, '..', 'assets', 'cosmetics')
+    const free = ['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly']
+    const builtin = await loadBuiltinCosmetics(async () => JSON.parse(readFileSync(join(assets, 'catalog.json'), 'utf8')), async (name) => readFileSync(join(assets, name)))
+    seedBuiltinCosmetics(env.ctx, [heist, ...builtin.filter((c) => free.includes(c.id) || c.id === 'mini_cubi').map((c, i) => ({ ...c, sort: i + 1 }))])
+    const list = publicPets(env.ctx)
+    for (const id of free) expect(list.find((p) => p.id === id), id).toMatchObject({ actions: ['pet', 'eat'] })
+    expect(list.find((p) => p.id === 'test_heist')).toMatchObject({ actions: [] })
+    // Begleiter am Kopf haben keine Aktionen (nur Platz `pet`).
+    expect(publicCompanions(env.ctx).find((c) => c.id === 'mini_cubi')).not.toHaveProperty('actions')
   })
 })

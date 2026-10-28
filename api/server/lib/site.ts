@@ -1,6 +1,6 @@
 import { REWARD_EVENTS } from '../../shared/halloween'
 import type { AppContext } from './context'
-import { PET_STATES } from '../../app/utils/cosmetic-v2/format'
+import { ACTION_DRIVERS, PET_STATES, actionOf } from '../../app/utils/cosmetic-v2/format'
 import { ACHIEVEMENTS } from './achievement-catalog'
 import { v2Assets, v2Fields, type CosmeticV2Fields } from './cosmetics'
 import { all } from './db'
@@ -253,6 +253,8 @@ export interface PublicHat extends CosmeticV2Fields {
   animated: boolean
   /** Nur Platz `pet`: Zustände mit eigener Animation (Reihenfolge wie `PET_STATES`, `idle` immer zuerst) – Vorschau-Knöpfe. */
   states?: string[]
+  /** Nur Platz `pet`: gültige Aktionen des Modells (`pet`, `eat`; Reihenfolge wie `ACTION_DRIVERS`) – Knöpfe Streicheln/Füttern. */
+  actions?: string[]
 }
 
 /**
@@ -311,7 +313,7 @@ function publicV2(ctx: AppContext, slot: PublicV2Slot): PublicHat[] {
       achievement: byReward.get(r.id) ?? null,
       texture: `/v1/cosmetics/${r.id}.png?v=${f.hash}`,
       animated: (a.model.animations ?? []).some((x) => (x.driver ?? 'idle') === 'idle'),
-      ...(slot === 'pet' ? { states: petStatesOf(a.model.animations ?? []) } : {}),
+      ...(slot === 'pet' ? { states: petStatesOf(a.model.animations ?? []), actions: ACTION_DRIVERS.filter((d) => actionOf(a.model, d)) } : {}),
       ...f,
     })
   }

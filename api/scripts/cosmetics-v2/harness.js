@@ -155,11 +155,11 @@ function frame(cur, view, zoom = 1) {
   }
 }
 
-function shot(cur, { t = 0, drivers = ['idle'], night = false, view = [0.6, 0.38, 0.9], zoom = 1, animate = true }) {
+function shot(cur, { t = 0, drivers = ['idle'], night = false, view = [0.6, 0.38, 0.9], zoom = 1, animate = true, action = null }) {
   viewer.background = night ? BG.night : BG.day
   applyDayNight(viewer, cur.cos, night)
   frame(cur, view, zoom)
-  cur.cos.update(t, { drivers, camera: viewer.camera, animate })
+  cur.cos.update(t, { drivers, camera: viewer.camera, animate, action })
   viewer.render()
   return canvas
 }
@@ -210,7 +210,10 @@ function sheetOf(rows, cols, cell, fill) {
   return out.toDataURL('image/png')
 }
 
-/** Prüfbögen: Zustände × 8 Bilder (Tag), Ansichten (Ruhe + idle, Tag/Nacht), beim Begleiter am Boden auch neben dem Spieler. */
+/**
+ * Prüfbögen: Zustände × 8 Bilder (Tag), Aktionen (Streicheln/Füttern) × 8 Bilder über ihre Länge, Ansichten (Ruhe + idle,
+ * Tag/Nacht), beim Begleiter am Boden auch neben dem Spieler.
+ */
 window.review = async (id) => {
   const CELL = 256
   viewer.setSize(512, 512)
@@ -224,6 +227,15 @@ window.review = async (id) => {
     shot(cur, { t, drivers: [st] })
     return `${st} ${t}ms`
   })
+  const actions = [...new Set((cur.model.actions ?? []).map((a) => a.driver))]
+  if (actions.length) {
+    out.actions = sheetOf(actions.length, 8, CELL, (r, c) => {
+      const driver = actions[r]
+      const t = Math.round((cur.model.actions.find((a) => a.driver === driver).lengthMs * c) / 7)
+      shot(cur, { t, action: { driver, localMs: t } })
+      return `${driver} ${t}ms`
+    })
+  }
   const VIEWS = [['front', [0, 0.2, 1]], ['three', [0.62, 0.36, 0.88]], ['left', [1, 0.15, 0.02]], ['back', [-0.35, 0.3, -1]], ['right', [-1, 0.15, 0.1]], ['top', [0.001, 1, 0.35]]]
   out.views = sheetOf(4, VIEWS.length, CELL, (r, c) => {
     const [name, view] = VIEWS[c]

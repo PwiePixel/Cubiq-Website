@@ -16,7 +16,7 @@ import {
   seedBuiltinCosmetics,
   type AnyBuiltinCosmetic,
 } from '../server/lib/cosmetics'
-import { buildV2Cosmetic, v2Hash } from '../server/lib/cosmetics-v2'
+import { MAX_MODEL_JSON_BYTES, buildV2Cosmetic, v2Hash } from '../server/lib/cosmetics-v2'
 import { isApiError } from '../server/lib/errors'
 import { lookupPlayers } from '../server/lib/lookup'
 import { publicHats } from '../server/lib/site'
@@ -155,6 +155,19 @@ describe('format v2: bundled models', () => {
     await expect(loadBuiltinCosmetics(async () => cat, async (n) => (n.endsWith('-card.png') ? null : readAsset(n)))).rejects.toThrow(/file missing/)
     // Unbekannte Felder im v2-Eintrag (z. B. template) sind ein Fehler – kein halber v1/v2-Mischmasch.
     await expect(loadBuiltinCosmetics(async () => [{ ...cat[0], template: 'cap' }], readAsset)).rejects.toThrow()
+  })
+
+  it('a model.json over 512 KiB is never served: the start stops (the Cubiq Client would reject it); exactly 512 KiB loads', async () => {
+    const cat = [{ id: 'cubiq_cap', name: 'Cubiq-Cap', format: 2, unlock: 'free', frames: 1, glowFrames: 12, glowFrameTimeMs: 150 }]
+    // gültiges JSON, mit Leerzeichen auf genau `bytes` Bytes aufgefüllt
+    const padded = (bytes: number) => async (name: string) => {
+      if (name !== 'v2/cubiq_cap.json') return readAsset(name)
+      const text = readFileSync(join(ASSETS, 'v2', 'cubiq_cap.json'), 'utf8')
+      return Buffer.from(text + ' '.repeat(bytes - Buffer.byteLength(text)))
+    }
+    expect(MAX_MODEL_JSON_BYTES).toBe(524_288)
+    await expect(loadBuiltinCosmetics(async () => cat, padded(MAX_MODEL_JSON_BYTES))).resolves.toHaveLength(1)
+    await expect(loadBuiltinCosmetics(async () => cat, padded(MAX_MODEL_JSON_BYTES + 1))).rejects.toThrow(/model\.json is 524289 bytes, at most 524288/)
   })
 })
 

@@ -2,9 +2,10 @@
 // Latz, Schnauze und Schwanzspitze, schwarze Söckchen und Ohrspitzen, bernsteinfarbene Augen. Kleiner Dieb: setzt sich
 // im Stand, gähnt und putzt sich, trabt, galoppiert beim schnellen Hinterherkommen, paddelt im Wasser, pirscht sich
 // geduckt an, springt mit dem Mäusesprung auf Beute (schnappt sich eine Beere und flitzt damit davon) und macht Männchen,
-// wenn man ihn ansieht.
+// wenn man ihn ansieht. Gestreichelt setzt er sich, schmiegt den Kopf in die Hand und wedelt (Herzen steigen auf);
+// gefüttert schaut er hoch, schnappt dreimal zu (Krümel fallen) und kaut zufrieden.
 
-import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, smoothstep, wave } from '../lib.mjs'
+import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave } from '../lib.mjs'
 
 const C = {
   fur: hex('#e2702c'),
@@ -80,11 +81,11 @@ function paintEye(c) {
   return d <= 1.05 ? C.iris : mix(C.iris, C.pupil, 0.6)
 }
 
-const paintEar = (outer) => (c) => {
+const paintEar = (outer, cx) => (c) => {
   const { p, face } = c
-  if (p[1] > 10.6) return mix(C.sock, C.sockHi, 0.3) // schwarze Spitze
+  if (p[1] > 10.9) return mix(C.sock, C.sockHi, 0.3) // schwarze Spitze
   if (face === outer) return fur(C.fur, p, 13, 1)
-  if (face === 'south') return p[1] < 9.9 ? fur(C.cream, p, 14) : C.earIn
+  if (face === 'south') return Math.abs(p[0] - cx) < 0.4 && p[1] > 9.375 && p[1] < 10.75 ? fur(C.cream, p, 14) : fur(C.fur, p, 14)
   return fur(C.furLo, p, 15)
 }
 
@@ -126,14 +127,13 @@ function face({ lid = 1, jaw = 0, earL = 0, earR = 0, ears = [0, 0, 0] } = {}) {
 /** Sitzen (0…1): Hinterteil tiefer, Oberkörper aufgerichtet, Hinterbeine eingeklappt, Vorderbeine senkrecht. */
 function sit(k) {
   return {
-    root: { p: [0, -1.25 * k, 0] },
-    body: { r: [-34 * k, 0, 0] },
-    head: { r: [26 * k, 0, 0] },
-    leg_fl: { r: [34 * k, 0, 0], s: [1, 1 + 0.12 * k, 1] },
-    leg_fr: { r: [34 * k, 0, 0], s: [1, 1 + 0.12 * k, 1] },
-    leg_bl: { r: [-78 * k, 0, 0], p: [0, 0, 0.6 * k] },
-    leg_br: { r: [-78 * k, 0, 0], p: [0, 0, 0.6 * k] },
-    tail: { r: [-30 * k, 0, 0] },
+    body: { r: [-42 * k, 0, 0] },
+    head: { r: [36 * k, 0, 0] },
+    leg_fl: { r: [42 * k, 0, 0] },
+    leg_fr: { r: [42 * k, 0, 0] },
+    leg_bl: { r: [-90 * k, 0, 0], p: [0.875 * k, 0.2 * k, -0.25 * k] },
+    leg_br: { r: [-90 * k, 0, 0], p: [-0.875 * k, 0.2 * k, -0.25 * k] },
+    tail: { r: [4 * k, 0, 0] },
   }
 }
 
@@ -157,7 +157,7 @@ export const item = {
   name: 'Füchschen',
   unlock: 'free',
   petScale: 1,
-  card: { zoom: 0.72, t: 5000 },
+  card: { zoom: 0.62, t: 600 },
   build,
 }
 
@@ -176,8 +176,8 @@ function build() {
     .bone('leg_fr', 'body', [-1.125, 3.5, 1.625])
     .bone('leg_bl', 'root', [1.125, 3.5, -2.375])
     .bone('leg_br', 'root', [-1.125, 3.5, -2.375])
-    .bone('tail', 'body', [0, 6, -3.5], [35, 0, 0])
-    .bone('tail_tip', 'tail', [0, 6, -6], [12, 0, 0])
+    .bone('tail', 'body', [0, 4.75, -3.5], [35, 0, 0])
+    .bone('tail_tip', 'tail', [0, 4.75, -6], [12, 0, 0])
 
   m.cube('body', 'body', [-2, 3.5, -3.5], [2, 7, 2.5], { paint: paintBody })
   m.cube('chest', 'body', [-1.5, 3.5, 2.5], [1.5, 6.25, 3], { paint: paintChest, skip: ['north'] })
@@ -189,13 +189,14 @@ function build() {
   m.cube('jaw', 'jaw', [-0.875, 5.625, 5.75], [0.875, 6, 7.25], { paint: paintJaw, skip: ['north'] })
   m.cube('eye_l', 'eye_l', [0.75, 7.5, 5.75], [1.75, 8.5, 5.875], { paint: paintEye, skip: ['north'], light: false })
   m.cube('eye_r', 'eye_r', [-1.75, 7.5, 5.75], [-0.75, 8.5, 5.875], { paint: paintEye, skip: ['north'], light: false })
-  m.cube('ear_l', 'ear_l', [0.75, 9.25, 3], [2, 11.5, 3.75], { paint: paintEar('north'), skip: ['down'] })
-  m.cube('ear_r', 'ear_r', [-2, 9.25, 3], [-0.75, 11.5, 3.75], { paint: paintEar('north'), skip: ['down'] })
+  m.cube('ear_l', 'ear_l', [0.75, 8.75, 3], [2, 11.5, 3.75], { paint: paintEar('north', 1.375), skip: ['down'] })
+  m.cube('ear_r', 'ear_r', [-2, 8.75, 3], [-0.75, 11.5, 3.75], { paint: paintEar('north', -1.375), skip: ['down'] })
   for (const [id, x, z] of [['leg_fl', 1.125, 1.625], ['leg_fr', -1.125, 1.625], ['leg_bl', 1.125, -2.375], ['leg_br', -1.125, -2.375]]) {
-    m.cube(id, id, [x - 0.625, 0, z - 0.625], [x + 0.625, 3.5, z + 0.625], { paint: paintLeg, skip: ['up'] })
+    // oben 0,5 im Rumpf: beim Schwingen bleibt am Gelenk keine Kerbe
+    m.cube(id, id, [x - 0.625, 0, z - 0.625], [x + 0.625, 4, z + 0.625], { paint: paintLeg, skip: ['up'] })
   }
   m.cube('tail', 'tail', [-1.25, 4.75, -6], [1.25, 7.25, -3.5], { paint: paintTail, skip: ['south'] })
-  m.cube('tail_tip', 'tail_tip', [-1.5, 4.5, -8], [1.5, 7.5, -6], { paint: paintTail })
+  m.cube('tail_tip', 'tail_tip', [-1.25, 4.75, -8], [1.25, 7.25, -6], { paint: paintTail })
   // Beute (Beere): in Ruhe im Kopf versteckt, nach dem Mäusesprung im Maul
   m.cube('berry', 'loot', [-0.375, 7.25, 3.5], [0.375, 8, 4.25], { paint: paintBerry })
   m.cube('berry_leaf', 'loot', [-0.125, 8, 3.75], [0.125, 8.25, 4], { paint: () => C.leaf })
@@ -395,16 +396,73 @@ function build() {
   m.anim('handsup', 'handsup', 1200, {
     samples: 48,
     pose: m.grounded((t) => merge(sit(1), {
-      body: { r: [-38, 0, 0] },
-      head: { r: [38, 0, 12 * wave(t, 1200)] },
-      leg_fl: { r: [-40 + 22 * wave(t, 400), 0, 8] },
-      leg_fr: { r: [-40 - 22 * wave(t, 400), 0, -8] },
-      leg_bl: { r: [10, 0, 0] },
-      leg_br: { r: [10, 0, 0] },
-      tail: { r: [0, 28 * wave(t, 300), 0] },
+      body: { r: [-26, 0, 0] },
+      head: { r: [26, 0, 12 * wave(t, 1200)] },
+      leg_fl: { r: [-50 + 22 * wave(t, 400), 0, 8] },
+      leg_fr: { r: [-50 - 22 * wave(t, 400), 0, -8] },
+      leg_bl: { p: [0, 0.1, 0.25] },
+      leg_br: { p: [0, 0.1, 0.25] },
+      tail: { r: [30, 28 * wave(t, 300), 0] },
       tail_tip: { r: [0, 18 * wave(t, 300, 0.2), 0] },
       ...face({ jaw: 16 + 6 * wave(t, 600), ears: [-6, 0, 0] }),
     }), { lift: (t) => 0.25 * Math.abs(wave(t, 1200)) }),
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head', hearts: 3 })
+  const above = (x, y) => ({ bone: 'head', at: [x, y, 4] })
+
+  // Streicheln: hinsetzen, Kopf in die Hand schmiegen, Augen zu, Ohren zurück, Schwanz fegt über den Boden
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 430, life: 900, from: above(0.5, 11.25), rise: 3.2, sway: 0.45, size: 1.15 },
+      { at: 760, life: 880, from: above(-1.75, 10.75), rise: 3.5, sway: 0.55, size: 0.95, phase: 0.35 },
+      { at: 1090, life: 860, from: above(1.75, 10.5), rise: 3, sway: 0.4, size: 1.05, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 380, 1700, 2100],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const k = curve(t, [[0, 0], [380, 1], [1700, 1], [2100, 0], [PET, 0]])
+      const happy = curve(t, [[0, 0], [300, 1], [1800, 1], [2050, 0], [PET, 0]])
+      const rub = happy * Math.sin((Math.PI * 2 * (t - 300)) / 900)
+      return merge(sit(k), {
+        head: { r: [-12 * happy, 10 * rub, 16 * rub] },
+        tail: { r: [0, 30 * k * wave(t, 420), 0] },
+        tail_tip: { r: [0, 18 * k * wave(t, 420, 0.2), 0] },
+        ...face({ lid: 1 - 0.88 * happy, jaw: 5 * happy, ears: [-26 * happy, 8 * happy, 0] }),
+      })
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Kopf hoch zur Hand, dreimal zuschnappen (Krümel fallen aus dem Maul), dann zufrieden kauen und wedeln
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 440, from: { bone: 'head', at: [0, 6.25, 7.5] }, fall: 4.6, vel: [(i - 1) * 0.7, 2.2, 2.4] })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 90), 300, 2150, 2450],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [300, 1], [2150, 1], [2450, 0], [EAT, 0]])
+      let lunge = 0
+      let open = 0
+      for (const b of BITES) {
+        lunge = Math.max(lunge, bump(t, b, 150))
+        open = Math.max(open, bump(t, b - 70, 90))
+      }
+      const chew = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      return {
+        body: { r: [-5 * up, 0, 2 * chew * wave(t, 600)] },
+        head: { r: [-26 * up + 14 * lunge, 0, 7 * chew * wave(t, 600, 0.25)], p: [0, 0, 0.4 * lunge] },
+        leg_fl: { r: [5 * up, 0, 0] },
+        leg_fr: { r: [5 * up, 0, 0] },
+        tail: { r: [8 * up, 26 * up * wave(t, 480), 0] },
+        tail_tip: { r: [0, 16 * up * wave(t, 480, 0.2), 0] },
+        ...face({ lid: 1 - 0.85 * chew, jaw: 34 * open + 12 * chew * Math.abs(wave(t, 220)), ears: [12 * up - 16 * chew, 0, 0] }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }

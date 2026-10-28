@@ -182,6 +182,40 @@ describe('private asset files', () => {
     expect(hat.files.texture.readUInt32BE(20)).toBe(16)
   })
 
+  it('skips a private v2 model.json over 512 KiB with one warning (the Cubiq Client would reject it)', () => {
+    const env = makeEnv()
+    const root = join(env.dir, 'private')
+    mkdirSync(join(root, 'cosmetics', 'v2'), { recursive: true })
+    const model = (id: string) => JSON.stringify({
+      format: 2,
+      id,
+      name: id,
+      slot: 'hat',
+      attach: 'head',
+      texture: { file: `${id}.png`, width: 16, height: 16, scale: 1 },
+      bones: [{ id: 'root', pivot: [0, 8, 0] }],
+      cubes: [{ bone: 'root', from: [-1, 8, -1], to: [1, 9, 1], faces: { south: { uv: [0, 0, 2, 1] } } }],
+    })
+    const MAX = 512 * 1024
+    for (const [id, bytes] of [['priv_fits', MAX], ['priv_big', MAX + 1]] as const) {
+      const text = model(id)
+      writeFileSync(join(root, 'cosmetics', 'v2', `${id}.json`), text + ' '.repeat(bytes - text.length))
+      writeFileSync(join(root, 'cosmetics', 'v2', `${id}.png`), solidPng(16, 16))
+      writeFileSync(join(root, 'cosmetics', 'v2', `${id}-card.png`), solidPng(8, 8))
+      writeFileSync(join(root, 'cosmetics', 'v2', `${id}-card-night.png`), solidPng(8, 8))
+    }
+    writeFileSync(join(root, 'cosmetics', 'catalog.private.json'), JSON.stringify({
+      cosmetics: [
+        { id: 'priv_fits', name: 'Fits', format: 2, unlock: 'code', frames: 1, glowFrames: 0, sort: 0 },
+        { id: 'priv_big', name: 'Big', format: 2, unlock: 'code', frames: 1, glowFrames: 0, sort: 1 },
+      ],
+    }))
+    const warnings: string[] = []
+    const priv = loadPrivateCosmetics(root, env.ctx, (m) => warnings.push(m))
+    expect(priv.loaded.map((p) => p.item.id)).toEqual(['priv_fits'])
+    expect(warnings).toEqual(['private cosmetic priv_big skipped: builtin cosmetic priv_big (format 2): model.json is 524289 bytes, at most 524288 (512 KiB, Cubiq Client limit)'])
+  })
+
   it('warns once and loads nothing when the private catalog is missing', () => {
     const root = scratch()
     const warnings: string[] = []

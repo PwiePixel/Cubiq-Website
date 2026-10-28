@@ -8,6 +8,10 @@ import type * as ThreeNs from 'three'
 import type { SkinViewer } from 'skinview3d'
 import {
   FACES,
+  STATE_FADE_MS,
+  actionLength,
+  actionOf,
+  blendPoses,
   boneLocal,
   faceCorners,
   faceUvCorners,
@@ -17,10 +21,13 @@ import {
   haloIntensity,
   hiddenBones,
   parseModel,
+  sampleAction,
   samplePoses,
+  type ActionDriver,
   type CosmeticModel,
   type Driver,
   type MaterialName,
+  type Pose,
 } from './format'
 
 /** Das three.js-Modul (`import * as THREE from 'three'` bzw. `await import('three')`). */
@@ -43,6 +50,23 @@ export interface CosmeticUpdateOptions {
   camera?: ThreeNs.Camera | null
   /** Aktive Treiber (Standard nur `idle`). */
   drivers?: readonly Driver[]
+  /**
+   * Zeit der Zustands-Animationen in ms, wenn sie nicht der Wanduhr folgt – z. B. Zeit seit Zustandsbeginn für den
+   * einmaligen Zustand `grab`. Streifen-Bilder und Höfe bleiben auf `timeMs`.
+   */
+  poseMs?: number
+  /**
+   * Laufende Aktion (`pet`/`eat`): Zeit seit ihrem Beginn in ms. Spielt allein (keine Animation dazu), auch bei
+   * `animate: false`; hat das Modell sie nicht, bleibt alles wie ohne sie.
+   */
+  action?: { driver: ActionDriver, localMs: number } | null
+  /**
+   * Uhr für Überblendungen (ms, monoton, z. B. `Date.now()`). Mit ihr blenden Wechsel von Zustand oder Aktion – und
+   * eine neu gestartete Aktion oder ein neu gestarteter einmaliger Zustand (`poseMs` springt zurück) – über 250 ms vom
+   * zuletzt gezeigten Bild aus über ({@link blendPoses}: je Komponente linear wie im Launcher, Effekt-Knochen `fx_*`
+   * sofort in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder, Karten, Werkbank-Vergleich).
+   */
+  fadeClock?: number
 }
 
 export interface CosmeticInstance {
@@ -257,11 +281,42 @@ export function createCosmetic(THREE: Three, model: CosmeticModel, images: Cosme
   let highlightObj: ThreeNs.LineSegments | null = null
   let glowOn = true
 
+  // Überblenden (nur mit fadeClock): beim Wechsel wird das zuletzt gezeigte Bild eingefroren und in 250 ms (smoothstep)
+  // zur neuen Pose geblendet – jede Seite also auf ihrer eigenen Zeitbasis (wie im Launcher). blendPoses lässt
+  // Effekt-Knochen dabei aus: Herzen/Krümel einer unterbrochenen Aktion verschwinden sofort im Versteck.
+  let mixKey: string | null = null
+  let mixSince = 0
+  let mixSnap: Map<string, Pose> | null = null
+  let mixLast = new Map<string, Pose>()
+  let mixLocal = -Infinity
+  const mix = (key: string, target: Map<string, Pose>, clock: number, local: number): Map<string, Pose> => {
+    // neuer Zustand, andere Aktion oder dieselbe Aktion bzw. derselbe einmalige Zustand neu gestartet (Zeit springt zurück)
+    if (mixKey !== null && (key !== mixKey || local < mixLocal)) {
+      mixSnap = mixLast
+      mixSince = clock
+    }
+    mixKey = key
+    mixLocal = local
+    let out = target
+    if (mixSnap) {
+      const u = Math.min(1, Math.max(0, (clock - mixSince) / STATE_FADE_MS))
+      if (u >= 1) mixSnap = null
+      else out = blendPoses(mixSnap, target, u * u * (3 - 2 * u))
+    }
+    mixLast = out
+    return out
+  }
+
   return {
     root,
     model,
-    update(timeMs, { animate = true, glow = true, camera = null, drivers } = {}) {
-      const poses = animate ? samplePoses(model, timeMs, drivers) : null
+    update(timeMs, { animate = true, glow = true, camera = null, drivers, poseMs, action = null, fadeClock } = {}) {
+      const act = action && actionOf(model, action.driver) ? action : null
+      let poses = act ? sampleAction(model, act.driver, act.localMs) : animate ? samplePoses(model, poseMs ?? timeMs, drivers) : null
+      if (fadeClock != null) {
+        const key = act ? `a:${act.driver}` : animate ? `s:${(drivers ?? ['idle']).join(',')}` : 'rest'
+        poses = mix(key, poses ?? new Map(), fadeClock, act ? act.localMs : animate ? (poseMs ?? -Infinity) : -Infinity)
+      }
       for (const b of model.bones) bones.get(b.id)!.matrix.fromArray(boneLocal(b, poses?.get(b.id)))
       root.updateMatrixWorld(true)
       if (glow !== glowOn) {
@@ -420,7 +475,22 @@ export interface MountOptions {
   options?: Readonly<Record<string, boolean>> | null
   /** Aktive Treiber (Standard nur `idle`; Begleiter am Boden z. B. `['walk']`). */
   drivers?: readonly Driver[] | null
+  /**
+   * Zähler der Zustands-Klicks (wie `petStateTick` im Launcher): ändert er sich, beginnt der Zustand von vorn, auch
+   * derselbe – ein zweiter Klick auf `grab` spielt den Clip noch einmal (mit Überblendung), statt im letzten Bild zu
+   * stehen.
+   */
+  stateTick?: number
+  /**
+   * Aktion eines Begleiters am Boden: Treiber + Beginn (`Date.now()`); ein neues Objekt startet sie neu. Läuft einmal
+   * (auch ohne Animation, z. B. bei reduzierter Bewegung) und endet nach ihrer Länge von selbst – mit Überblendung.
+   */
+  action?: { driver: ActionDriver, startedAt: number } | null
 }
+
+/** Zustände, die einmal ab ihrem Beginn laufen statt zur Wanduhr (wie im Spiel). */
+const ONE_SHOT: readonly Driver[] = ['grab']
+const sameDrivers = (a: readonly Driver[] | null | undefined, b: readonly Driver[] | null | undefined) => (a ?? []).join() === (b ?? []).join()
 
 /**
  * Boden-Anker (attach `ground`): neben dem Fuß des Spielers, leicht zur Kamera gedreht. Die Füße des skinview3d-Spielers
@@ -482,16 +552,20 @@ export interface MountedCosmetic {
 /**
  * Hängt ein Modell an seinen Anhängepunkt (`head`, `body`, `ground`, siehe {@link attachAnchor}) eines
  * skinview3d-Spielers und hält es mit einer eigenen Bild-Schleife aktuell (Wanduhr wie im Spiel: alle Clients zeigen
- * dieselbe Phase). Animation aus = Ruhepose, Leuchten steht – wie die Werkbank.
+ * dieselbe Phase). Animation aus = Ruhepose, Leuchten steht – wie die Werkbank. Wechsel von Zustand und Aktion blenden
+ * über 250 ms; `grab` läuft einmal ab dem Wechsel (oder ab dem letzten neuen `stateTick`), eine Aktion ab ihrem
+ * `startedAt`.
  */
 export function mountOnSkinViewer(THREE: Three, viewer: SkinViewer, loaded: LoadedCosmetic, opts: MountOptions = {}): MountedCosmetic {
   const cos = createCosmetic(THREE, loaded.model, loaded.images)
   const anchor = attachAnchor(THREE, viewer, loaded.model.attach)
   anchor.group.add(cos.root)
-  const state: Required<MountOptions> = { animate: true, glow: true, night: false, fixedTime: null, options: null, drivers: null, ...opts }
+  const state: Required<MountOptions> = { animate: true, glow: true, night: false, fixedTime: null, options: null, drivers: null, stateTick: 0, action: null, ...opts }
   applyDayNight(viewer, cos, state.night)
   cos.setOptions(state.options)
   let frozenAt = state.fixedTime ?? Date.now()
+  /** Beginn des aktuellen Zustands (für einmalige Zustände wie `grab`). */
+  let stateSince = Date.now()
   let raf = 0
   let alive = true
   const now = () => {
@@ -502,11 +576,18 @@ export function mountOnSkinViewer(THREE: Three, viewer: SkinViewer, loaded: Load
   }
   const tick = () => {
     if (!alive) return
+    const wall = Date.now()
+    const a = state.action
+    const local = a ? wall - a.startedAt : -1
+    const running = a != null && local >= 0 && local < actionLength(cos.model, a.driver)
     cos.update(now(), {
       animate: state.animate || state.fixedTime != null,
       glow: state.glow,
       camera: viewer.camera,
       ...(state.drivers ? { drivers: state.drivers } : {}),
+      ...(state.fixedTime == null && state.drivers?.length && state.drivers.every((d) => ONE_SHOT.includes(d)) ? { poseMs: wall - stateSince } : {}),
+      action: running ? { driver: a.driver, localMs: local } : null,
+      fadeClock: wall,
     })
     raf = requestAnimationFrame(tick)
   }
@@ -514,6 +595,8 @@ export function mountOnSkinViewer(THREE: Three, viewer: SkinViewer, loaded: Load
   return {
     cosmetic: cos,
     set(next) {
+      const changed = next.drivers !== undefined && !sameDrivers(next.drivers, state.drivers)
+      if (changed || (next.stateTick !== undefined && next.stateTick !== state.stateTick)) stateSince = Date.now()
       Object.assign(state, next)
       if (next.night !== undefined) applyDayNight(viewer, cos, state.night)
       if (next.options !== undefined) cos.setOptions(state.options)
