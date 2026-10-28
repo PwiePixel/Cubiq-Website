@@ -395,7 +395,9 @@ function build() {
     return { k: curve(u, [[0, 0], [0.18, -0.12], [0.45, 0.17], [0.7, -0.08], [0.86, 0.04], [1, 0]]), up: Math.sin(Math.PI * u) }
   }
 
-  // Streicheln: schmiegt sich schief in die Hand, Augen „^^“, schnurrt (feines Zittern), zum Schluss ein Freuden-Boing
+  // Streicheln: schmiegt sich schief in die Hand, Augen „^^“, schnurrt (feines Zittern), zum Schluss ein Freuden-Boing.
+  // Die Neigung bleibt unter 8° und hebt den Körper um 0,3 an: so drückt die tiefe Kante nicht in einen Fuß, und beide
+  // Füße bleiben am Boden (bei 16° stand er auf der Körperkante, die Füße schwebten bis 0,57 hoch).
   const PET = 2200
   const petPlan = {
     hearts: [
@@ -411,7 +413,7 @@ function build() {
       const rub = lean * Math.sin((TAU * (t - 280)) / 1000)
       const b = boingAt(t, 1760, 420)
       return {
-        roll: { r: [-7 * lean, 8 * rub, 11 * lean + 5 * rub] },
+        roll: { p: [0, 0.3 * lean, 0], r: [-3.5 * lean, 8 * rub, 4.5 * lean + 2 * rub] },
         body: { s: squash(b.k - 0.05 * lean + 0.018 * lean * wave(t, 140)) },
         foot_l: { r: [0, 0, 8 * b.up] },
         foot_r: { r: [0, 0, -8 * b.up] },
