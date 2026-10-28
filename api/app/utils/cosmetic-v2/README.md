@@ -65,7 +65,9 @@ nicht).
 - Höfe: Sprite 64×64-Verlauf `(1 − r)^2.5`, additiv, `renderOrder 3`, um `size/2` zur Kamera geschoben.
 - Zeit = `Date.now()` (Wanduhr), damit Website, Launcher und Spiel dieselbe Phase zeigen. Ausnahmen: einmalige Zustände
   (`grab`) und Aktionen laufen ab ihrem eigenen Beginn; Bilder und Höfe bleiben trotzdem auf der Wanduhr.
-- Überblendungen (250 ms, smoothstep, wie Launcher und Cubiq Client): Drehungen je Achse auf dem kürzesten Weg
-  (`d = ((b − a) % 360 + 540) % 360 − 180`), Position und Skalierung linear; Effekt-Knochen `fx_*` werden nie
-  übergeblendet, sie stehen sofort in der Zielpose (unterbrochene Herzen/Krümel verschwinden im Versteck).
+- Überblendungen (250 ms, smoothstep, wie Launcher und Cubiq Client): Drehung (Euler-Grad), Position und Skalierung je
+  Komponente linear, `a + (b − a) · w` – wie die veröffentlichten Launcher und Clients, Hüte und Flügel blenden also
+  unverändert. Drehungen bewusst nicht auf den kürzesten Weg (gegen ein bewegtes Ziel wie Cubis Rolle spränge das Bild
+  bis zu 164°); nach mehreren Umdrehungen dreht der Begleiter dafür kurz schnell zurück. Effekt-Knochen `fx_*` werden
+  nie übergeblendet, sie stehen sofort in der Zielpose (unterbrochene Herzen/Krümel verschwinden im Versteck).
 - CSP: alles same-origin (Bilder/JSON von der eigenen API), keine Blob-/Daten-URLs nötig.

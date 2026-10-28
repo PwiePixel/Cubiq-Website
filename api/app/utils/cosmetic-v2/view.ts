@@ -63,8 +63,8 @@ export interface CosmeticUpdateOptions {
   /**
    * Uhr für Überblendungen (ms, monoton, z. B. `Date.now()`). Mit ihr blenden Wechsel von Zustand oder Aktion – und
    * eine neu gestartete Aktion oder ein neu gestarteter einmaliger Zustand (`poseMs` springt zurück) – über 250 ms vom
-   * zuletzt gezeigten Bild aus über ({@link blendPoses}: Drehungen auf dem kürzesten Weg, Effekt-Knochen `fx_*` sofort
-   * in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder, Karten, Werkbank-Vergleich).
+   * zuletzt gezeigten Bild aus über ({@link blendPoses}: je Komponente linear wie im Launcher, Effekt-Knochen `fx_*`
+   * sofort in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder, Karten, Werkbank-Vergleich).
    */
   fadeClock?: number
 }

@@ -497,15 +497,15 @@ const REST_POSE: Pose = { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1
  */
 export const isFxBone = (id: string): boolean => id.startsWith('fx_')
 
-/** Drehung auf dem kürzesten Weg von `from` nach `to` (Grad), Anteil w: d = ((to − from) mod 360 + 540) mod 360 − 180. */
-const turn = (from: number, to: number, w: number): number => from + (((((to - from) % 360) + 540) % 360) - 180) * w
-
 /**
  * Zwei Posen überblenden (w = 0 → a, 1 → b), fehlende Knochen zählen als Ruhe – nur für die Überblendungen (250 ms).
- * Gemeinsame Regeln mit Launcher und Cubiq Client (API.md §11.9, Wiedergabe): Drehungen nehmen je Achse den kürzesten
- * Weg (nach einer Rolle kein Rückwärts-Dreher; die Endpose ist dieselbe Drehung wie b), Position linear, Skalierung
- * linear. Effekt-Knochen (`fx_*`) werden nie übergeblendet: sie stehen sofort in b (Ruhe, wenn b sie nicht bewegt) –
- * ein unterbrochenes Herz verschwindet im Versteck, statt in voller Größe zurückzugleiten.
+ * Gemeinsame Regeln mit Launcher und Cubiq Client (API.md §11.9, Wiedergabe): Drehung (Euler-Grad), Position und
+ * Skalierung je Komponente linear, a + (b − a) · w – genau wie die veröffentlichten Launcher und Clients Zustände
+ * überblenden, Hüte und Flügel blenden also unverändert. Drehungen werden bewusst nicht auf den kürzesten Weg
+ * umgerechnet: gegen ein bewegtes Ziel (Cubis Rolle beim Rutschen, Drehungen bei „Hände hoch“) spränge die Überblendung
+ * sonst bis zu 164° in einem Bild; nach mehreren Umdrehungen dreht der Begleiter dafür kurz schnell zurück (bekannt).
+ * Effekt-Knochen (`fx_*`) werden nie übergeblendet: sie stehen sofort in b (Ruhe, wenn b sie nicht bewegt) – ein
+ * unterbrochenes Herz verschwindet im Versteck, statt in voller Größe zurückzugleiten.
  */
 export function blendPoses(a: ReadonlyMap<string, Pose>, b: ReadonlyMap<string, Pose>, w: number): Map<string, Pose> {
   const out = new Map<string, Pose>()
@@ -517,8 +517,7 @@ export function blendPoses(a: ReadonlyMap<string, Pose>, b: ReadonlyMap<string, 
       continue
     }
     const pa = a.get(id) ?? REST_POSE
-    const rotation: Vec3 = [turn(pa.rotation[0], pb.rotation[0], w), turn(pa.rotation[1], pb.rotation[1], w), turn(pa.rotation[2], pb.rotation[2], w)]
-    out.set(id, { position: mix(pa.position, pb.position), rotation, scale: mix(pa.scale, pb.scale) })
+    out.set(id, { position: mix(pa.position, pb.position), rotation: mix(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
   }
   return out
 }
