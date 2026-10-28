@@ -173,6 +173,42 @@ const round = (v, d) => {
   return r === 0 ? 0 : r
 }
 
+// ---------------------------------------------------------------- Vorwärts-Kinematik (wie format.ts)
+
+const DEG = Math.PI / 180
+function mat3(rx, ry, rz) {
+  const [a, b, c] = [rx * DEG, ry * DEG, rz * DEG]
+  const [ca, sa, cb, sb, cc, sc] = [Math.cos(a), Math.sin(a), Math.cos(b), Math.sin(b), Math.cos(c), Math.sin(c)]
+  // Rz·Ry·Rx, spaltenweise
+  return [cc * cb, sc * cb, -sb, cc * sb * sa - sc * ca, sc * sb * sa + cc * ca, cb * sa, cc * sb * ca + sc * sa, sc * sb * ca - cc * sa, cb * ca]
+}
+/** Affine Matrix als { m: 3×3 spaltenweise, t: [x,y,z] }. */
+function compose(A, B) {
+  const m = new Array(9)
+  for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) m[c * 3 + r] = A.m[r] * B.m[c * 3] + A.m[3 + r] * B.m[c * 3 + 1] + A.m[6 + r] * B.m[c * 3 + 2]
+  return { m, t: apply(A, B.t) }
+}
+function apply(A, p) {
+  return [0, 1, 2].map((r) => A.m[r] * p[0] + A.m[3 + r] * p[1] + A.m[6 + r] * p[2] + A.t[r])
+}
+/** Welt-Lagen aller Knochen für eine Pose { knochen: { r, p, s } }: T(pivot + p) · R(rest + r) · S(s) · T(−pivot). */
+export function boneWorld(bones, pose) {
+  const out = new Map()
+  for (const b of bones) {
+    const ch = pose[b.id] ?? {}
+    const r = [0, 1, 2].map((i) => (b.rotation?.[i] ?? 0) + (ch.r?.[i] ?? 0))
+    const sc = ch.s ?? [1, 1, 1]
+    const R = mat3(...r)
+    const m = [R[0] * sc[0], R[1] * sc[0], R[2] * sc[0], R[3] * sc[1], R[4] * sc[1], R[5] * sc[1], R[6] * sc[2], R[7] * sc[2], R[8] * sc[2]]
+    const piv = b.pivot
+    const pp = [0, 1, 2].map((i) => piv[i] + (ch.p?.[i] ?? 0))
+    const mp = apply({ m, t: [0, 0, 0] }, piv)
+    const local = { m, t: [pp[0] - mp[0], pp[1] - mp[1], pp[2] - mp[2]] }
+    out.set(b.id, b.parent ? compose(out.get(b.parent), local) : local)
+  }
+  return out
+}
+
 // ---------------------------------------------------------------- Modell-Baukasten
 
 /**
@@ -230,6 +266,33 @@ export class ModelBuilder {
     return this
   }
 
+  /** Tiefster Punkt aller Würfel (Ecken) in einer Pose; `skip(cube)` = Würfel nicht mitzählen. */
+  lowest(pose, skip = () => false) {
+    const W = boneWorld(this.bones, pose)
+    let lo = Infinity
+    for (const c of this.cubes) {
+      if (skip(c)) continue
+      const M = W.get(c.bone)
+      for (const x of [c.from[0], c.to[0]]) for (const y of [c.from[1], c.to[1]]) for (const z of [c.from[2], c.to[2]]) lo = Math.min(lo, apply(M, [x, y, z])[1])
+    }
+    return lo
+  }
+
+  /**
+   * Pose-Funktion „auf den Boden stellen“: verschiebt Knochen `bone` (Wurzel) je Zeitpunkt so, dass der tiefste Punkt
+   * genau auf y = `lift(t)` liegt (0 = steht, > 0 = hüpft). Füße sinken so nie ein und schweben nie.
+   */
+  grounded(pose, { bone = 'root', lift = () => 0, skip } = {}) {
+    return (t) => {
+      const p = pose(t)
+      const lo = this.lowest(p, skip)
+      const ch = (p[bone] ??= {})
+      const cur = ch.p ?? [0, 0, 0]
+      ch.p = [cur[0], cur[1] - lo + lift(t), cur[2]]
+      return p
+    }
+  }
+
   /** Abschaltbares Teil (Anhang D). */
   option(id, bones, def, name) {
     this.options.push({ id, bones, default: def, name })
@@ -239,11 +302,12 @@ export class ModelBuilder {
   /**
    * Animation. `pose(tMs)` liefert { knochen: { r?: [x,y,z], p?: [x,y,z], s?: [x,y,z] } } (Drehung in Grad, Position
    * in Einheiten, Skalierung als Faktor; fehlend = Ruhe). Abgetastet an `samples` gleichmäßigen Stellen plus `events`
-   * (ms, z. B. Blinzeln), dann je Spur auf die nötigen Schlüssel vereinfacht (linear).
+   * (ms, z. B. Blinzeln), dann je Spur auf die nötigen Schlüssel vereinfacht (linear). `once` = läuft im Spiel einmal
+   * ab Zustandsbeginn (`grab`), Ende und Anfang dürfen verschieden sein.
    */
-  anim(id, driver, lengthMs, { pose, samples, events = [], loop = true, offsetMs = 0, tol = 1 } = {}) {
+  anim(id, driver, lengthMs, { pose, samples, events = [], loop = true, once = false, offsetMs = 0, tol = 1 } = {}) {
     if (!ID.test(id) || this.anims.some((a) => a.id === id)) throw new Error(`${this.id}: bad or duplicate animation ${id}`)
-    this.anims.push({ id, driver, lengthMs, pose, samples, events, loop, offsetMs, tol })
+    this.anims.push({ id, driver, lengthMs, pose, samples, events, loop, once, offsetMs, tol })
     return this
   }
 
@@ -475,7 +539,8 @@ const CHANNELS = [
 
 function sampleAnimation(b, a) {
   const len = a.lengthMs
-  const n = a.samples ?? Math.max(16, Math.min(60, Math.round(len / 70)))
+  // höchstens 63 Abschnitte: 64 Schlüssel je Spur (Format-Grenze)
+  const n = Math.min(63, a.samples ?? Math.max(16, Math.min(60, Math.round(len / 70))))
   const times = new Set()
   for (let k = 0; k <= n; k++) times.add(Math.round((k * len) / n))
   for (const e of a.events) for (const d of [-90, -45, 0, 45, 90]) times.add(Math.round(Math.max(0, Math.min(len, e + d))))
@@ -508,7 +573,8 @@ function sampleAnimation(b, a) {
         const d = Math.abs(v - pts[pts.length - 1][1][i])
         return key === 'r' ? Math.min(d, Math.abs(d - 360 * Math.round(d / 360))) : d
       }
-      if (a.loop && pts[0][1].some((v, i) => gap(v, i) > tol * 4)) {
+      // `once`: im Spiel einmal ab Zustandsbeginn (grab), nur Vorschauen wiederholen – dort darf es springen
+      if (a.loop && !a.once && pts[0][1].some((v, i) => gap(v, i) > tol * 4)) {
         throw new Error(`${b.id}/${a.id}: ${bone}.${key} does not loop (${pts[0][1]} → ${pts[pts.length - 1][1]})`)
       }
       const flat = pts.every(([, v]) => v.every((x, i) => Math.abs(x - pts[0][1][i]) <= tol))

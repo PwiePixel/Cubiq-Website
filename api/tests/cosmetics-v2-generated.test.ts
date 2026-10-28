@@ -59,6 +59,8 @@ describe('generated format-2 cosmetics', () => {
       const m = model(id)
       expect(m.slot in SLOT_ATTACH && SLOT_ATTACH[m.slot] === m.attach).toBe(true)
       for (const a of m.animations ?? []) {
+        // `grab` läuft im Spiel einmal ab Zustandsbeginn – darf am Ende anders stehen als am Anfang
+        if (a.driver === 'grab') continue
         for (const tr of a.tracks) {
           const k = tr.keys
           expect(k[0]!.t, `${id}/${a.id}/${tr.bone}`).toBe(0)
@@ -80,8 +82,8 @@ describe('generated format-2 cosmetics', () => {
       const drivers = new Set((m.animations ?? []).map((a) => a.driver ?? 'idle'))
       for (const s of ['idle', 'walk', 'slide', 'swim', 'air']) expect(drivers.has(s as never), `${id} ${s}`).toBe(true)
       for (const d of drivers) expect((PET_STATES as readonly string[]).includes(d), `${id} ${d}`).toBe(true)
-      // `grab` läuft im Spiel einmal 2,4 s ab Zustandsbeginn
-      for (const a of m.animations ?? []) if (a.driver === 'grab') expect(a.lengthMs).toBeLessThanOrEqual(2400)
+      // `grab` läuft im Spiel einmal 2,4 s ab Zustandsbeginn: mindestens so lang, sonst springt es zurück an den Anfang
+      for (const a of m.animations ?? []) if (a.driver === 'grab') expect(a.lengthMs).toBeGreaterThanOrEqual(2400)
       const lo = Math.min(...m.cubes.map((c) => c.from[1]))
       expect(lo, `${id} floor`).toBe(0)
       for (const c of m.cubes) {
