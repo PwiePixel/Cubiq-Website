@@ -438,6 +438,24 @@ function logoAt(size) {
   return out
 }
 
+/** Sichtbarer Teil des Logos (Pixel mit Deckkraft), damit es nach dem echten Motiv mittig sitzt, nicht nach dem Bildrand. */
+function logoBox(logo, size) {
+  let x0 = size
+  let y0 = size
+  let x1 = -1
+  let y1 = -1
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (logo[(y * size + x) * 4 + 3] <= 0.02) continue
+      x0 = Math.min(x0, x)
+      y0 = Math.min(y0, y)
+      x1 = Math.max(x1, x)
+      y1 = Math.max(y1, y)
+    }
+  }
+  return { x0, y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }
+}
+
 /** Legt das (vormultiplizierte) Logo deckend über den Bereich ab (x0, y0). */
 function placeLogo(a, logo, size, x0, y0) {
   for (let y = 0; y < size; y++) {
@@ -460,10 +478,10 @@ const LOGO_LOOKS = {
 }
 
 /**
- * Außenfläche (Rücken, von hinten sichtbar): Grundfarbe, schmale grüne Linie als Rahmen und das Logo mittig im oberen
- * Teil. Gleich für die Außenseite des Umhangs und der Elytra.
+ * Außenfläche (Rücken, von hinten sichtbar): Grundfarbe, schmale grüne Linie als Rahmen und das Logo genau in der Mitte
+ * (waagerecht und senkrecht). Gleich für die Außenseite des Umhangs und der Elytra.
  */
-function logoFace(a, look, logo, size, top) {
+function logoFace(a, look, logo, size) {
   a.fill(() => look.base)
   // Rahmen: 4 px breit, 10 px vom Rand.
   const inset = 10
@@ -475,7 +493,9 @@ function logoFace(a, look, logo, size, top) {
       if (inOuter && !inInner) a.set(i, j, look.line)
     }
   }
-  const x0 = Math.round((a.w - size) / 2)
+  const box = logoBox(logo, size)
+  const x0 = Math.round((a.w - box.w) / 2) - box.x0
+  const top = Math.round((a.h - box.h) / 2) - box.y0
   if (look.glow > 0) {
     // Mitte des Würfels im Logo (logo.png 512×512: etwa 232/222).
     const cx = x0 + Math.round(size * 0.453)
@@ -500,10 +520,10 @@ function cubiqLogoCape(lookName) {
   // Innenseite: ruhig, nach unten ganz leicht zur Grundfarbe hin.
   const inner = area(img, 'inner', HD)
   inner.fill((i, j) => mix(look.inner, look.base, 0.2 * (j / inner.h)))
-  logoFace(area(img, 'outer', HD), look, logo, 128, 48)
+  logoFace(area(img, 'outer', HD), look, logo, 128)
   // Elytra (Box 10×20×2 bei 22,0): Ränder grün, Außenseite wie der Umhang, Innenseite ruhig.
   area(img, 'elytra', HD).fill(() => look.edge)
-  logoFace(rectArea(img, [24, 2, 10, 20], HD), look, logo, 128, 64)
+  logoFace(rectArea(img, [24, 2, 10, 20], HD), look, logo, 128)
   const back = rectArea(img, [36, 2, 10, 20], HD)
   back.fill((i, j) => mix(look.inner, look.base, 0.2 * (j / back.h)))
   return img
