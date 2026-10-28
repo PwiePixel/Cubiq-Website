@@ -559,6 +559,7 @@ function sampleAnimation(b, a) {
       const def = CHANNELS.find((c) => c[0] === key)[2]
       const v = pose[bone]?.[key] ?? [def, def, def]
       if (v.some((x) => !Number.isFinite(x))) throw new Error(`${b.id}/${a.id}: ${bone}.${key} not finite at ${ts[i]}`)
+      if (key === 's' && v.some((x) => x <= 0 || x > 4)) throw new Error(`${b.id}/${a.id}: ${bone}.s outside 0…4 at ${ts[i]}`)
       series.get(k).push([ts[i], v])
     }
   }

@@ -8,6 +8,8 @@ export interface GeneratedItem {
   name: string
   unlock: GeneratedUnlock
   petScale?: number
+  /** Begleiter am Boden, der absichtlich schwebt (Ruhepose berührt den Boden nicht). */
+  hover?: boolean
   build(): unknown
 }
 

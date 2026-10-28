@@ -75,8 +75,8 @@ describe('generated format-2 cosmetics', () => {
     }
   })
 
-  it('pets stand on the ground, fit their box and animate every base state', () => {
-    for (const { id } of ITEMS) {
+  it('pets stand on the ground (or hover on purpose), fit their box and animate every base state', () => {
+    for (const { id, hover } of ITEMS) {
       const m = model(id)
       if (m.slot !== 'pet') continue
       const drivers = new Set((m.animations ?? []).map((a) => a.driver ?? 'idle'))
@@ -85,7 +85,8 @@ describe('generated format-2 cosmetics', () => {
       // `grab` läuft im Spiel einmal 2,4 s ab Zustandsbeginn: mindestens so lang, sonst springt es zurück an den Anfang
       for (const a of m.animations ?? []) if (a.driver === 'grab') expect(a.lengthMs).toBeGreaterThanOrEqual(2400)
       const lo = Math.min(...m.cubes.map((c) => c.from[1]))
-      expect(lo, `${id} floor`).toBe(0)
+      if (hover) expect(lo, `${id} hovers`).toBeGreaterThan(0)
+      else expect(lo, `${id} floor`).toBe(0)
       for (const c of m.cubes) {
         expect(Math.max(Math.abs(c.from[0]), Math.abs(c.to[0]), Math.abs(c.from[2]), Math.abs(c.to[2])), `${id} ${c.id}`).toBeLessThanOrEqual(8)
         expect(c.to[1], `${id} ${c.id}`).toBeLessThanOrEqual(16)
