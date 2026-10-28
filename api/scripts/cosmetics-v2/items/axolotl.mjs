@@ -361,7 +361,9 @@ function build() {
     }, { skip: fx.skip }), petPlan),
   })
 
-  // Füttern: Kopf hoch, dreimal das Maul weit auf und schnappen (Krümel), dann zufriedenes Kiemen-Wackeln
+  // Füttern: Kopf hoch, dreimal das Maul weit auf und schnappen (Krümel), dann zufriedenes Kiemen-Wackeln. Der Schwanz
+  // kippt gegen das Aufrichten des Körpers und bleibt waagerecht: sonst sinkt die durchscheinende Schwanzflosse unter die
+  // Hinterbeine, trägt das Axolotl und hebt alle vier Beine vom Boden ab.
   const EAT = 2600
   const BITES = [700, 1200, 1700]
   const eatPlan = {
@@ -382,7 +384,7 @@ function build() {
         root: { p: [0, 0, 0.6 * snap] },
         body: { r: [-4 * up, 6 * happy * wave(t, 500), 0] },
         head: { r: [-18 * up + 10 * snap, -8 * happy * wave(t, 500), 0] },
-        tail: { r: [0, 18 * up * wave(t, 600), 0] },
+        tail: { r: [4 * up, 18 * up * wave(t, 600), 0] },
         tail_tip: { r: [0, 22 * up * wave(t, 600, 0.85), 0] },
         ...gills(t, { fan: 10 * up + 8 * happy, amp: 4 * up + 10 * happy, period: 320, back: 18 * snap }),
         ...face({ lid: 1 - 0.7 * happy, jaw: 34 * open + 6 * happy * Math.abs(wave(t, 240)), wide: 1 + 0.1 * open }),

@@ -233,16 +233,11 @@ describe('generated format-2 cosmetics', () => {
     }
   })
 
-  /**
-   * Bekannte Ausnahme (eigener Fix steht aus, hier nur gegen Verschlechterung gesichert): beim Füttern richtet sich das
-   * Axolotl auf, die durchscheinende Schwanzflosse wird zum tiefsten Punkt, alle vier Beine heben ≤ 0,133 ab.
-   */
-  const STAND_OFF: Readonly<Record<string, number>> = { 'axolotl/eat': 0.14 }
-
   it('ground companions stand on their own feet during actions: no foot sinks in, one of them always carries the pet', () => {
     // Füße, Pfoten, Sockel = Würfel, die in Ruhe den Boden berühren. Einer darf mit Absicht abheben (Pinguin trippelt,
     // Fuchs setzt sich auf), aber kein anderer Teil darf zum tiefsten Punkt werden und so die Füße anheben – so stand
-    // Cubi beim Streicheln auf der Körperkante, und beide Füße schwebten bis 0,57 über dem Boden.
+    // Cubi beim Streicheln auf der Körperkante, und beide Füße schwebten bis 0,57 über dem Boden; beim Füttern trug die
+    // durchscheinende Schwanzflosse das Axolotl, und alle vier Beine hoben bis 0,133 ab.
     const low = (W: Map<string, Mat4>, c: Cube) => Math.min(...corners(c).map((p) => transformPoint(W.get(c.bone)!, p)[1]))
     for (const { id, hover } of ITEMS.filter((i) => ACTION_PETS.includes(i.id))) {
       if (hover) continue
@@ -252,11 +247,10 @@ describe('generated format-2 cosmetics', () => {
       expect(feet.length, id).toBeGreaterThan(0)
       for (const d of ACTION_DRIVERS) {
         const a = actionOf(m, d)!
-        const allowed = STAND_OFF[`${id}/${d}`] ?? 0.05
         for (let t = 0; t <= a.lengthMs; t += 10) {
           const W = boneMatrices(m, sampleAction(m, d, t))
           const ys = feet.map((c) => low(W, c))
-          expect(Math.min(...ys), `${id}/${d} at ${t} ms: lowest foot`).toBeLessThanOrEqual(allowed)
+          expect(Math.min(...ys), `${id}/${d} at ${t} ms: lowest foot`).toBeLessThanOrEqual(0.05)
           for (const [i, y] of ys.entries()) expect(y, `${id}/${d} at ${t} ms: ${feet[i]!.id} sinks in`).toBeGreaterThanOrEqual(-0.05)
         }
       }
