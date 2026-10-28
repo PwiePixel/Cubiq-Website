@@ -20,6 +20,7 @@ import {
   type Vec3,
 } from '../app/utils/cosmetic-v2/format'
 import { loadBuiltinCosmetics } from '../server/lib/builtin'
+import { MAX_MODEL_JSON_BYTES } from '../server/lib/cosmetics-v2'
 import { ITEMS, buildItem, catalogEntry } from '../scripts/generate-cosmetics-v2.mjs'
 
 // Per Code gebaute Format-2-Teile (scripts/generate-cosmetics-v2.mjs): Haustiere am Boden, Flügel, Begleiter am Kopf.
@@ -75,8 +76,8 @@ describe('generated format-2 cosmetics', () => {
       expect(r.errors, item.id).toEqual([])
       expect(r.warnings, item.id).toEqual([])
       for (const card of [c.files.card, c.files.cardNight]) expect(size(card)).toEqual({ width: 512, height: 512 })
-      // Grenze des Cubiq Clients für model.json (CosmeticV2.MAX_JSON_BYTES)
-      expect(c.files.modelJson.length).toBeLessThan(512 * 1024)
+      // Grenze des Cubiq Clients für model.json (CosmeticV2.MAX_JSON_BYTES, 512 KiB) – die Begleiter liegen bei 100–160 KB
+      expect(c.files.modelJson.length, item.id).toBeLessThanOrEqual(MAX_MODEL_JSON_BYTES / 2)
     }
   })
 

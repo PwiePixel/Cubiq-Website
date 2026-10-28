@@ -14,6 +14,12 @@ import { COSMETIC_MAX_SCALE, inspectPng } from './png'
 /** Platzhalter in `cosmetics.template` für v2-Zeilen (der alte CHECK verlangt eine Vorlage, Migration 20). */
 export const V2_TEMPLATE = '@v2'
 
+/**
+ * Größte model.json in Bytes (512 KiB, `actions` eingeschlossen): der Cubiq Client lädt größere nicht
+ * (`CosmeticV2.MAX_JSON_BYTES`, auch in den veröffentlichten Versionen) – so ein Modell wird nie ausgeliefert.
+ */
+export const MAX_MODEL_JSON_BYTES = 512 * 1024
+
 export interface CosmeticV2Files {
   modelJson: Buffer
   texture: Buffer
@@ -79,6 +85,7 @@ export function buildV2Cosmetic(e: V2EntryInput): BuiltinCosmeticV2 {
   const fail = (msg: string): never => {
     throw new Error(`builtin cosmetic ${e.id} (format 2): ${msg}`)
   }
+  if (e.files.modelJson.length > MAX_MODEL_JSON_BYTES) fail(`model.json is ${e.files.modelJson.length} bytes, at most ${MAX_MODEL_JSON_BYTES} (512 KiB, Cubiq Client limit)`)
   let json: unknown
   try {
     json = JSON.parse(e.files.modelJson.toString('utf8'))
