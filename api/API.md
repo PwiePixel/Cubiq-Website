@@ -1403,7 +1403,7 @@ A **format-2** CosmeticView has `template: null`, `emissive: false` and these ex
 | `axolotl` | Axolotl | **format 2** (**pet**) | free | glow 12 × 160 ms, 6 halos; idle (3 layers)/walk/slide/swim/air/sneak/handsup |
 | `snowman` | Schneemännchen | **format 2** (**pet**) | free | glow 12 × 180 ms; idle (3 layers)/walk/slide/swim/air/sneak/handsup; **options `hat`, `scarf`** |
 | `firefly` | Glühwürmchen | **format 2** (**pet**, hovers) | free | glow 12 × 140 ms, emissive lantern + halos; idle/walk/slide/swim/air/sneak/handsup |
-| `aurora_wings` | Polarlichtflügel | **format 2** (wings) | free | glow 12 × 160 ms, translucent curtains, halos; idle/air/sneak |
+| `aurora_wings` | Polarlichtflügel | **format 2** (wings) | free | glow 6 × 320 ms, layered feathers (one bone each), halos; idle/air/sneak |
 | `shooting_star` | Sternschnuppe | **format 2** (**companion**) | free | glow 12 × 150 ms, halos, orbit animation |
 | `mini_cubi` | Mini-Cubi | **format 2** (**companion**) | free | glow 12 × 150 ms, orbit with a spinning sprout propeller and a flip |
 
