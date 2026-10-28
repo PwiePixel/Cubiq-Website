@@ -28,14 +28,17 @@ const C = {
 
 const speck = (p, seed, amount = 0.08) => 1 + (hash(cell(p[0]), cell(p[1]), cell(p[2]), seed) - 0.5) * amount
 
-/** Frack: schwarz mit bläulichem Glanz oben, weiß vorne (wickelt etwas um die Seiten), gelblicher Hauch an der Brust. */
-const coat = (whiteHalf, sideFront, seed) => (c) => {
+/**
+ * Frack: schwarz mit bläulichem Glanz oben, weiß nur vorne (|x| < `whiteHalf`, gelblicher Hauch an der Brust). Seiten,
+ * Rücken, Ober- und Unterseite bleiben schwarz – bis auf die schmale Stufe vor der Brust (`ledge` = { z, half }: ab z
+ * weiß, halbe Breite hinten `half`, nach vorne um so viel breiter, wie die Stufe tief ist). Dort stoßen das Weiß der
+ * Brust und das des Bauchs aneinander; schwarz liefe ein Strich quer über die weiße Vorderseite.
+ */
+const coat = (whiteHalf, seed, ledge = null) => (c) => {
   const { p, face } = c
   let white = false
   if (face === 'south') white = Math.abs(p[0]) < whiteHalf
-  else if (face === 'east' || face === 'west') white = p[2] > sideFront
-  else if (face === 'up') white = p[2] > sideFront + 0.4 && Math.abs(p[0]) < whiteHalf + 0.5
-  else if (face === 'down') white = p[2] > 0
+  else if (face === 'up' && ledge) white = p[2] > ledge.z && Math.abs(p[0]) < ledge.half + (p[2] - ledge.z)
   if (white) {
     let col = mix(C.white, C.whiteShade, smoothstep((Math.abs(p[0]) - whiteHalf + 1.2) / 1.2) * 0.8)
     if (face !== 'south') col = mix(col, C.whiteShade, 0.35)
@@ -60,7 +63,10 @@ function paintBelly(c) {
 
 const FACE_LOBES = [[1.25, 10.6], [-1.25, 10.6]]
 
-/** Kopf: schwarze Kappe, weiße Gesichtsmaske (zwei Bögen um die Augen, darunter weiß), Bäckchen, geschlossene Augen. */
+/**
+ * Kopf: schwarz mit weißer Gesichtsmaske nur vorne (zwei Bögen um die Augen, darunter weiß), Bäckchen, geschlossene
+ * Augen. Seiten, Hinterkopf, Scheitel und Kinn bleiben schwarz.
+ */
 function paintHead(c) {
   const { p, face } = c
   const lobe = FACE_LOBES.some(([x, y]) => ell(p[0], p[1], x, y, 1.45, 1.55) <= 1)
@@ -79,8 +85,7 @@ function paintHead(c) {
       return mul(col, speck(p, 11, 0.025))
     }
   }
-  if ((face === 'east' || face === 'west') && p[2] > 1.4 && p[1] < 10.1) return mul(mix(C.white, C.whiteShade, 0.3), speck(p, 12, 0.03))
-  if (face === 'down') return p[2] > 0.5 ? C.whiteShade : C.blackLo
+  if (face === 'down') return C.blackLo
   let col = mix(C.black, C.blackHi, smoothstep((p[1] - 9) / 3.2) * 0.7)
   if (face === 'up') col = mix(C.black, C.blackHi, 0.8)
   return mul(col, speck(p, 13))
@@ -111,12 +116,11 @@ function paintFoot(c) {
   return col
 }
 
-/** Flosse: außen schwarz mit weißem Saum unten, innen hell. */
+/** Flosse: rundum schwarz mit bläulichem Glanz nach oben, Innenseite und Spitze unten etwas dunkler. */
 const paintFlipper = (inner) => (c) => {
   const { p, face } = c
-  if (face === inner || face === 'down') return mix(C.whiteShade, C.white, 0.4)
   let col = mix(C.black, C.blackHi, smoothstep((p[1] - 3) / 4) * 0.5)
-  if (p[1] < 3.125) col = mix(col, C.whiteShade, 0.85)
+  if (face === inner || face === 'down') col = mix(col, C.blackLo, 0.5)
   return mul(col, speck(p, 21))
 }
 
@@ -183,10 +187,11 @@ function build() {
     .bone('foot_r', 'root', [-1.625, 0.75, 0.5])
   m.option('scarf', ['scarf'], true, { de: 'Schal', en: 'Scarf', es: 'Bufanda' })
 
-  m.cube('lower_body', 'body', [-3.5, 0.75, -3], [3.5, 5.75, 3], { paint: coat(2.6, 1.0, 1) })
+  // Stufe vor der Brust: von der Breite des Weißen am Oberkörper (z = 2,5) bis zu der am Unterkörper (z = 3)
+  m.cube('lower_body', 'body', [-3.5, 0.75, -3], [3.5, 5.75, 3], { paint: coat(2.6, 1, { z: 2.5, half: 2.1 }) })
   m.cube('belly', 'body', [-2.5, 1.25, 3], [2.5, 5.5, 3.5], { paint: paintBelly, skip: ['north'] })
-  m.cube('upper_body', 'body', [-3, 5.75, -2.5], [3, 8, 2.5], { paint: coat(2.1, 1.2, 3), skip: ['down'] })
-  m.cube('tail', 'tail', [-1, 1, -3.75], [1, 2, -3], { paint: coat(0, 9, 4), skip: ['south'] })
+  m.cube('upper_body', 'body', [-3, 5.75, -2.5], [3, 8, 2.5], { paint: coat(2.1, 3), skip: ['down'] })
+  m.cube('tail', 'tail', [-1, 1, -3.75], [1, 2, -3], { paint: coat(0, 4), skip: ['south'] })
   m.cube('head', 'head', [-2.75, 8, -2.5], [2.75, 12.25, 2.5], { paint: paintHead })
   m.cube('tuft_a', 'tuft', [0, 12.25, -0.75], [0, 13.5, 0.75], { paint: paintTuft, light: false })
   m.cube('tuft_b', 'tuft', [-0.75, 12.25, 0], [0.75, 13.5, 0], { paint: paintTuft, light: false })
