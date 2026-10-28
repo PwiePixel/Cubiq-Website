@@ -2,9 +2,10 @@
 // große Augen, orangefarbener Halsschild, Fühler, flatternde durchscheinende Flügel und ein Hinterleib, der als
 // Laterne leuchtet (emissive, pulsierender Leucht-Streifen und weicher Hof). Fliegt beim Laufen schräg nach vorn,
 // zischt beim schnellen Hinterherkommen mit einer kurzen Lichtspur, schwebt über dem Wasser, dimmt sein Licht beim
-// Schleichen und dreht vor Freude einen Looping.
+// Schleichen und dreht vor Freude einen Looping. Gestreichelt kuschelt es sich in die Hand, die Laterne strahlt
+// (Herzen); gefüttert nippt es dreimal (Krümel) und blinkt vor Freude mit der Laterne.
 
-import { ModelBuilder, blink, bump, clamp, curve, ell, hash, hex, mix, mul, smoothstep, wave, wave01 } from '../lib.mjs'
+import { ModelBuilder, TAU, blink, bump, clamp, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave, wave01 } from '../lib.mjs'
 
 const C = {
   body: hex('#2c2b36'),
@@ -267,6 +268,77 @@ function build() {
         ...face({ lid: 0.25 + 0.75 * (1 - bump(t, 700, 500)) }),
       }
     },
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head', hearts: 3 })
+  /** Flattern für die Aktionen: Stärke k (0 = Ruhe), damit Anfang und Ende in Ruhe sind. */
+  const flutter = (t, k, { period = 240, amp = 36, spread = 0, antenna = 0 } = {}) => ({
+    wing_l: { r: [0, 0, k * amp * Math.sin((TAU * t) / period)] },
+    wing_r: { r: [0, 0, -k * amp * Math.sin((TAU * t) / period)] },
+    elytra_l: { r: [0, 0, k * (6 + spread)] },
+    elytra_r: { r: [0, 0, -k * (6 + spread)] },
+    antenna_l: { r: [k * (antenna + 6 * Math.sin((TAU * t) / 500)), 0, 0] },
+    antenna_r: { r: [k * (antenna + 6 * Math.sin((TAU * t) / 500 + 1)), 0, 0] },
+  })
+
+  // Streicheln (schwebt weiter): kuschelt sich näher, Augen zu, Laterne strahlt und pulsiert, Fühler wippen
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 420, life: 900, from: { bone: 'head', at: [0.5, 12.5, 2.25] }, rise: 3, sway: 0.45, size: 1.25 },
+      { at: 750, life: 900, from: { bone: 'head', at: [-1.75, 12, 2.25] }, rise: 3.4, sway: 0.5, size: 1.05, phase: 0.35 },
+      { at: 1080, life: 880, from: { bone: 'head', at: [2, 11.75, 2.25] }, rise: 2.8, sway: 0.4, size: 1.15, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 300, 1750, 2050],
+    tol: 2,
+    pose: fx.pose(PET, (t) => {
+      const lean = curve(t, [[0, 0], [300, 1], [1750, 1], [2050, 0], [PET, 0]])
+      const rub = lean * Math.sin((TAU * (t - 300)) / 1000)
+      const glow = 1 + 0.16 * lean + 0.06 * lean * wave(t, 400)
+      return {
+        hover: { p: [0, 0.6 * lean + 0.25 * lean * wave(t, 700), 0.5 * lean], r: [-8 * lean, 6 * rub, 8 * rub] },
+        head: { r: [-8 * lean, 6 * rub, 8 * rub] },
+        abdomen: { r: [5 * lean * wave(t, 600), 0, 0] },
+        lamp: { s: [glow, glow, glow] },
+        legs: { r: [18 * lean * wave(t, 500), 0, 0] },
+        ...flutter(t, lean, { antenna: 12 }),
+        ...face({ lid: 1 - 0.75 * curve(t, [[0, 0], [200, 1], [1900, 1], [2100, 0], [PET, 0]]) }),
+      }
+    }, petPlan),
+  })
+
+  // Füttern: nippt dreimal (nickt vor, Krümel fallen), die Laterne blitzt nach jedem Bissen, zum Schluss Freudenwackeln
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 420, from: { bone: 'head', at: [0, 7, 3.75] }, fall: 3.2, vel: [(i - 1) * 0.7, 1.4, 1.8], size: 1.1 })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 90), 300, 2050, 2350],
+    tol: 2,
+    pose: fx.pose(EAT, (t) => {
+      const on = curve(t, [[0, 0], [300, 1], [2050, 1], [2350, 0], [EAT, 0]])
+      let dip = 0
+      let flash = 0
+      for (const b of BITES) {
+        dip = Math.max(dip, bump(t, b, 150))
+        flash = Math.max(flash, bump(t, b + 180, 160))
+      }
+      const happy = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      const glow = 1 + 0.08 * on + 0.16 * flash + 0.1 * happy * Math.abs(wave(t, 300))
+      return {
+        hover: { p: [0, 0.4 * on + 0.2 * on * wave(t, 700), 0.4 * on - 0.3 * dip], r: [-6 * on + 16 * dip, 0, 9 * happy * wave(t, 400)] },
+        head: { r: [-10 * on + 14 * dip, 0, 6 * happy * wave(t, 400, 0.25)] },
+        abdomen: { r: [4 * on * wave(t, 600), 0, 0] },
+        lamp: { s: [glow, glow, glow] },
+        legs: { r: [-14 * dip + 12 * on * wave(t, 500), 0, 0] },
+        ...flutter(t, on, { antenna: 10 - 18 * dip }),
+        ...face({ lid: 1 - 0.75 * happy, look: [0, -0.125 * dip] }),
+      }
+    }, eatPlan),
   })
   return m
 }

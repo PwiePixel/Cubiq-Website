@@ -2,10 +2,11 @@
 // Release-Bildern (Cubiq-Launcher scripts/release-art.mjs): heller Deckel, Glanz links, Schatten rechts, weiße Augen,
 // rosa Bäckchen, Pflänzchen auf dem Kopf. Läuft nicht, sondern hüpft (Stauchen und Strecken), rollt beim schnellen
 // Hinterherkommen über die Kanten, schwimmt wie ein Korken und jubelt mit Funken. Nachts leuchten Augen,
-// Bäckchen und Blätter.
+// Bäckchen und Blätter. Gestreichelt kuschelt er sich schnurrend in die Hand (Herzen) und hüpft vor Freude; gefüttert
+// schaut er hoch, mampft dreimal (Krümel) und kaut mit „^^“-Augen.
 
 import {
-  ModelBuilder, SCALE, TAU, blink, bump, cell, clamp, curve, dither, ell, hash, hex, mix, mul, smoothstep, wave, wave01,
+  ModelBuilder, SCALE, TAU, blink, bump, cell, clamp, curve, dither, ell, hash, hex, mix, mul, petFx, smoothstep, wave, wave01,
 } from '../lib.mjs'
 
 const C = {
@@ -383,6 +384,74 @@ function build() {
         ...face({ lid: 0.06, open: 1, smile: [1.2, 1.2] }),
       }
     },
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Körper
+  const fx = petFx(m, { hide: 'body', hearts: 3 })
+  /** Freudiges „Boing“ auf der Stelle ab `t0` (Dauer `dur`): strecken, stauchen, nachfedern – die Füße bleiben am Boden. */
+  const boingAt = (t, t0, dur) => {
+    const u = (t - t0) / dur
+    if (u <= 0 || u >= 1) return { k: 0, up: 0 }
+    return { k: curve(u, [[0, 0], [0.18, -0.12], [0.45, 0.17], [0.7, -0.08], [0.86, 0.04], [1, 0]]), up: Math.sin(Math.PI * u) }
+  }
+
+  // Streicheln: schmiegt sich schief in die Hand, Augen „^^“, schnurrt (feines Zittern), zum Schluss ein Freuden-Boing
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 420, life: 900, from: { bone: 'body', at: [1.25, 12.25, 0.5] }, rise: 3.4, sway: 0.5, size: 1.55 },
+      { at: 740, life: 900, from: { bone: 'body', at: [-2, 11.5, 0.5] }, rise: 3.8, sway: 0.6, size: 1.3, phase: 0.35 },
+      { at: 1060, life: 880, from: { bone: 'body', at: [2.75, 11, 0.5] }, rise: 3.2, sway: 0.45, size: 1.4, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 280, 1760, 1950, 2180],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const lean = curve(t, [[0, 0], [280, 1], [1700, 1], [1850, 0], [PET, 0]])
+      const rub = lean * Math.sin((TAU * (t - 280)) / 1000)
+      const b = boingAt(t, 1760, 420)
+      return {
+        roll: { r: [-7 * lean, 8 * rub, 11 * lean + 5 * rub] },
+        body: { s: squash(b.k - 0.05 * lean + 0.018 * lean * wave(t, 140)) },
+        foot_l: { r: [0, 0, 8 * b.up] },
+        foot_r: { r: [0, 0, -8 * b.up] },
+        sprout: { r: [-16 * lean - 60 * b.k, 0, 12 * rub] },
+        leaf_l: { r: [0, 0, 16 * lean * wave(t, 320) + 18 * b.up] },
+        leaf_r: { r: [0, 0, -16 * lean * wave(t, 320, 0.3) - 18 * b.up] },
+        ...face({ lid: 1 - 0.94 * curve(t, [[0, 0], [200, 1], [1950, 1], [2150, 0], [PET, 0]]), smile: [1 + 0.25 * lean, 1 + 0.3 * lean], open: b.up > 0.35 ? 1 : 0 }),
+      }
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Blick nach oben, dreimal Maul auf und mampfen (Krümel), dann zufrieden kauen und ein kleines Boing
+  const EAT = 2600
+  const BITES = [650, 1150, 1650]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 20, life: 420, from: { bone: 'body', at: [0, 3.5, 4.5] }, fall: 3.2, vel: [(i - 1) * 0.8, 2.4, 2.6], size: 1.3 })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 110), 280, 2160, 2350],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [280, 1], [1850, 1], [2050, 0], [EAT, 0]])
+      let open = 0
+      let munch = 0
+      for (const b of BITES) {
+        open = Math.max(open, bump(t, b - 110, 120))
+        munch = Math.max(munch, bump(t, b + 40, 110))
+      }
+      const chew = curve(t, [[0, 0], [1750, 0], [1850, 1], [2150, 1], [2300, 0], [EAT, 0]])
+      const b = boingAt(t, 2160, 380)
+      return {
+        roll: { r: [-9 * up + 6 * munch, 0, 3 * chew * wave(t, 500)] },
+        body: { s: squash(b.k - 0.14 * munch + 0.06 * open - 0.05 * chew * Math.abs(wave(t, 300))) },
+        foot_l: { r: [0, 0, 6 * b.up] },
+        foot_r: { r: [0, 0, -6 * b.up] },
+        sprout: { r: [10 * up - 30 * munch, 0, 8 * chew * wave(t, 500)] },
+        leaf_l: { r: [0, 0, 12 * chew * wave(t, 250)] },
+        leaf_r: { r: [0, 0, -12 * chew * wave(t, 250, 0.3)] },
+        ...face({ lid: 1 - 0.94 * chew, look: [0, 0.26 * up * (1 - chew)], open: open > 0.25 ? 1 : 0, smile: [1 + 0.25 * chew, 1 + 0.3 * chew], wide: 1 + 0.08 * open }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }

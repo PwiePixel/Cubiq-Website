@@ -1,9 +1,11 @@
 // Schneemännchen – ein kleiner Schneemann als Begleiter am Boden (slot pet) für den Winter: drei Schneekugeln
 // (gestuft gerundet), Kohleaugen, die nachts eisblau leuchten, Karottennase, Zweigarme, Mütze und Schal in den
 // Polarlicht-Farben (beide abschaltbar). Der Schnee glitzert. Hüpft statt zu laufen, gleitet wie ein Curlingstein,
-// treibt im Wasser wie eine Boje, verliert in der Luft fast die Mütze und jubelt mit beiden Zweigen.
+// treibt im Wasser wie eine Boje, verliert in der Luft fast die Mütze und jubelt mit beiden Zweigen. Gestreichelt
+// schmiegt es den Kopf in die Hand und winkt mit den Zweigen (Herzen); gefüttert macht es dreimal „o“ und mampft
+// (Krümel), dann wackelt die Karottennase vor Freude.
 
-import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, smoothstep, wave } from '../lib.mjs'
+import { ModelBuilder, TAU, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave } from '../lib.mjs'
 
 const C = {
   snow: hex('#f4f8fc'),
@@ -315,6 +317,69 @@ function build() {
         ...face({ lid: clamp(1 - 0.6 * h.air), o: h.air > 0.3 ? 1 : 0 }),
       }
     },
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head_1', hearts: 3 })
+
+  // Streicheln: Kopf in die Hand schmiegen, Augen zu, Zweige hoch und winken, Bommel hüpft, Nase wackelt
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 420, life: 900, from: { bone: 'head', at: [0.75, 15.25, 0.5] }, rise: 3.2, sway: 0.5, size: 1.55 },
+      { at: 750, life: 900, from: { bone: 'head', at: [-2.25, 14.5, 0.5] }, rise: 3.6, sway: 0.6, size: 1.3, phase: 0.35 },
+      { at: 1080, life: 880, from: { bone: 'head', at: [2.5, 14.25, 0.5] }, rise: 3, sway: 0.45, size: 1.4, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 300, 1750, 2050],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const lean = curve(t, [[0, 0], [300, 1], [1750, 1], [2050, 0], [PET, 0]])
+      const rub = lean * Math.sin((TAU * (t - 300)) / 1000)
+      const bounce = lean * wave(t, 360)
+      return {
+        base: { s: [1 + 0.015 * bounce, 1 - 0.025 * bounce, 1 + 0.015 * bounce] },
+        mid: { r: [-4 * lean, 0, 5 * rub] },
+        head: { r: [-8 * lean, 6 * rub, 12 * rub] },
+        arm_l: { r: [0, 0, 34 * lean + 12 * lean * wave(t, 300)] },
+        arm_r: { r: [0, 0, -34 * lean - 12 * lean * wave(t, 300, 0.5)] },
+        hat: { r: [0, 0, 5 * rub] },
+        pompom: { r: [16 * bounce, 0, 10 * rub] },
+        scarf_end: { r: [6 * lean * wave(t, 300), 0, 0] },
+        ...face({ lid: 1 - 0.8 * curve(t, [[0, 0], [200, 1], [1900, 1], [2100, 0], [PET, 0]]), nose: 10 * lean * wave(t, 260) }),
+      }
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Zweige halten das Futter vor den Mund, dreimal „o“ und mampfen (Krümel), dann Zweige hoch und die Nase
+  // wackelt vor Freude
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 440, from: { bone: 'head', at: [0, 10, 2.5] }, fall: 7, vel: [(i - 1) * 0.8, 2.2, 2.4], size: 1.35 })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 80), 300, 2050, 2350],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [300, 1], [2050, 1], [2350, 0], [EAT, 0]])
+      let open = 0
+      let munch = 0
+      for (const b of BITES) {
+        open = Math.max(open, bump(t, b - 80, 120))
+        munch = Math.max(munch, bump(t, b + 50, 120))
+      }
+      const happy = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      const hold = curve(t, [[0, 0], [300, 1], [1800, 1], [1950, 0], [EAT, 0]])
+      return {
+        base: { s: [1 + 0.04 * munch, 1 - 0.07 * munch, 1 + 0.04 * munch] },
+        mid: { r: [-3 * up + 5 * munch, 0, 3 * happy * wave(t, 500)] },
+        head: { r: [-14 * up + 14 * munch, 0, 6 * happy * wave(t, 500, 0.25)] },
+        arm_l: { r: [0, -58 * hold, 22 * hold + 8 * munch + 34 * happy + 10 * happy * wave(t, 260)] },
+        arm_r: { r: [0, 58 * hold, -22 * hold - 8 * munch - 34 * happy - 10 * happy * wave(t, 260, 0.5)] },
+        pompom: { r: [-14 * munch + 10 * happy * wave(t, 300), 0, 0] },
+        ...face({ lid: 1 - 0.8 * happy, o: open > 0.2 ? 1 : 0, nose: 16 * happy * wave(t, 200) }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }

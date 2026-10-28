@@ -2,9 +2,10 @@
 // Latz, Schnauze und Schwanzspitze, schwarze Söckchen und Ohrspitzen, bernsteinfarbene Augen. Kleiner Dieb: setzt sich
 // im Stand, gähnt und putzt sich, trabt, galoppiert beim schnellen Hinterherkommen, paddelt im Wasser, pirscht sich
 // geduckt an, springt mit dem Mäusesprung auf Beute (schnappt sich eine Beere und flitzt damit davon) und macht Männchen,
-// wenn man ihn ansieht.
+// wenn man ihn ansieht. Gestreichelt setzt er sich, schmiegt den Kopf in die Hand und wedelt (Herzen steigen auf);
+// gefüttert schaut er hoch, schnappt dreimal zu (Krümel fallen) und kaut zufrieden.
 
-import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, smoothstep, wave } from '../lib.mjs'
+import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave } from '../lib.mjs'
 
 const C = {
   fur: hex('#e2702c'),
@@ -405,6 +406,63 @@ function build() {
       tail_tip: { r: [0, 18 * wave(t, 300, 0.2), 0] },
       ...face({ jaw: 16 + 6 * wave(t, 600), ears: [-6, 0, 0] }),
     }), { lift: (t) => 0.25 * Math.abs(wave(t, 1200)) }),
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head', hearts: 3 })
+  const above = (x, y) => ({ bone: 'head', at: [x, y, 4] })
+
+  // Streicheln: hinsetzen, Kopf in die Hand schmiegen, Augen zu, Ohren zurück, Schwanz fegt über den Boden
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 430, life: 900, from: above(0.5, 11.25), rise: 3.2, sway: 0.45, size: 1.15 },
+      { at: 760, life: 880, from: above(-1.75, 10.75), rise: 3.5, sway: 0.55, size: 0.95, phase: 0.35 },
+      { at: 1090, life: 860, from: above(1.75, 10.5), rise: 3, sway: 0.4, size: 1.05, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 380, 1700, 2100],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const k = curve(t, [[0, 0], [380, 1], [1700, 1], [2100, 0], [PET, 0]])
+      const happy = curve(t, [[0, 0], [300, 1], [1800, 1], [2050, 0], [PET, 0]])
+      const rub = happy * Math.sin((Math.PI * 2 * (t - 300)) / 900)
+      return merge(sit(k), {
+        head: { r: [-12 * happy, 10 * rub, 16 * rub] },
+        tail: { r: [0, 30 * k * wave(t, 420), 0] },
+        tail_tip: { r: [0, 18 * k * wave(t, 420, 0.2), 0] },
+        ...face({ lid: 1 - 0.88 * happy, jaw: 5 * happy, ears: [-26 * happy, 8 * happy, 0] }),
+      })
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Kopf hoch zur Hand, dreimal zuschnappen (Krümel fallen aus dem Maul), dann zufrieden kauen und wedeln
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 440, from: { bone: 'head', at: [0, 6.25, 7.5] }, fall: 4.6, vel: [(i - 1) * 0.7, 2.2, 2.4] })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 90), 300, 2150, 2450],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [300, 1], [2150, 1], [2450, 0], [EAT, 0]])
+      let lunge = 0
+      let open = 0
+      for (const b of BITES) {
+        lunge = Math.max(lunge, bump(t, b, 150))
+        open = Math.max(open, bump(t, b - 70, 90))
+      }
+      const chew = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      return {
+        body: { r: [-5 * up, 0, 2 * chew * wave(t, 600)] },
+        head: { r: [-26 * up + 14 * lunge, 0, 7 * chew * wave(t, 600, 0.25)], p: [0, 0, 0.4 * lunge] },
+        leg_fl: { r: [5 * up, 0, 0] },
+        leg_fr: { r: [5 * up, 0, 0] },
+        tail: { r: [8 * up, 26 * up * wave(t, 480), 0] },
+        tail_tip: { r: [0, 16 * up * wave(t, 480, 0.2), 0] },
+        ...face({ lid: 1 - 0.85 * chew, jaw: 34 * open + 12 * chew * Math.abs(wave(t, 220)), ears: [12 * up - 16 * chew, 0, 0] }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }

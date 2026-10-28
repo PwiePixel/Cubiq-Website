@@ -1,9 +1,10 @@
 // Watschelpinguin – ein rundlicher Pinguin als Begleiter am Boden (slot pet), eigenes Design: schwarzer Frack mit
 // weißem Bauch und Gesicht, rosa Bäckchen, wippendes Federbüschel, Schnabel, der sich öffnet, und ein rot-weißer
 // Strickschal (abschaltbar). Watschelt mit Hüftschwung, rutscht auf dem Bauch, paddelt an der Oberfläche, flattert
-// in der Luft, schleicht auf Zehenspitzen und jubelt mit beiden Flossen.
+// in der Luft, schleicht auf Zehenspitzen und jubelt mit beiden Flossen. Gestreichelt schmiegt er den Kopf in die Hand
+// und flattert vor Freude (Herzen); gefüttert schnappt er dreimal mit dem Schnabel zu (Krümel) und wackelt zufrieden.
 
-import { ModelBuilder, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, smoothstep, wave } from '../lib.mjs'
+import { ModelBuilder, TAU, blink, bump, cell, clamp, curve, ell, hash, hex, mix, mul, petFx, smoothstep, wave } from '../lib.mjs'
 
 const C = {
   black: hex('#191d29'),
@@ -358,6 +359,69 @@ function build() {
         ...face({ lid: 0.08, open: 24 }),
       }
     },
+  })
+
+  // ---------------------------------------------------------- Aktionen: Herzen und Krümel stecken in Ruhe im Kopf
+  const fx = petFx(m, { hide: 'head', hearts: 3 })
+
+  // Streicheln: Kopf in die Hand schmiegen, Augen zu, Flossen flattern, Füße trippeln
+  const PET = 2200
+  const petPlan = {
+    hearts: [
+      { at: 420, life: 900, from: { bone: 'head', at: [0.75, 14.25, 0.5] }, rise: 3.4, sway: 0.5, size: 1.6 },
+      { at: 750, life: 900, from: { bone: 'head', at: [-2.25, 13.75, 0.5] }, rise: 3.8, sway: 0.6, size: 1.35, phase: 0.35 },
+      { at: 1080, life: 880, from: { bone: 'head', at: [2.75, 13.25, 0.5] }, rise: 3.2, sway: 0.45, size: 1.45, phase: 0.7 },
+    ],
+  }
+  m.action('pet', PET, {
+    events: [...fx.events(PET, petPlan), 300, 1750, 2050],
+    pose: fx.pose(PET, m.grounded((t) => {
+      const lean = curve(t, [[0, 0], [300, 1], [1750, 1], [2050, 0], [PET, 0]])
+      const rub = lean * Math.sin((TAU * (t - 300)) / 1000)
+      const flap = lean * Math.abs(wave(t, 320))
+      const tap = lean * wave(t, 440)
+      return {
+        body: { r: [-4 * lean, 0, 4 * rub], s: [1, 1 + 0.02 * lean * wave(t, 220), 1] },
+        head: { r: [-10 * lean, 6 * rub, 14 * rub] },
+        flipper_l: { r: [0, 0, 16 * lean + 28 * flap] },
+        flipper_r: { r: [0, 0, -16 * lean - 28 * flap] },
+        foot_l: { p: [0, 0.3 * Math.max(0, tap), 0] },
+        foot_r: { p: [0, 0.3 * Math.max(0, -tap), 0] },
+        tuft: { r: [10 * lean * wave(t, 320), 0, 8 * rub] },
+        scarf_end: { r: [6 * lean * wave(t, 320, 0.2), 0, 4 * rub] },
+        ...face({ lid: 1 - 0.9 * curve(t, [[0, 0], [200, 1], [1900, 1], [2100, 0], [PET, 0]]), open: 10 * lean }),
+      }
+    }, { skip: fx.skip }), petPlan),
+  })
+
+  // Füttern: Schnabel hoch, dreimal zuschnappen und schlucken (Krümel), dann flattern und zufrieden wackeln
+  const EAT = 2600
+  const BITES = [700, 1200, 1700]
+  const eatPlan = {
+    crumbs: BITES.map((at, i) => ({ at: at + 30, life: 440, from: { bone: 'head', at: [0, 9.25, 4.125] }, fall: 6.5, vel: [(i - 1) * 0.8, 2.2, 2.4], size: 1.35 })),
+  }
+  m.action('eat', EAT, {
+    events: [...fx.events(EAT, eatPlan), ...BITES, ...BITES.map((b) => b - 80), 300, 2050, 2350],
+    pose: fx.pose(EAT, m.grounded((t) => {
+      const up = curve(t, [[0, 0], [300, 1], [2050, 1], [2350, 0], [EAT, 0]])
+      let open = 0
+      let gulp = 0
+      for (const b of BITES) {
+        open = Math.max(open, bump(t, b - 80, 110))
+        gulp = Math.max(gulp, bump(t, b + 60, 120))
+      }
+      const happy = curve(t, [[0, 0], [1850, 0], [1950, 1], [2250, 1], [2400, 0], [EAT, 0]])
+      const flap = happy * Math.abs(wave(t, 260))
+      return {
+        body: { r: [-5 * up, 0, 3 * happy * wave(t, 500)], s: [1, 1 + 0.04 * gulp, 1] },
+        head: { r: [-24 * up + 12 * gulp, 0, 8 * happy * wave(t, 500, 0.25)] },
+        flipper_l: { r: [0, 0, 10 * up + 40 * flap] },
+        flipper_r: { r: [0, 0, -10 * up - 40 * flap] },
+        tuft: { r: [-10 * gulp + 8 * happy * wave(t, 300), 0, 0] },
+        scarf_end: { r: [-6 * up, 0, 4 * happy * wave(t, 300)] },
+        ...face({ lid: 1 - 0.9 * happy, open: 30 * open + 6 * happy * Math.abs(wave(t, 200)) }),
+      }
+    }, { skip: fx.skip }), eatPlan),
   })
   return m
 }
