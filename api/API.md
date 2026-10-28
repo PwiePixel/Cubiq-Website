@@ -1405,8 +1405,9 @@ A **format-2** CosmeticView has `template: null`, `emissive: false` and these ex
 | `firefly` | Glühwürmchen | **format 2** (**pet**, hovers) | free | glow 12 × 140 ms, emissive lantern + halos; idle/walk/slide/swim/air/sneak/handsup |
 | `aurora_wings` | Polarlichtflügel | **format 2** (wings) | free | glow 12 × 160 ms, translucent curtains, halos; idle/air/sneak |
 | `shooting_star` | Sternschnuppe | **format 2** (**companion**) | free | glow 12 × 150 ms, halos, orbit animation |
+| `mini_cubi` | Mini-Cubi | **format 2** (**companion**) | free | glow 12 × 150 ms, orbit with a spinning sprout propeller and a flip |
 
-The last eight are **built as code** instead of in Cubiq Studio: `node api/scripts/generate-cosmetics-v2.mjs [--only <id,…>]
+The last nine are **built as code** instead of in Cubiq Studio: `node api/scripts/generate-cosmetics-v2.mjs [--only <id,…>]
 [--check]` writes model, texture and glow strip to `assets/cosmetics/v2/` and their entries to the end of `catalog.json`
 (the items live in `api/scripts/cosmetics-v2/items/`, the toolkit in `lib.mjs`); `node api/scripts/render-cosmetic-cards.mjs
 [--only <id,…>] [--review <dir>]` renders the cards with the website renderer in headless Chromium (needs Playwright).

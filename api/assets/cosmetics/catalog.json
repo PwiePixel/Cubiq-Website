@@ -165,5 +165,14 @@
     "frames": 1,
     "glowFrames": 12,
     "glowFrameTimeMs": 150
+  },
+  {
+    "id": "mini_cubi",
+    "name": "Mini-Cubi",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150
   }
 ]
