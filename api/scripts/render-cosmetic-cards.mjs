@@ -146,7 +146,8 @@ async function main() {
         continue
       }
       for (const night of [false, true]) {
-        const url = await page.evaluate(([i, n]) => window.card(i, n), [id, night])
+        const opts = ITEMS.find((it) => it.id === id)?.card ?? {}
+        const url = await page.evaluate(([i, n, o]) => window.card(i, n, o), [id, night, opts])
         const file = join(V2, `${id}-card${night ? '-night' : ''}.png`)
         writeFileSync(file, downscale(decode(url), 2))
         console.log(`${id}: ${file}`)

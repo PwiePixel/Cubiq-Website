@@ -267,7 +267,7 @@ function build() {
       }
       const wig = bump(t, 12800, 450) * wave(t, 300)
       return {
-        hop: { p: [0, y, 0], r: [0, 0, 6 * wig] },
+        hop: { p: [0, y + 0.45 * Math.abs(wig), 0], r: [0, 0, 6 * wig] },
         body: { s: squash(k) },
         sprout: { r: [-30 * k, 0, 0] },
       }
@@ -302,13 +302,16 @@ function build() {
     pose: (t) => {
       const a = (720 * t) / 960
       const r = (a * Math.PI) / 180
-      const lift = 4 * (Math.abs(Math.cos(r)) + Math.abs(Math.sin(r))) - 5
+      // Würfel bleibt auf der Kante; zeigt das Gesicht nach unten, heben Augen und Mund ihn ein Stück an
+      const lift = 4 * (Math.abs(Math.cos(r)) + Math.abs(Math.sin(r))) - 5 + 0.5 * Math.max(0, Math.sin(r)) ** 6
       const spin = (TAU * t) / 480
+      // Pflänzchen einziehen, sobald es beim Rollen nach unten zeigt (sonst steckt es im Boden)
+      const tuck = 0.05 + 0.95 * smoothstep((Math.cos(r) + 0.2) / 1.2)
       return {
         roll: { p: [0, lift, 0], r: [a, 0, 0] },
         foot_l: { p: [0, 1.5, 0], s: [0.3, 0.3, 0.3] },
         foot_r: { p: [0, 1.5, 0], s: [0.3, 0.3, 0.3] },
-        sprout: { r: [-28, 0, 0] },
+        sprout: { r: [-28, 0, 0], s: [tuck, tuck, tuck] },
         ...face({ look: [0.22 * Math.cos(spin), 0.15 + 0.15 * Math.sin(spin)], open: 1, wide: 1.08 }),
       }
     },
@@ -350,7 +353,7 @@ function build() {
       const dart = curve(t % 2400, [[0, -0.3], [500, -0.3], [700, 0.3], [1700, 0.3], [1900, -0.3], [2400, -0.3]])
       return {
         body: { s: [1.1, 0.78, 1.1] },
-        hop: { r: [0, 0, 5 * wave(t, 1200)] },
+        hop: { p: [0, 0.36 * Math.abs(wave(t, 1200)), 0], r: [0, 0, 5 * wave(t, 1200)] },
         foot_l: { p: [0, 0.4 * Math.max(0, wave(t, 1200)), 0.3 * wave(t, 1200)] },
         foot_r: { p: [0, 0.4 * Math.max(0, -wave(t, 1200)), -0.3 * wave(t, 1200)] },
         sprout: { r: [35, 0, 0] },

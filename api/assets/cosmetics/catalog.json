@@ -99,5 +99,14 @@
     "glowFrames": 12,
     "glowFrameTimeMs": 150,
     "petScale": 1
+  },
+  {
+    "id": "waddle_penguin",
+    "name": "Watschelpinguin",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 0,
+    "petScale": 1
   }
 ]
