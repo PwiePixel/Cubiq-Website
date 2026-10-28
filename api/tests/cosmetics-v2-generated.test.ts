@@ -80,6 +80,8 @@ describe('generated format-2 cosmetics', () => {
     }
   })
 
+  // Baut alle Teile neu (Texturen und Leucht-Streifen malen): allein ~2,6 s, neben anderen Test-Dateien schon > 4 s –
+  // daher mehr Zeit als die 5 s Standard, sonst bricht der Lauf je nach Last zufällig ab.
   it('match the generator byte for byte (model, texture, glow strip, catalog entry)', () => {
     const entries = new Map(catalog().map((c) => [c.id, c]))
     for (const item of ITEMS) {
@@ -89,7 +91,7 @@ describe('generated format-2 cosmetics', () => {
       if (out.glow) expect(out.glow.equals(readFileSync(join(V2, `${item.id}-glow.png`))), `${item.id}-glow.png`).toBe(true)
       expect(entries.get(item.id)).toEqual(catalogEntry(item, out.model))
     }
-  })
+  }, 30_000)
 
   it('loop seamlessly and stay within the key limits', () => {
     for (const { id } of ITEMS) {

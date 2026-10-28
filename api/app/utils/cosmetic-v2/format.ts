@@ -491,14 +491,34 @@ export function samplePoses(model: Pick<CosmeticModel, 'animations'>, timeMs: nu
 
 const REST_POSE: Pose = { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }
 
-/** Zwei Posen mischen (w = 0 → a, 1 → b), fehlende Knochen zählen als Ruhe – für die Überblendungen (250 ms). */
+/**
+ * Effekt-Knochen (Herzen, Krümel der Aktionen, API.md §11.9): ihre id beginnt mit `fx_`. In Ruhe stecken sie unsichtbar
+ * in einem deckenden Würfel; Überblendungen fassen sie nie an (siehe {@link blendPoses}).
+ */
+export const isFxBone = (id: string): boolean => id.startsWith('fx_')
+
+/** Drehung auf dem kürzesten Weg von `from` nach `to` (Grad), Anteil w: d = ((to − from) mod 360 + 540) mod 360 − 180. */
+const turn = (from: number, to: number, w: number): number => from + (((((to - from) % 360) + 540) % 360) - 180) * w
+
+/**
+ * Zwei Posen überblenden (w = 0 → a, 1 → b), fehlende Knochen zählen als Ruhe – nur für die Überblendungen (250 ms).
+ * Gemeinsame Regeln mit Launcher und Cubiq Client (API.md §11.9, Wiedergabe): Drehungen nehmen je Achse den kürzesten
+ * Weg (nach einer Rolle kein Rückwärts-Dreher; die Endpose ist dieselbe Drehung wie b), Position linear, Skalierung
+ * linear. Effekt-Knochen (`fx_*`) werden nie übergeblendet: sie stehen sofort in b (Ruhe, wenn b sie nicht bewegt) –
+ * ein unterbrochenes Herz verschwindet im Versteck, statt in voller Größe zurückzugleiten.
+ */
 export function blendPoses(a: ReadonlyMap<string, Pose>, b: ReadonlyMap<string, Pose>, w: number): Map<string, Pose> {
   const out = new Map<string, Pose>()
   const mix = (x: Vec3, y: Vec3): Vec3 => [x[0] + (y[0] - x[0]) * w, x[1] + (y[1] - x[1]) * w, x[2] + (y[2] - x[2]) * w]
   for (const id of new Set([...a.keys(), ...b.keys()])) {
-    const pa = a.get(id) ?? REST_POSE
     const pb = b.get(id) ?? REST_POSE
-    out.set(id, { position: mix(pa.position, pb.position), rotation: mix(pa.rotation, pb.rotation), scale: mix(pa.scale, pb.scale) })
+    if (isFxBone(id)) {
+      out.set(id, { position: [...pb.position], rotation: [...pb.rotation], scale: [...pb.scale] })
+      continue
+    }
+    const pa = a.get(id) ?? REST_POSE
+    const rotation: Vec3 = [turn(pa.rotation[0], pb.rotation[0], w), turn(pa.rotation[1], pb.rotation[1], w), turn(pa.rotation[2], pb.rotation[2], w)]
+    out.set(id, { position: mix(pa.position, pb.position), rotation, scale: mix(pa.scale, pb.scale) })
   }
   return out
 }

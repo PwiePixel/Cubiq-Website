@@ -1,16 +1,27 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import * as THREE from 'three'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ACTION_DRIVERS,
   actionLength,
   actionOf,
+  blendPoses,
   boneLocal,
+  boneMatrices,
+  invertAffine,
+  isFxBone,
   sampleAction,
   samplePoses,
+  transformPoint,
   validateModel,
   type Action,
   type CosmeticModel,
+  type Cube,
+  type Driver,
+  type Mat4,
   type Pose,
+  type Vec3,
 } from '../app/utils/cosmetic-v2/format'
 import { createCosmetic, mountOnSkinViewer, type LoadedCosmetic } from '../app/utils/cosmetic-v2/view'
 import { ANIM_DRIVERS, ModelBuilder } from '../scripts/cosmetics-v2/lib.mjs'
@@ -135,6 +146,44 @@ describe('actions: sampling', () => {
   })
 })
 
+describe('fades: blendPoses (shared rules with the launcher and the Cubiq Client)', () => {
+  const P = (rotation: [number, number, number], position: [number, number, number] = [0, 0, 0], scale: [number, number, number] = [1, 1, 1]): Pose => ({ position, rotation, scale })
+
+  it('rotations take the shortest way per axis; positions and scales stay linear', () => {
+    const a = new Map([['roll', P([450, 350, -170], [0, 2, 0], [1, 1, 1])]])
+    const b = new Map([['roll', P([0, 10, 170], [0, 0, 4], [2, 1, 0.5])]])
+    const half = blendPoses(a, b, 0.5).get('roll')!
+    // 450 → 0: 90° zurück (nicht 450°), 350 → 10: über 360 (20°), −170 → 170: über −180 (20°)
+    expect(half.rotation).toEqual([405, 360, -180])
+    expect(half.position).toEqual([0, 1, 2])
+    expect(half.scale).toEqual([1.5, 1, 0.75])
+    expect(blendPoses(a, b, 0).get('roll')).toEqual(a.get('roll'))
+    // am Ende dieselbe Drehung wie b (Winkel bis auf volle Umdrehungen gleich)
+    const end = blendPoses(a, b, 1).get('roll')!
+    end.rotation.forEach((v, i) => expect(Math.abs(((v - b.get('roll')!.rotation[i]!) % 360 + 360) % 360)).toBeCloseTo(0, 9))
+    expect(end.position).toEqual([0, 0, 4])
+    // genau die gemeinsame Formel: d = ((to − from) % 360 + 540) % 360 − 180
+    for (const [from, to] of [[0, 180], [0, -180], [10, 20], [-370, 5], [720.5, -0.25], [1e6, 3]] as const) {
+      const d = ((((to - from) % 360) + 540) % 360) - 180
+      expect(blendPoses(new Map([['x', P([from, 0, 0])]]), new Map([['x', P([to, 0, 0])]]), 0.25).get('x')!.rotation[0]).toBe(from + d * 0.25)
+    }
+  })
+
+  it('effect bones (fx_*) are never blended: they take the target pose at once, rest if the target leaves them alone', () => {
+    const flying = P([0, 90, 0], [0, 6, 0], [1.4, 1.4, 1.4])
+    const a = new Map([['fx_heart_0', flying], ['fx_crumbs', flying], ['head', P([0, 0, 40])]])
+    const b = new Map([['fx_crumbs', P([0, 0, 0], [0, 1, 0], [0.5, 0.5, 0.5])], ['head', P([0, 0, 0])]])
+    for (const w of [0, 0.01, 0.5, 0.99]) {
+      const out = blendPoses(a, b, w)
+      expect(out.get('fx_heart_0') ?? null, `w ${w}`).toEqual(P([0, 0, 0]))
+      expect(out.get('fx_crumbs'), `w ${w}`).toEqual(b.get('fx_crumbs'))
+      expect(out.get('head')!.rotation[2]).toBeCloseTo(40 * (1 - w), 9)
+    }
+    expect(isFxBone('fx_heart_0')).toBe(true)
+    expect(isFxBone('fox')).toBe(false)
+  })
+})
+
 describe('actions: renderer (three.js in node)', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -230,6 +279,120 @@ describe('actions: renderer (three.js in node)', () => {
     for (let i = 0; i < 25; i++) tick(40) // 1 s
     expect(head.matrix.elements[13]).toBeCloseTo(1, 1)
     mounted.dispose()
+  })
+})
+
+describe('fades with the real companions (three.js in node)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const V2 = join(__dirname, '..', 'assets', 'cosmetics', 'v2')
+  const model = (id: string): CosmeticModel => JSON.parse(readFileSync(join(V2, `${id}.json`), 'utf8'))
+  const img = { width: 16, height: 16 } as unknown as HTMLCanvasElement
+  /** Minimaler DOM-Ersatz für die Hof-Textur (Leinwand), wie in cosmetic-v2-format.test.ts. */
+  function stubCanvas() {
+    vi.stubGlobal('ImageData', class {
+      constructor(public data: Uint8ClampedArray, public width: number, public height: number) {}
+    })
+    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => ({ putImageData: () => {} }) }) })
+  }
+  const corners = (c: Pick<Cube, 'from' | 'to'>): Vec3[] =>
+    [0, 1, 2, 3, 4, 5, 6, 7].map((i) => [(i & 1 ? c.to : c.from)[0], (i & 2 ? c.to : c.from)[1], (i & 4 ? c.to : c.from)[2]])
+  const inside = (c: Pick<Cube, 'from' | 'to'>, p: Vec3) => [0, 1, 2].every((a) => p[a]! >= c.from[a] - 1e-6 && p[a]! <= c.to[a] + 1e-6)
+  type Matrices = (bone: string) => Mat4
+  /** Versteck je Effekt-Würfel: der Würfel des Eltern-Knochens, der ihn in Ruhe umschließt. */
+  function hostsOf(m: CosmeticModel): Map<Cube, Cube> {
+    const W = boneMatrices(m, null)
+    const out = new Map<Cube, Cube>()
+    for (const c of m.cubes.filter((x) => isFxBone(x.bone))) {
+      const parent = m.bones.find((b) => b.id === c.bone)!.parent!
+      const back = invertAffine(W.get(parent)!)
+      const host = m.cubes.find((h) => h.bone === parent && corners(c).every((p) => inside(h, transformPoint(back, transformPoint(W.get(c.bone)!, p)))))
+      expect(host, `${m.id} ${c.id}`).toBeDefined()
+      out.set(c, host!)
+    }
+    return out
+  }
+  /** Wie viele Effekt-Würfel ragen aus ihrem Versteck (im Raum des Verstecks gemessen)? */
+  const outside = (hosts: Map<Cube, Cube>, W: Matrices) => {
+    const back = new Map<string, Mat4>()
+    return [...hosts].filter(([c, h]) => {
+      if (!back.has(h.bone)) back.set(h.bone, invertAffine(W(h.bone)))
+      const M = W(c.bone)
+      return !corners(c).every((p) => inside(h, transformPoint(back.get(h.bone)!, transformPoint(M, p))))
+    }).length
+  }
+  const fromPoses = (m: CosmeticModel, poses: Map<string, Pose>): Matrices => {
+    const W = boneMatrices(m, poses)
+    return (b) => W.get(b)!
+  }
+  const fromScene = (cos: ReturnType<typeof createCosmetic>): Matrices => (b) => cos.root.getObjectByName(b)!.matrixWorld.elements
+  const round = (e: readonly number[]) => e.map((v) => Math.round(v * 1e6) / 1e6 + 0)
+
+  type Interrupt = (localMs: number) => { action?: { driver: 'pet' | 'eat', localMs: number }, drivers?: Driver[] }
+  const INTERRUPTS: [string, Interrupt][] = [
+    ['Feed', (localMs) => ({ action: { driver: 'eat', localMs } })],
+    ['Pet again', (localMs) => ({ action: { driver: 'pet', localMs } })],
+    ['the Walk button', () => ({ drivers: ['walk'] })],
+    ['the end of the action', () => ({})],
+  ]
+
+  it.each(['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly'])('%s: interrupting Pet mid heart-flight hides the hearts from the first faded frame on', (id) => {
+    stubCanvas()
+    const m = model(id)
+    const hosts = hostsOf(m)
+    const fxBones = m.bones.filter((b) => isFxBone(b.id))
+    // mitten im Herzflug: der Zeitpunkt mit den meisten Herz-Würfeln draußen
+    let mid = 0
+    let most = 0
+    for (let t = 0; t <= actionLength(m, 'pet'); t += 16) {
+      const n = outside(hosts, fromPoses(m, sampleAction(m, 'pet', t)))
+      if (n > most) [most, mid] = [n, t]
+    }
+    expect(most, id).toBeGreaterThan(0)
+    for (const [name, interrupt] of INTERRUPTS) {
+      const cos = createCosmetic(THREE, m, { texture: img })
+      const clock = 1_759_152_000_000
+      for (let t = 0; t <= mid; t += 16) cos.update(clock + t, { fadeClock: clock + t, action: { driver: 'pet', localMs: t } })
+      expect(outside(hosts, fromScene(cos)), `${id} / ${name}: hearts in flight`).toBeGreaterThan(0)
+      for (let dt = 16; dt <= 256; dt += 16) {
+        const now = clock + mid + dt
+        const opts = interrupt(dt - 16)
+        cos.update(now, { fadeClock: now, ...opts })
+        const target = opts.action ? sampleAction(m, opts.action.driver, opts.action.localMs) : samplePoses(m, now, opts.drivers)
+        // Effekt-Knochen werden nicht übergeblendet: sie stehen genau in der Zielpose …
+        for (const b of fxBones) expect(round(cos.root.getObjectByName(b.id)!.matrix.elements), `${id} / ${name} ${b.id} +${dt} ms`).toEqual(round(boneLocal(b, target.get(b.id))))
+        // … also im Versteck, solange das Ziel sie dort lässt – das erste übergeblendete Bild immer
+        if (dt === 16 || outside(hosts, fromPoses(m, target)) === 0) expect(outside(hosts, fromScene(cos)), `${id} / ${name} +${dt} ms`).toBe(0)
+        // der Rest blendet weiter über (das erste Bild ist noch fast das vorige)
+        if (dt === 16) expect(m.bones.some((b) => !isFxBone(b.id) && round(cos.root.getObjectByName(b.id)!.matrix.elements).join() !== round(boneLocal(b, target.get(b.id))).join()), `${id} / ${name}`).toBe(true)
+      }
+      cos.dispose()
+    }
+  })
+
+  it('cubi: from rolling (slide) into Pet the roll turns the short way instead of spinning back', () => {
+    stubCanvas()
+    const m = model('cubi')
+    const cos = createCosmetic(THREE, m, { texture: img })
+    const roll = cos.root.getObjectByName('roll')!
+    const q = () => new THREE.Quaternion().setFromRotationMatrix(roll.matrix)
+    // Rutschen zur Wanduhr bis 600 ms in die Schleife: Rolle um x = 450° (eine Umdrehung + 90°)
+    const clock = 960 * 1_000_000
+    for (let t = 0; t <= 600; t += 16) cos.update(clock + t, { fadeClock: clock + t, drivers: ['slide'] })
+    expect(samplePoses(m, clock + 600, ['slide']).get('roll')!.rotation[0]).toBeCloseTo(450, 6)
+    // Streicheln beginnt: der zurückgelegte Drehweg der Rolle über die Überblendung (vorher 450°, jetzt ≈ 90°)
+    let path = 0
+    let last = q()
+    for (let dt = 16; dt <= 320; dt += 16) {
+      cos.update(clock + 600 + dt, { fadeClock: clock + 600 + dt, action: { driver: 'pet', localMs: dt - 16 } })
+      const now = q()
+      path += THREE.MathUtils.radToDeg(last.angleTo(now))
+      last = now
+    }
+    expect(path).toBeGreaterThan(80)
+    expect(path).toBeLessThan(110)
+    // danach genau die Aktion (gleiche Drehung wie das Ziel)
+    expect(round(roll.matrix.elements)).toEqual(round(boneLocal(m.bones.find((b) => b.id === 'roll')!, sampleAction(m, 'pet', 304).get('roll'))))
+    cos.dispose()
   })
 })
 

@@ -62,8 +62,9 @@ export interface CosmeticUpdateOptions {
   action?: { driver: ActionDriver, localMs: number } | null
   /**
    * Uhr für Überblendungen (ms, monoton, z. B. `Date.now()`). Mit ihr blenden Wechsel von Zustand oder Aktion – und
-   * eine neu gestartete Aktion – über 250 ms vom zuletzt gezeigten Bild aus über. Ohne sie springt die Pose wie bisher
-   * (Standbilder, Karten, Werkbank-Vergleich).
+   * eine neu gestartete Aktion – über 250 ms vom zuletzt gezeigten Bild aus über ({@link blendPoses}: Drehungen auf dem
+   * kürzesten Weg, Effekt-Knochen `fx_*` sofort in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder,
+   * Karten, Werkbank-Vergleich).
    */
   fadeClock?: number
 }
@@ -281,7 +282,8 @@ export function createCosmetic(THREE: Three, model: CosmeticModel, images: Cosme
   let glowOn = true
 
   // Überblenden (nur mit fadeClock): beim Wechsel wird das zuletzt gezeigte Bild eingefroren und in 250 ms (smoothstep)
-  // zur neuen Pose geblendet – jede Seite also auf ihrer eigenen Zeitbasis (wie im Launcher).
+  // zur neuen Pose geblendet – jede Seite also auf ihrer eigenen Zeitbasis (wie im Launcher). blendPoses lässt
+  // Effekt-Knochen dabei aus: Herzen/Krümel einer unterbrochenen Aktion verschwinden sofort im Versteck.
   let mixKey: string | null = null
   let mixSince = 0
   let mixSnap: Map<string, Pose> | null = null
