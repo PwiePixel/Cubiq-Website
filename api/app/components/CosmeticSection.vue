@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { Driver } from '~/utils/cosmetic-v2/format'
+import { ACTION_DRIVERS, type ActionDriver, type Driver } from '~/utils/cosmetic-v2/format'
 // Ein Abschnitt der Kosmetik-Seite für Teile im Format v2 (Hüte, Begleiter am Kopf, Flügel, Begleiter am Boden):
 // Raster mit Studio-Karten + große 3D-Vorschau (HatViewer). Klick wählt aus, Überfahren (nur mit Maus) zeigt kurz in
 // der Vorschau. Tag/Nacht und Animation teilen sich alle Abschnitte (v-model). Abschaltbare Teile (Optionen, z. B. Bart)
-// lassen sich in der Vorschau umschalten – nur Anzeige, gespeichert wird im Launcher.
+// lassen sich in der Vorschau umschalten – nur Anzeige, gespeichert wird im Launcher. Begleiter am Boden lassen sich
+// zusätzlich streicheln und füttern (im Spiel: Rechtsklick auf den eigenen Begleiter).
 const props = defineProps<{
   id: string
   items: SiteHat[]
@@ -60,8 +61,45 @@ const STATE_GROUP: Record<string, string> = { en: 'Animation state', de: 'Zustan
 const stateName = (s: string) => STATE_NAMES[lang.value]?.[s] ?? STATE_NAMES.en![s] ?? s
 const petState = ref<string>('idle')
 const shownStates = computed(() => shown.value?.states ?? [])
-watch(() => shown.value?.id, () => (petState.value = 'idle'))
 const viewerState = computed(() => (shownStates.value.includes(petState.value) && petState.value !== 'idle' ? petState.value as Driver : null))
+/** `grab` läuft im Spiel einmal 2,4 s ab Zustandsbeginn (Cubiq Client: 48 Ticks) – die Vorschau danach zurück zu idle. */
+const GRAB_MS = 2400
+let grabTimer: ReturnType<typeof setTimeout> | null = null
+function stopGrab() {
+  if (grabTimer) clearTimeout(grabTimer)
+  grabTimer = null
+}
+function chooseState(st: string) {
+  stopGrab()
+  petAction.value = null
+  petState.value = st
+  if (st === 'grab') {
+    grabTimer = setTimeout(() => {
+      grabTimer = null
+      petState.value = 'idle'
+    }, GRAB_MS)
+  }
+}
+
+// Aktionen: einmal abspielen (ein neuer Klick startet neu), danach weiter im gewählten Zustand.
+const ACTION_NAMES: Record<string, Record<ActionDriver, string>> = {
+  en: { pet: 'Pet', eat: 'Feed' },
+  de: { pet: 'Streicheln', eat: 'Füttern' },
+  es: { pet: 'Acariciar', eat: 'Dar de comer' },
+}
+const ACTION_GROUP: Record<string, string> = { en: 'Interact', de: 'Interagieren', es: 'Interactuar' }
+const ACTION_ICON: Record<ActionDriver, string> = { pet: 'heart', eat: 'cookie' }
+const actionName = (a: ActionDriver) => ACTION_NAMES[lang.value]?.[a] ?? ACTION_NAMES.en![a]
+const shownActions = computed(() => ACTION_DRIVERS.filter((a) => shown.value?.actions?.includes(a)))
+const petAction = shallowRef<{ driver: ActionDriver, startedAt: number } | null>(null)
+function playAction(a: ActionDriver) {
+  petAction.value = { driver: a, startedAt: Date.now() }
+}
+watch(() => shown.value?.id, () => {
+  stopGrab()
+  petState.value = 'idle'
+  petAction.value = null
+})
 
 let canHover = false
 let hoverTimer: ReturnType<typeof setTimeout> | null = null
@@ -70,6 +108,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (hoverTimer) clearTimeout(hoverTimer)
+  stopGrab()
 })
 function hover(id: string | null) {
   if (!canHover) return
@@ -120,7 +159,7 @@ function pick(h: SiteHat) {
         <div class="card overflow-hidden">
           <div class="stage relative" :class="{ 'stage-night': night }">
             <ClientOnly>
-              <HatViewer :hat="shown" :night="night" :animate="animate" :options="shownChoices" :state="viewerState" :height="400" @loading="loading = $event" />
+              <HatViewer :hat="shown" :night="night" :animate="animate" :options="shownChoices" :state="viewerState" :action="petAction" :height="400" @loading="loading = $event" />
             </ClientOnly>
             <p class="absolute top-3 left-4 text-xs tracking-[0.18em] text-base-400 uppercase">{{ m.capes.preview }}</p>
             <p class="absolute right-4 bottom-3 text-xs text-base-600">{{ m.capes.dragHint }}</p>
@@ -147,8 +186,15 @@ function pick(h: SiteHat) {
               </button>
             </div>
           </div>
-          <div v-if="shownStates.length > 1" class="flex flex-wrap gap-2 border-t border-base-800 px-5 py-3" role="group" :aria-label="STATE_GROUP[lang] ?? STATE_GROUP.en">
-            <button v-for="st in shownStates" :key="st" type="button" class="tog" :aria-pressed="petState === st" @click="petState = st">{{ stateName(st) }}</button>
+          <div v-if="shownStates.length > 1 || shownActions.length" class="flex flex-wrap items-center gap-2 border-t border-base-800 px-5 py-3">
+            <div v-if="shownStates.length > 1" class="flex flex-wrap gap-2" role="group" :aria-label="STATE_GROUP[lang] ?? STATE_GROUP.en">
+              <button v-for="st in shownStates" :key="st" type="button" class="tog" :aria-pressed="petState === st" @click="chooseState(st)">{{ stateName(st) }}</button>
+            </div>
+            <div v-if="shownActions.length" class="flex flex-wrap gap-2" role="group" :aria-label="ACTION_GROUP[lang] ?? ACTION_GROUP.en">
+              <button v-for="a in shownActions" :key="a" type="button" class="tog act" :class="`act-${a}`" @click="playAction(a)">
+                <SiteIcon :name="ACTION_ICON[a]" class="size-3.5" />{{ actionName(a) }}
+              </button>
+            </div>
           </div>
           <div v-if="shown" class="border-t border-base-800 p-5">
             <p class="display text-2xl text-base-50">{{ shown.name }}</p>
@@ -244,6 +290,21 @@ function pick(h: SiteHat) {
 .tog[aria-pressed='true'] {
   color: var(--color-primary-300);
   border-color: var(--color-primary-400);
+}
+/* Aktionen: Herz-Rosa (Streicheln) und Keks-Gold (Füttern), wie die Herzen und Krümel in der Vorschau */
+.act-pet {
+  color: #ff9fb6;
+  border-color: #5c2f42;
+}
+.act-eat {
+  color: #f2c98c;
+  border-color: #5a4426;
+}
+.act:hover {
+  background: var(--color-base-800);
+}
+.act:active {
+  transform: scale(0.96);
 }
 .opt-dot {
   width: 0.55rem;

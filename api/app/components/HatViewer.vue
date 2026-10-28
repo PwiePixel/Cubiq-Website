@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { SkinViewer } from 'skinview3d'
-import type { Driver } from '~/utils/cosmetic-v2/format'
+import type { ActionDriver, Driver } from '~/utils/cosmetic-v2/format'
 import type { LoadedCosmetic, MountedCosmetic, Three } from '~/utils/cosmetic-v2/view'
 
 // 3D-Vorschau einer Kosmetik (Format v2) an Cubi – derselbe Renderer wie die Studio-Werkbank
@@ -16,12 +16,18 @@ const props = withDefaults(defineProps<{
   options?: Record<string, boolean> | null
   /** Begleiter am Boden: gespielter Zustand (`walk`, `grab`, …), `null` = idle. */
   state?: Driver | null
+  /**
+   * Begleiter am Boden: Aktion Streicheln/Füttern ab `startedAt` (`Date.now()`) – ein neues Objekt spielt sie neu ab,
+   * auch bei ausgeschalteter Animation. Ohne passende Aktion im Modell passiert nichts.
+   */
+  action?: { driver: ActionDriver, startedAt: number } | null
 }>(), {
   night: false,
   animate: true,
   height: 400,
   options: null,
   state: null,
+  action: null,
 })
 const emit = defineEmits<{ loading: [boolean] }>()
 
@@ -71,7 +77,7 @@ async function apply() {
     const loaded = await load(hat)
     if (mine !== token || !viewer) return
     mounted?.dispose()
-    mounted = view.mountOnSkinViewer(three, viewer, loaded, { animate: props.animate, night: props.night, options: props.options, drivers: props.state ? [props.state] : null })
+    mounted = view.mountOnSkinViewer(three, viewer, loaded, { animate: props.animate, night: props.night, options: props.options, drivers: props.state ? [props.state] : null, action: props.action })
     view.frameModel(three, viewer, loaded.model, 'three', zoom())
   } catch (e) {
     console.error('cosmetic preview failed', e)
@@ -124,6 +130,7 @@ watch(() => props.night, (night) => {
 watch(() => props.animate, (animate) => mounted?.set({ animate }))
 watch(() => props.options, (options) => mounted?.set({ options }), { deep: true })
 watch(() => props.state, (state) => mounted?.set({ drivers: state ? [state] : null }))
+watch(() => props.action, (action) => mounted?.set({ action }))
 </script>
 
 <template>
