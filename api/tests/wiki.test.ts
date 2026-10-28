@@ -183,6 +183,18 @@ describe('Doku-Domain: Host-Handler', () => {
     expect(head.headers['content-length']).toBe('3')
   })
 
+  it('Dateien: viele Abrufe hintereinander – keine Antwort bleibt offen', async () => {
+    // Mit h3s sendStream blieb unter Last ab und zu eine Antwort für immer offen (Datei gesendet, Ende fehlte).
+    const within = <T,>(p: Promise<T>, ms: number, what: string) => new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${what} bleibt hängen`)), ms)
+      p.then((v) => { clearTimeout(t); resolve(v) }, (e: unknown) => { clearTimeout(t); reject(e) })
+    })
+    for (let i = 0; i < 150; i++) {
+      const r = await within(get(i % 2 ? '/llms.txt' : '/raw/en/help.md', wiki), 2000, `Abruf ${i}`)
+      expect(r.body).toBe(i % 2 ? '# Cubiq' : '# Help')
+    }
+  })
+
   it('Hilfsdateien noindex; llms.txt als Text', async () => {
     expect((await get('/raw/en/help.md', wiki)).headers['x-robots-tag']).toBe('noindex')
     const l = await get('/llms.txt', wiki)
