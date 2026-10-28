@@ -156,5 +156,14 @@
     "frames": 1,
     "glowFrames": 12,
     "glowFrameTimeMs": 160
+  },
+  {
+    "id": "shooting_star",
+    "name": "Sternschnuppe",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150
   }
 ]

@@ -6,5 +6,6 @@ import { item as axolotl } from './axolotl.mjs'
 import { item as snowman } from './snowman.mjs'
 import { item as firefly } from './firefly.mjs'
 import { item as auroraWings } from './aurora_wings.mjs'
+import { item as shootingStar } from './shooting_star.mjs'
 
-export const ITEMS = [cubi, waddlePenguin, foxKit, axolotl, snowman, firefly, auroraWings]
+export const ITEMS = [cubi, waddlePenguin, foxKit, axolotl, snowman, firefly, auroraWings, shootingStar]
