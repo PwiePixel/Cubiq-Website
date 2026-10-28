@@ -373,7 +373,8 @@ describe('event cosmetics: catalog, claim, companion', () => {
     expect(cosmeticCatalog(env.ctx, u).filter((c) => c.event).map((c) => [c.id, c.slot])).toEqual([['bat_buddy', 'companion']])
     expect(catalog(env.ctx, u).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])
     expect(publicHats(env.ctx)).toEqual([])
-    expect(publicCompanions(env.ctx).map((h) => h.id)).toEqual(['bat_buddy'])
+    // Event-Begleiter; die freien Begleiter (scripts/generate-cosmetics-v2.mjs) stehen immer in der Liste
+    expect(publicCompanions(env.ctx).filter((h) => h.event).map((h) => h.id)).toEqual(['bat_buddy'])
     expect(publicCapes(env.ctx).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])
   })
 
@@ -471,15 +472,15 @@ describe('event cosmetics: catalog, claim, companion', () => {
     const env = makeEnv()
     await seedBundled(env, { archive: true })
     expect(publicHats(env.ctx).map((h) => h.id)).not.toContain('witch_hat')
-    expect(publicCompanions(env.ctx)).toEqual([])
+    expect(publicCompanions(env.ctx).filter((h) => h.event)).toEqual([])
     expect(publicCapes(env.ctx).map((c) => c.id)).not.toContain('halloween')
     // Nur Einzelfreigabe → die anonyme Website bleibt neutral.
     const u = (await login(env, 'Steve')).user.uuid
     run(env.ctx.db, "INSERT INTO event_players (event_id, player_uuid, player_name, added_at) VALUES ('halloween', ?, 'S', 1)", u)
-    expect(publicCompanions(env.ctx)).toEqual([])
+    expect(publicCompanions(env.ctx).filter((h) => h.event)).toEqual([])
     setEventEnabled(env.ctx, ADMIN, 'halloween', true)
     expect(publicHats(env.ctx).filter((h) => h.event).map((h) => [h.id, h.slot, h.unlock])).toEqual([['witch_hat', 'hat', 'event'], ['pumpkin_head', 'hat', 'event']])
-    expect(publicCompanions(env.ctx).map((h) => [h.id, h.slot, h.unlock, h.event])).toEqual([['bat_buddy', 'companion', 'event', 'halloween']])
+    expect(publicCompanions(env.ctx).filter((h) => h.event).map((h) => [h.id, h.slot, h.unlock, h.event])).toEqual([['bat_buddy', 'companion', 'event', 'halloween']])
     expect(publicCapes(env.ctx).find((c) => c.id === 'halloween')).toMatchObject({ unlock: 'event', event: 'halloween', frames: 4, scale: 8 })
   })
 })
