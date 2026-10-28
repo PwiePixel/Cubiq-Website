@@ -11,6 +11,14 @@ import { PNG } from 'pngjs'
 /** Texel je Modell-Einheit – wie alle mitgelieferten v2-Teile (Server-Grenze 8). */
 export const SCALE = 8
 
+/**
+ * Treiber in `animations` – eingefroren auf genau die Liste, die ausgelieferte Launcher und der Cubiq Client kennen:
+ * ein anderer Treiber dort verwirft bei ihnen das ganze Modell (der Begleiter verschwindet).
+ */
+export const ANIM_DRIVERS = Object.freeze(['idle', 'walk', 'sneak', 'jump', 'air', 'slide', 'swim', 'grab', 'flee', 'handsup'])
+/** Treiber der Aktionen (eigene Liste `actions`, nur Begleiter am Boden): Streicheln, Füttern. */
+export const ACTION_DRIVERS = Object.freeze(['pet', 'eat'])
+
 // ---------------------------------------------------------------- Farben
 
 /** '#rrggbb' → [r, g, b] (0–255). */
@@ -191,6 +199,25 @@ function compose(A, B) {
 function apply(A, p) {
   return [0, 1, 2].map((r) => A.m[r] * p[0] + A.m[3 + r] * p[1] + A.m[6 + r] * p[2] + A.t[r])
 }
+/** Umkehrung einer affinen Lage { m, t } (3×3 spaltenweise, Drehung · Skalierung). */
+function invert(A) {
+  const [a, d, g, b, e, h, c, f, i] = A.m
+  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+  const m = [
+    (e * i - f * h) / det, -(d * i - f * g) / det, (d * h - e * g) / det,
+    -(b * i - c * h) / det, (a * i - c * g) / det, -(a * h - b * g) / det,
+    (b * f - c * e) / det, -(a * f - c * d) / det, (a * e - b * d) / det,
+  ]
+  const t = apply({ m, t: [0, 0, 0] }, A.t)
+  return { m, t: [-t[0], -t[1], -t[2]] }
+}
+/** Drehmatrix (3×3 spaltenweise) → Winkel [x, y, z] in Grad, Reihenfolge ZYX (wie eulerZYX in format.ts). */
+function eulerZYX3(R) {
+  const b = Math.asin(clamp(-R[2], -1, 1))
+  const [a, c] = Math.abs(R[2]) < 0.999999 ? [Math.atan2(R[5], R[8]), Math.atan2(R[1], R[0])] : [Math.atan2(-R[7], R[4]), 0]
+  return [a / DEG, b / DEG, c / DEG]
+}
+
 /** Welt-Lagen aller Knochen für eine Pose { knochen: { r, p, s } }: T(pivot + p) · R(rest + r) · S(s) · T(−pivot). */
 export function boneWorld(bones, pose) {
   const out = new Map()
@@ -224,6 +251,7 @@ export class ModelBuilder {
     this.halos = []
     this.options = []
     this.anims = []
+    this.actions = []
   }
 
   /** Knochen (Eltern vor Kindern); `pivot` im Modell-Raum, `rotation` Ruhe-Drehung in Grad (ZYX). */
@@ -307,7 +335,24 @@ export class ModelBuilder {
    */
   anim(id, driver, lengthMs, { pose, samples, events = [], loop = true, once = false, offsetMs = 0, tol = 1 } = {}) {
     if (!ID.test(id) || this.anims.some((a) => a.id === id)) throw new Error(`${this.id}: bad or duplicate animation ${id}`)
+    if (ACTION_DRIVERS.includes(driver)) throw new Error(`${this.id}/${id}: ${driver} is an action – use action(), not anim()`)
+    if (!ANIM_DRIVERS.includes(driver)) throw new Error(`${this.id}/${id}: driver ${driver} unknown to released clients`)
     this.anims.push({ id, driver, lengthMs, pose, samples, events, loop, once, offsetMs, tol })
+    return this
+  }
+
+  /**
+   * Aktion (Liste `actions`, API.md §11.9): einmalige Pose auf Anstoß – `pet` (Streicheln) oder `eat` (Füttern), id =
+   * Treiber. Läuft im Client allein, ohne Animation dazu: `pose(tMs)` beschreibt also jeden Knochen, der sich bewegen
+   * soll. Anfang und Ende müssen in Ruhe sein (wird beim Bauen geprüft) – so blenden auch Clients sauber über, die
+   * beide Seiten einer Überblendung mit derselben Zeit abtasten.
+   */
+  action(driver, lengthMs, { pose, samples = 63, events = [], tol = 1 } = {}) {
+    if (!ACTION_DRIVERS.includes(driver)) throw new Error(`${this.id}: unknown action ${driver}`)
+    if (this.actions.some((a) => a.driver === driver)) throw new Error(`${this.id}: duplicate action ${driver}`)
+    if (this.slot !== 'pet') throw new Error(`${this.id}: actions only for slot pet`)
+    if (!Number.isInteger(lengthMs) || lengthMs < 300 || lengthMs > 10000) throw new Error(`${this.id}/${driver}: lengthMs 300…10000`)
+    this.actions.push({ id: driver, driver, lengthMs, pose, samples, events, loop: false, once: true, offsetMs: 0, tol, rest: true })
     return this
   }
 
@@ -455,10 +500,218 @@ export class ModelBuilder {
         }
       }),
       animations: this.anims.map((a) => sampleAnimation(this, a)),
+      // Aktionen nur, wenn es welche gibt: Modelle ohne bleiben Byte für Byte wie bisher
+      ...(this.actions.length ? { actions: this.actions.map((a) => sampleAnimation(this, a)) } : {}),
       ...(this.halos.length ? { halos: this.halos } : {}),
       meta: { generator: 'api/scripts/generate-cosmetics-v2.mjs' },
     }
     return model
+  }
+}
+
+// ---------------------------------------------------------------- Effekte für Aktionen (Herzen, Krümel)
+
+/** So klein reist ein Effekt durch die Hülle hinaus und zurück (Skalierung 0 erlaubt das Format nicht). */
+const FX_TINY = 0.02
+/** Am Anfang/Ende der Aktion: so lange schrumpft/wächst ein Effekt im Versteck (ms). */
+const FX_EDGE = 40
+/** Erst ab hier (bzw. bis Länge − FX_HIDE) reist er winzig hinaus/zurück (ms). */
+const FX_HIDE = 100
+/** Herz 7 × 6 Pixel (oben → unten). */
+const HEART = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...']
+/** Krümel um die Mitte des Verstecks: [von, bis] relativ, Kanten 0,25–0,5. */
+const CRUMBS = [
+  [[-1, 0, 0], [-0.5, 0.5, 0.5]],
+  [[0.375, 0.25, -0.5], [0.875, 0.75, 0]],
+  [[0, -0.5, 0.25], [0.375, -0.125, 0.625]],
+  [[0.625, -0.375, 0.375], [0.875, -0.125, 0.625]],
+  [[-0.5, -0.75, -0.625], [-0.125, -0.375, -0.25]],
+]
+const FX_COLORS = {
+  heart: hex('#ff4f7b'),
+  heartHi: hex('#ffb0c4'),
+  heartLo: hex('#d42a5c'),
+  crumbs: [hex('#d9a35f'), hex('#b97a3a'), hex('#efcf92'), hex('#c98f4c'), hex('#a8692e')],
+}
+
+/** Herz-Pixel als Würfel: Läufe je Zeile, gleiche Läufe benachbarter Zeilen zusammengefasst. */
+function heartRuns() {
+  const runs = []
+  HEART.forEach((row, i) => {
+    for (let j = 0; j < row.length; j++) {
+      if (row[j] !== 'X' || row[j - 1] === 'X') continue
+      let k = j
+      while (row[k] === 'X') k++
+      const prev = runs.find((r) => r.j0 === j && r.j1 === k && r.i1 === i)
+      if (prev) prev.i1 = i + 1
+      else runs.push({ j0: j, j1: k, i0: i, i1: i + 1 })
+    }
+  })
+  return runs
+}
+
+/**
+ * Effekte für die Aktionen eines Begleiters am Boden: Herzen (Streicheln) und Krümel (Füttern) als Würfel an eigenen
+ * Knochen `fx_heart_<n>` und `fx_crumbs`. In Ruhe stecken sie ganz im Würfel `hide` (alle Flächen, deckend, Rand
+ * ≥ 0,125): direkte Kinder seines Knochens, ohne Ruhe-Drehung und von keiner Animation bewegt – so bleiben sie in
+ * jeder Pose der `animations` verdeckt, ältere Clients sehen sie nie. Nur die Aktionen holen sie heraus: winzig durch
+ * die Hülle, dann aufploppen; Lage und Drehung in Weltkoordinaten (Herzen steigen gerade nach oben und bleiben
+ * aufrecht, Krümel fallen senkrecht), egal wie sich der Kopf dabei bewegt.
+ *
+ * `hearts` = Anzahl Herz-Knochen (0–3), `crumbs` = Krümel-Knochen ja/nein. Liefert `skip` (für grounded), `events(len,
+ * plan)` (Zeitpunkte für die Abtastung) und `pose(len, body, plan)`: Pose-Funktion = Körper-Pose plus Effekte.
+ * plan = { hearts: [{ at, life, from, rise, sway, size, phase }] (je Herz-Knochen höchstens einer),
+ *          crumbs: [{ at, life, from, fall, vel, size }] (nacheinander am selben Knochen) }. `from` = Startpunkt in
+ * Modell-Raum oder { bone, at } = Punkt eines Knochens (Ruhe-Koordinaten) zur Startzeit, z. B. die Schnauzenspitze.
+ */
+export function petFx(m, { hide, hearts = 3, crumbs = true } = {}) {
+  const box = m.cubes.find((c) => c.id === hide)
+  if (!box) throw new Error(`${m.id}: fx hiding cube ${hide} missing`)
+  if (box.faces.length !== 6 || box.inflate || (box.material ?? 'cutout') === 'translucent' || box.mats) throw new Error(`${m.id}: fx hiding cube ${hide} must have 6 opaque faces`)
+  const parent = box.bone
+  const center = [0, 1, 2].map((a) => Math.round((box.from[a] + box.to[a]) / 2 / GRID) * GRID)
+  const px = 0.25
+  const heartIds = []
+  for (let n = 0; n < hearts; n++) {
+    const id = `fx_heart_${n}`
+    heartIds.push(id)
+    m.bone(id, parent, center)
+    const x0 = center[0] - 3.5 * px
+    const yTop = center[1] + 3 * px
+    for (const [k, r] of heartRuns().entries()) {
+      m.cube(`${id}_${k}`, id, [x0 + r.j0 * px, yTop - r.i1 * px, center[2] - 0.25], [x0 + r.j1 * px, yTop - r.i0 * px, center[2] + 0.25], {
+        material: 'emissive',
+        paint: (c) => {
+          if (c.face !== 'south' && c.face !== 'north') return c.face === 'up' ? FX_COLORS.heart : FX_COLORS.heartLo
+          const j = Math.floor((c.p[0] - x0) / px)
+          const i = Math.floor((yTop - c.p[1]) / px)
+          if (c.face === 'south' && ((i === 1 && j === 1) || (i === 0 && j === 2))) return FX_COLORS.heartHi
+          if (i >= 4 || j >= 6 || (i === 3 && j === 5)) return FX_COLORS.heartLo
+          return FX_COLORS.heart
+        },
+      })
+    }
+  }
+  if (crumbs) {
+    m.bone('fx_crumbs', parent, center)
+    CRUMBS.forEach(([a, b], k) => {
+      m.cube(`fx_crumb_${k}`, 'fx_crumbs', a.map((v, i) => center[i] + v), b.map((v, i) => center[i] + v), {
+        paint: (c) => (c.face === 'up' ? mix(FX_COLORS.crumbs[k], [255, 240, 210], 0.25) : FX_COLORS.crumbs[k]),
+      })
+    })
+  }
+  for (const id of [...heartIds, ...(crumbs ? ['fx_crumbs'] : [])]) {
+    const c = m.cubes.filter((x) => x.bone === id)
+    for (let a = 0; a < 3; a++) {
+      if (c.some((x) => x.from[a] < box.from[a] + GRID - 1e-9 || x.to[a] > box.to[a] - GRID + 1e-9)) throw new Error(`${m.id}: ${id} does not fit into ${hide} with 0.125 margin`)
+    }
+  }
+
+  /** Lokale Lage eines Effekt-Knochens, damit seine Mitte bei `world` liegt (Drehung `rot` in der Welt, sonst lokal `local`). */
+  const place = (pose, world, { rot = null, local = [0, 0, 0], scale = 1 }) => {
+    const W = boneWorld(m.bones, pose).get(parent)
+    const at = apply(invert(W), world)
+    const norm = [0, 1, 2].map((c) => Math.hypot(W.m[c * 3], W.m[c * 3 + 1], W.m[c * 3 + 2]))
+    let r = local
+    if (rot) {
+      // R_lokal = R_Elternᵀ · R_Welt (Skalierung des Elternknochens herausgerechnet)
+      const P = W.m.map((v, i) => v / norm[Math.floor(i / 3)])
+      const D = mat3(...rot)
+      const L = new Array(9)
+      for (let col = 0; col < 3; col++) for (let row = 0; row < 3; row++) L[col * 3 + row] = P[row * 3] * D[col * 3] + P[row * 3 + 1] * D[col * 3 + 1] + P[row * 3 + 2] * D[col * 3 + 2]
+      r = eulerZYX3(L)
+    }
+    return { p: [at[0] - center[0], at[1] - center[1], at[2] - center[2]], r, s: norm.map((n) => scale / n) }
+  }
+  /** Startpunkt eines Flugs in Modell-Raum (bei { bone, at }: wo dieser Punkt zur Startzeit ist). */
+  const origins = new WeakMap()
+  const origin = (f, body) => {
+    if (Array.isArray(f.from)) return f.from
+    if (!origins.has(f)) origins.set(f, apply(boneWorld(m.bones, body(f.at)).get(f.from.bone), f.from.at))
+    return origins.get(f)
+  }
+  /** Hüllkurve 0…1: aufploppen (mit Überschwingen), halten, verschwinden. */
+  const envelope = (dt, life, inMs, outMs) => (dt < inMs ? easeOutBack(dt / inMs, 2.2) : dt > life - outMs ? 1 - easeIn((dt - (life - outMs)) / outMs) : 1)
+  /** Herz: steigt `rise` Einheiten (abbremsend), schwankt seitlich um `sway`, wiegt sich, pulsiert leicht. */
+  const heartAt = (f, dt, body) => {
+    const o = origin(f, body)
+    const u = dt / f.life
+    const ph = f.phase ?? 0
+    const world = [o[0] + (f.sway ?? 0.5) * Math.sin(TAU * (1.1 * u + ph)), o[1] + (f.rise ?? 3) * easeOut(u), o[2]]
+    const size = FX_TINY + ((f.size ?? 1) * (1 + 0.06 * Math.sin(TAU * 3 * u)) - FX_TINY) * envelope(dt, f.life, 150, 170)
+    return place(body(f.at + dt), world, { rot: [0, 18 * Math.sin(TAU * (0.8 * u + ph)), 11 * Math.sin(TAU * (1.3 * u + ph + 0.2))], scale: size })
+  }
+  /** Krümel: Wurfbahn mit Startgeschwindigkeit `vel` (Einheiten/s), fällt bis zum Ende `fall` tiefer, taumelt, streut. */
+  const crumbAt = (f, dt, body) => {
+    const o = origin(f, body)
+    const T = f.life / 1000
+    const tau = dt / 1000
+    const v = f.vel ?? [0, 1.5, 1.5]
+    const g = (2 * ((f.fall ?? 4) + v[1] * T)) / (T * T)
+    const world = [o[0] + v[0] * tau, o[1] + v[1] * tau - (g * tau * tau) / 2, o[2] + v[2] * tau]
+    const u = dt / f.life
+    const size = FX_TINY + ((f.size ?? 1) * (1 + 0.45 * u) - FX_TINY) * envelope(dt, f.life, 70, 90)
+    return place(body(f.at + dt), world, { local: [260 * u, 170 * u, 90 * u], scale: size })
+  }
+  /** Lage eines Effekt-Knochens zur Zeit t: Rand (schrumpfen/wachsen), Flug (sichtbar) oder winzig unterwegs. */
+  const state = (len, body, flights, at, t) => {
+    if (t <= FX_EDGE) return { s: [1, 1, 1].map(() => 1 + (FX_TINY - 1) * smoothstep(t / FX_EDGE)) }
+    if (t >= len - FX_EDGE) return { s: [1, 1, 1].map(() => FX_TINY + (1 - FX_TINY) * smoothstep((t - len + FX_EDGE) / FX_EDGE)) }
+    for (const f of flights) if (t >= f.at && t <= f.at + f.life) return at(f, t - f.at, body)
+    // winzig zwischen zwei Ankern: Versteck (Lage 0) → Flug-Anfang, Flug-Ende → nächster Flug … → Versteck
+    const anchors = [{ t: FX_HIDE, p: [0, 0, 0], r: [0, 0, 0] }]
+    for (const f of flights) {
+      anchors.push({ t: f.at, ...at(f, 0, body) })
+      anchors.push({ t: f.at + f.life, ...at(f, f.life, body) })
+    }
+    anchors.push({ t: len - FX_HIDE, p: [0, 0, 0], r: [0, 0, 0] })
+    let a = anchors[0]
+    let b = anchors[anchors.length - 1]
+    for (let i = 0; i + 1 < anchors.length; i += 2) {
+      if (t >= anchors[i].t && t <= anchors[i + 1].t) {
+        a = anchors[i]
+        b = anchors[i + 1]
+      }
+    }
+    const w = t <= a.t ? 0 : t >= b.t ? 1 : smoothstep((t - a.t) / (b.t - a.t))
+    const lerp = (x, y) => x.map((v, i) => v + (y[i] - v) * w)
+    return { p: lerp(a.p, b.p), r: lerp(a.r, b.r), s: [FX_TINY, FX_TINY, FX_TINY] }
+  }
+  const check = (len, flights, what) => {
+    let end = FX_HIDE
+    for (const f of flights) {
+      if (f.at < end + 60) throw new Error(`${m.id}: ${what} flight at ${f.at} too early`)
+      end = f.at + f.life
+    }
+    if (end > len - FX_HIDE - 60) throw new Error(`${m.id}: ${what} flight ends too late (${end} of ${len})`)
+  }
+  return {
+    /** Effekt-Würfel (zählen nicht für den Bodenkontakt). */
+    skip: (c) => c.bone.startsWith('fx_'),
+    /** Zeitpunkte, an denen die Abtastung genau sein muss (Rand, Aufploppen, Verschwinden). */
+    events(len, plan) {
+      const out = [FX_EDGE, FX_HIDE, len - FX_HIDE, len - FX_EDGE]
+      for (const f of [...(plan.hearts ?? []), ...(plan.crumbs ?? [])]) out.push(f.at, f.at + 70, f.at + 150, f.at + f.life - 170, f.at + f.life - 90, f.at + f.life)
+      return out
+    },
+    /** Pose-Funktion der Aktion: `body(t)` (z. B. m.grounded(…, { skip })) plus Herzen und Krümel nach `plan`. */
+    pose(len, body, plan) {
+      const hp = plan.hearts ?? []
+      if (hp.length > heartIds.length) throw new Error(`${m.id}: ${hp.length} hearts planned, ${heartIds.length} built`)
+      hp.forEach((f, i) => check(len, [f], `heart ${i}`))
+      if (plan.crumbs?.length) {
+        if (!crumbs) throw new Error(`${m.id}: no crumbs built`)
+        check(len, plan.crumbs, 'crumbs')
+      }
+      return (t) => {
+        const pose = body(t)
+        hp.forEach((f, i) => {
+          pose[heartIds[i]] = state(len, body, [f], heartAt, t)
+        })
+        if (plan.crumbs?.length) pose.fx_crumbs = state(len, body, plan.crumbs, crumbAt, t)
+        return pose
+      }
+    },
   }
 }
 
@@ -536,6 +789,8 @@ const CHANNELS = [
   ['p', 'position', 0, 0.02, 3],
   ['s', 'scale', 1, 0.004, 3],
 ]
+/** Aktionen beginnen und enden in Ruhe: erlaubte Abweichung je Kanal (Grad, Einheiten, Faktor). */
+const REST_TOL = { r: 1, p: 0.05, s: 0.01 }
 
 function sampleAnimation(b, a) {
   const len = a.lengthMs
@@ -569,6 +824,14 @@ function sampleAnimation(b, a) {
       const pts = series.get(`${bone}|${key}`)
       if (!pts) continue
       const tol = tol0 * a.tol
+      // Aktionen: erster und letzter Schlüssel in Ruhe (sonst Fehler), dann genau auf den Ruhewert gesetzt
+      if (a.rest) {
+        for (const at of [0, pts.length - 1]) {
+          const [t, v] = pts[at]
+          if (v.some((x) => Math.abs(x - def) > REST_TOL[key])) throw new Error(`${b.id}/${a.id}: ${bone}.${key} not at rest at ${t} ms (${v.map((x) => round(x, 3))})`)
+          pts[at] = [t, [def, def, def]]
+        }
+      }
       // Schleifen müssen nahtlos sein (Drehungen auch um ganze Umdrehungen versetzt)
       const gap = (v, i) => {
         const d = Math.abs(v - pts[pts.length - 1][1][i])
@@ -585,6 +848,8 @@ function sampleAnimation(b, a) {
         keys = [pts[0]]
       } else {
         keys = simplify(pts, tol)
+        // mehr als 64 Schlüssel (schnelles Wackeln, dichte Abtastung um Ereignisse): Toleranz schrittweise erhöhen
+        for (let k = 1.25; keys.length > 64 && k < 8; k *= 1.25) keys = simplify(pts, tol * k)
       }
       if (keys.length > 64) throw new Error(`${b.id}/${a.id}: ${bone}.${key} needs ${keys.length} keys`)
       tracks.push({ bone, channel, keys: keys.map(([t, v]) => ({ t, v: v.map((x) => round(x, digits)) })) })
@@ -596,7 +861,8 @@ function sampleAnimation(b, a) {
     id: a.id,
     driver: a.driver,
     lengthMs: len,
-    ...(a.loop === false ? { loop: false } : {}),
+    // einmalige Clips (grab, Aktionen) auch als loop:false – Clients halten sie dann am Ende, statt neu zu beginnen
+    ...(a.loop === false || a.once ? { loop: false } : {}),
     ...(a.offsetMs ? { offsetMs: a.offsetMs } : {}),
     tracks,
   }
@@ -641,8 +907,8 @@ export function formatModel(m) {
   keys.forEach((k, idx) => {
     const comma = idx < keys.length - 1 ? ',' : ''
     const v = m[k]
-    if (k === 'animations') {
-      out.push(`  "animations": [`)
+    if (k === 'animations' || k === 'actions') {
+      out.push(`  ${line(k)}: [`)
       v.forEach((a, i) => {
         const { tracks, ...head } = a
         out.push(`    ${line(head).slice(0, -1)},"tracks":[`)
