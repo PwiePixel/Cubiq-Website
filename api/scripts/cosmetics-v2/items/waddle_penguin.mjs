@@ -79,7 +79,7 @@ function paintHead(c) {
     }
   }
   if ((face === 'east' || face === 'west') && p[2] > 1.4 && p[1] < 10.1) return mul(mix(C.white, C.whiteShade, 0.3), speck(p, 12, 0.03))
-  if (face === 'down') return C.whiteShade
+  if (face === 'down') return p[2] > 0.5 ? C.whiteShade : C.blackLo
   let col = mix(C.black, C.blackHi, smoothstep((p[1] - 9) / 3.2) * 0.7)
   if (face === 'up') col = mix(C.black, C.blackHi, 0.8)
   return mul(col, speck(p, 13))
@@ -115,14 +115,14 @@ const paintFlipper = (inner) => (c) => {
   const { p, face } = c
   if (face === inner || face === 'down') return mix(C.whiteShade, C.white, 0.4)
   let col = mix(C.black, C.blackHi, smoothstep((p[1] - 3) / 4) * 0.5)
-  if (p[1] < 3.0) col = mix(col, C.whiteShade, 0.85)
+  if (p[1] < 3.125) col = mix(col, C.whiteShade, 0.85)
   return mul(col, speck(p, 21))
 }
 
 function paintScarf(c) {
   const { p, face, i } = c
   if (face === 'up' || face === 'down') return C.scarfLo
-  let col = Math.abs(p[1] - 8.125) < 0.13 ? C.stripe : C.scarf
+  let col = Math.abs(p[1] - 7.5) < 0.13 ? C.stripe : C.scarf
   if (i % 3 === 0) col = mul(col, 0.88)
   return col
 }
@@ -130,8 +130,8 @@ function paintScarf(c) {
 function paintScarfEnd(c) {
   const { p, i } = c
   // Fransen unten (jeder zweite Texel-Streifen länger)
-  if (p[1] < 5.125 && (i % 4 < 2 || p[1] < 4.875)) return null
-  let col = Math.floor((7.75 - p[1]) / 0.75) % 2 === 1 && p[1] > 5.125 ? C.stripe : C.scarf
+  if (p[1] < 6.0 && (i % 4 < 2 || p[1] < 5.75)) return null
+  let col = Math.floor((7.25 - p[1]) / 0.5) % 2 === 1 && p[1] > 6.0 ? C.stripe : C.scarf
   if (i % 3 === 0) col = mul(col, 0.88)
   return col
 }
@@ -173,11 +173,11 @@ function build() {
     .bone('beak_low', 'head', [0, 9.25, 2.5])
     .bone('eye_l', 'head', [1.25, 10.5, 2.5])
     .bone('eye_r', 'head', [-1.25, 10.5, 2.5])
-    .bone('flipper_l', 'body', [3.625, 7.5, 0])
-    .bone('flipper_r', 'body', [-3.625, 7.5, 0])
+    .bone('flipper_l', 'body', [3, 7.625, 0], [0, 0, 10])
+    .bone('flipper_r', 'body', [-3, 7.625, 0], [0, 0, -10])
     .bone('tail', 'body', [0, 1.5, -3])
-    .bone('scarf', 'body', [0, 8, 0])
-    .bone('scarf_end', 'scarf', [1.125, 7.75, 2.75])
+    .bone('scarf', 'body', [0, 7.5, 0])
+    .bone('scarf_end', 'scarf', [1.125, 7.25, 2.875])
     .bone('foot_l', 'root', [1.625, 0.75, 0.5])
     .bone('foot_r', 'root', [-1.625, 0.75, 0.5])
   m.option('scarf', ['scarf'], true, { de: 'Schal', en: 'Scarf', es: 'Bufanda' })
@@ -193,12 +193,12 @@ function build() {
   m.cube('eye_r', 'eye_r', [-1.75, 9.75, 2.5], [-0.75, 11.25, 2.625], { paint: paintEye, skip: ['north'], light: false })
   m.cube('beak_up', 'head', [-0.75, 9.25, 2.5], [0.75, 10, 4], { paint: paintBeak, skip: ['north'] })
   m.cube('beak_low', 'beak_low', [-0.625, 8.875, 2.5], [0.625, 9.25, 3.75], { paint: paintBeak, skip: ['north'] })
-  m.cube('flipper_l', 'flipper_l', [3.625, 2.5, -1.5], [4.375, 7.5, 1.25], { paint: paintFlipper('west') })
-  m.cube('flipper_r', 'flipper_r', [-4.375, 2.5, -1.5], [-3.625, 7.5, 1.25], { paint: paintFlipper('east') })
+  m.cube('flipper_l', 'flipper_l', [3, 2.625, -1.5], [3.75, 7.625, 1.25], { paint: paintFlipper('west') })
+  m.cube('flipper_r', 'flipper_r', [-3.75, 2.625, -1.5], [-3, 7.625, 1.25], { paint: paintFlipper('east') })
   m.cube('foot_l', 'foot_l', [0.5, 0, -0.5], [2.75, 0.75, 3.75], { paint: paintFoot, outline: 0.85 })
   m.cube('foot_r', 'foot_r', [-2.75, 0, -0.5], [-0.5, 0.75, 3.75], { paint: paintFoot, outline: 0.85 })
-  m.cube('scarf', 'scarf', [-3.125, 7.625, -2.625], [3.125, 8.625, 2.625], { paint: paintScarf })
-  m.cube('scarf_end', 'scarf_end', [0.5, 4.75, 2.625], [1.75, 7.75, 3], { paint: paintScarfEnd, skip: ['north'] })
+  m.cube('scarf', 'scarf', [-3.125, 7, -2.625], [3.125, 8, 2.625], { paint: paintScarf, skip: ['up'] })
+  m.cube('scarf_end', 'scarf_end', [0.5, 5.625, 2.625], [1.75, 7.25, 3.125], { paint: paintScarfEnd, skip: ['north'] })
 
   // ---------------------------------------------------------- Stehen: Atmen, leichtes Wiegen
   m.anim('idle', 'idle', 4800, {
@@ -240,7 +240,7 @@ function build() {
         flipper_l: { r: [0, 0, 55 * flap] },
         flipper_r: { r: [0, 0, -55 * flap] },
         root: { p: [0, 0.5 * flap, 0] },
-        head: { r: [42 * preen, 0, 10 * shake] },
+        head: { r: [30 * preen, 0, 10 * shake] },
         beak_low: { r: [12 * preen, 0, 0] },
       }
     },
@@ -256,13 +256,12 @@ function build() {
       const liftR = Math.max(0, -Math.sin(2 * Math.PI * ph))
       const bob = Math.abs(Math.sin(2 * Math.PI * ph))
       return {
-        root: { p: [0, 0.35 * bob, 0] },
-        body: { r: [4, 0, roll] },
+        body: { p: [0, 0.35 * bob, 0], r: [4, 0, roll] },
         head: { r: [-3 + 2 * bob, 0, -0.6 * roll] },
         flipper_l: { r: [0, 0, 12 + 0.9 * roll] },
         flipper_r: { r: [0, 0, -12 + 0.9 * roll] },
-        foot_l: { p: [0, 0.55 * liftL, 0.5 * Math.cos(2 * Math.PI * ph)], r: [-18 * liftL, 0, 0] },
-        foot_r: { p: [0, 0.55 * liftR, -0.5 * Math.cos(2 * Math.PI * ph)], r: [-18 * liftR, 0, 0] },
+        foot_l: { p: [0, 0.45 * liftL, 0.5 * Math.cos(2 * Math.PI * ph)] },
+        foot_r: { p: [0, 0.45 * liftR, -0.5 * Math.cos(2 * Math.PI * ph)] },
         tail: { r: [0, 12 * Math.sin(2 * Math.PI * ph), 0] },
         tuft: { r: [-6 * bob, 0, -0.8 * roll] },
         scarf_end: { r: [-10 - 6 * bob, 0, -0.7 * roll] },
@@ -275,13 +274,13 @@ function build() {
     samples: 48,
     pose: (t) => ({
       root: { p: [0, 3.15 + 0.12 * wave(t, 600), -5.5], r: [78, 3 * wave(t, 1200), 2.5 * wave(t, 1200, 0.25)] },
-      head: { r: [-62, 0, 0] },
+      head: { r: [-62, 0, 0], p: [0, -0.8, 0.5] },
       flipper_l: { r: [-10, 0, 14 + 6 * wave(t, 300)] },
       flipper_r: { r: [-10, 0, -14 - 6 * wave(t, 300)] },
       foot_l: { r: [75, 0, 0], p: [0, 0.4, -0.75] },
       foot_r: { r: [75, 0, 0], p: [0, 0.4, -0.75] },
       tuft: { r: [-25, 0, 0] },
-      scarf_end: { r: [0, 0, 72 + 14 * wave(t, 300)] },
+      scarf_end: { r: [8 * wave(t, 300), 0, 6 * wave(t, 300, 0.25)] },
       ...face({ open: 22 + 4 * wave(t, 600), wide: 1.08 }),
     }),
   })
@@ -292,13 +291,13 @@ function build() {
     events: [1700],
     pose: (t) => ({
       root: { p: [0, 2.2 + 0.25 * wave(t, 1200), -4.5], r: [64 + 3 * wave(t, 1200, 0.25), 4 * wave(t, 2400), 0] },
-      head: { r: [-50, 12 * wave(t, 2400, 0.1), 0] },
+      head: { r: [-50, 12 * wave(t, 2400, 0.1), 0], p: [0, -0.7, 0.4] },
       flipper_l: { r: [45 * wave(t, 600), 0, 20] },
       flipper_r: { r: [-45 * wave(t, 600), 0, -20] },
       foot_l: { r: [70 + 25 * wave(t, 300), 0, 0] },
       foot_r: { r: [70 - 25 * wave(t, 300), 0, 0] },
       tail: { r: [0, 15 * wave(t, 600), 0] },
-      scarf_end: { r: [0, 0, 60 + 10 * wave(t, 1200)] },
+      scarf_end: { r: [6 * wave(t, 1200), 0, 6 * wave(t, 600)] },
       ...face({ lid: blink(t, [1700], 2400) }),
     }),
   })
@@ -306,16 +305,16 @@ function build() {
   // ---------------------------------------------------------- In der Luft: wild flattern, Füße baumeln
   m.anim('air', 'air', 600, {
     samples: 36,
-    pose: (t) => ({
+    pose: m.grounded((t) => ({
       body: { s: [0.98, 1.04, 0.98] },
       flipper_l: { r: [0, 0, 70 + 45 * wave(t, 200)] },
       flipper_r: { r: [0, 0, -70 - 45 * wave(t, 200)] },
       foot_l: { r: [25 + 12 * wave(t, 300), 0, 0], p: [0, -0.2, 0] },
       foot_r: { r: [25 - 12 * wave(t, 300), 0, 0], p: [0, -0.2, 0] },
       tuft: { r: [-20 + 8 * wave(t, 200), 0, 0] },
-      scarf_end: { r: [-55 + 10 * wave(t, 150), 0, 0] },
+      scarf_end: { r: [-22 + 8 * wave(t, 150), 0, 0] },
       ...face({ open: 26, wide: 1.15 }),
-    }),
+    })),
   })
 
   // ---------------------------------------------------------- Schleichen: geduckt, Flossen vorn, Zehenspitzen, Blick hin und her
@@ -327,13 +326,12 @@ function build() {
       const stepR = smoothstep(clamp(1 - Math.abs(ph - 0.75) / 0.2))
       const look = curve(ph, [[0, -26], [0.18, -26], [0.32, 26], [0.68, 26], [0.82, -26], [1, -26]])
       return {
-        root: { p: [0, 0.2 * (stepL + stepR), 0] },
-        body: { r: [14, 0, 4 * (stepR - stepL)], s: [1.02, 0.92, 1.02] },
-        head: { r: [-10, look, 0] },
+        body: { p: [0, 0.45 + 0.2 * (stepL + stepR), 0], r: [14, 0, 4 * (stepR - stepL)], s: [1.02, 0.92, 1.02] },
+        head: { r: [-4, look, 0] },
         flipper_l: { r: [-55, 0, 18] },
         flipper_r: { r: [-55, 0, -18] },
-        foot_l: { p: [0, 0.9 * stepL, 0.4 * stepL], r: [-28 * stepL, 0, 0] },
-        foot_r: { p: [0, 0.9 * stepR, 0.4 * stepR], r: [-28 * stepR, 0, 0] },
+        foot_l: { p: [0, 0.35 * stepL, 0.4 * stepL], r: [-6 * stepL, 0, 0] },
+        foot_r: { p: [0, 0.35 * stepR, 0.4 * stepR], r: [-6 * stepR, 0, 0] },
         tuft: { r: [18, 0, 0] },
         ...face({ lid: 0.55 }),
       }
