@@ -2,5 +2,6 @@
 import { item as cubi } from './cubi.mjs'
 import { item as waddlePenguin } from './waddle_penguin.mjs'
 import { item as foxKit } from './fox_kit.mjs'
+import { item as axolotl } from './axolotl.mjs'
 
-export const ITEMS = [cubi, waddlePenguin, foxKit]
+export const ITEMS = [cubi, waddlePenguin, foxKit, axolotl]

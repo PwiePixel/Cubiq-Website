@@ -117,5 +117,15 @@
     "frames": 1,
     "glowFrames": 0,
     "petScale": 1
+  },
+  {
+    "id": "axolotl",
+    "name": "Axolotl",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 160,
+    "petScale": 1
   }
 ]
