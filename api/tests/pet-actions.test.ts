@@ -81,7 +81,12 @@ describe('actions: validation (warnings only)', () => {
     ['no tracks', [action('pet', { tracks: [] })]],
     ['entry not an object', [42]],
     ['actions not a list', {}],
+    ['actions null (not a list either)', null],
     ['more than 16 entries', Array.from({ length: 17 }, () => action('pet'))],
+    // ids und Knochen sind Texte – nichts wird umgewandelt (true → "true", ["pet"] → "pet" wären sonst gültig)
+    ['id true', [action('pet', { id: true })]],
+    ['id ["pet"]', [action('pet', { id: ['pet'] })]],
+    ['track bone ["head"]', [action('pet', { tracks: [{ ...track('head', 'rotation', [0, 0, 30]), bone: ['head'] }] })]],
   ]
   it.each(cases)('%s → ok, exactly one warning, action ignored', (_name, actions) => {
     const m = pet(actions)
@@ -109,11 +114,28 @@ describe('actions: validation (warnings only)', () => {
     expect(actionOf(m, 'pet')?.id).toBe('pet')
   })
 
+  it('the first VALID entry per driver counts: an invalid entry does not block a later valid one', () => {
+    // [ungültig, gültig]: eine Warnung (für den ungültigen), die Aktion kommt aus dem zweiten Eintrag
+    const m = pet([action('pet', { loop: true }), action('pet', { id: 'pet_two', lengthMs: 2000 })])
+    const r = validateModel(m, images)
+    expect(r.warnings).toEqual(['actions[0]: loop nur false – ignoriert'])
+    expect(actionOf(m, 'pet')).toMatchObject({ id: 'pet_two', lengthMs: 2000 })
+    // [ungültig, gültig, gültig]: der dritte ist ein Doppel des gültigen zweiten
+    const three = pet([action('pet', { loop: true }), action('pet', { id: 'pet_two' }), action('pet', { id: 'pet_three' })])
+    expect(validateModel(three, images).warnings).toEqual(['actions[0]: loop nur false – ignoriert', 'actions[2]: driver pet doppelt – ignoriert'])
+    expect(actionOf(three, 'pet')?.id).toBe('pet_two')
+  })
+
   it('only for ground companions: on a hat the whole block is ignored with one warning', () => {
     const m = { ...pet([action('pet')]), slot: 'hat', attach: 'head' } as CosmeticModel & Record<string, unknown>
     const r = validateModel(m, images)
     expect(r).toMatchObject({ ok: true, warnings: ['actions: nur für slot pet – ignoriert'] })
     expect(actionOf(m, 'pet')).toBeUndefined()
+    // jeder Schlüssel `actions` außerhalb von slot pet, auch eine leere Liste oder null: genau eine Warnung
+    for (const actions of [[], null]) {
+      const other = { ...pet(actions), slot: 'companion', attach: 'head' } as CosmeticModel & Record<string, unknown>
+      expect(validateModel(other, images)).toMatchObject({ ok: true, errors: [], warnings: [expect.stringMatching(/^actions: .* – ignoriert$/)] })
+    }
   })
 
   it('pet/eat inside `animations` stays an error (released clients reject them there)', () => {

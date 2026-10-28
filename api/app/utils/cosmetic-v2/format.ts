@@ -774,7 +774,10 @@ function checkTracks(p: string, a: any, bones: { has(id: string): boolean }, err
  * Prüft die Liste `actions` (Streicheln/Füttern). Nie ein Fehler: jedes Problem gibt genau eine Warnung, und der
  * Eintrag – oder der ganze Block – fällt weg. Gültige Einträge melden nichts, so liefert {@link validateModel} für ein
  * Modell mit gültigen Aktionen dasselbe wie ohne sie. Unbekannte Treiber werden nur übersprungen (ein neuerer Client
- * kennt sie vielleicht). `list` = die gültigen Einträge, je Treiber der erste.
+ * kennt sie vielleicht). `list` = die gültigen Einträge, je Treiber der erste gültige: ein weiterer Eintrag für einen
+ * Treiber, der schon einen gültigen hat, gibt eine Warnung; ein ungültiger Eintrag sperrt einen späteren gültigen nicht.
+ * Strenger als `animations` (gleich in Launcher und Cubiq Client): id und Knochen der Spuren müssen Texte sein – `true`
+ * oder `["pet"]` zählen nicht als „pet“.
  */
 function checkActions(m: any): { list: Action[], warnings: string[] } {
   const list: Action[] = []
@@ -786,7 +789,8 @@ function checkActions(m: any): { list: Action[], warnings: string[] } {
   else if (m.slot !== 'pet') ignore('actions', 'nur für slot pet')
   else if (acts.length > ACTION_LIMITS.entries) ignore('actions', `höchstens ${ACTION_LIMITS.entries} Einträge`)
   else {
-    const bones = new Set<string>((Array.isArray(m.bones) ? (m.bones as any[]) : []).map((b) => b?.id))
+    const ids = new Set<unknown>((Array.isArray(m.bones) ? (m.bones as any[]) : []).map((b) => b?.id))
+    const bones = { has: (id: unknown) => typeof id === 'string' && ids.has(id) }
     for (const [i, a] of (acts as any[]).entries()) {
       const p = `actions[${i}]`
       if (!a || typeof a !== 'object' || Array.isArray(a)) {
@@ -803,7 +807,7 @@ function checkActions(m: any): { list: Action[], warnings: string[] } {
       }
       const problems: [string, string][] = []
       const bad: Err = (q, msg) => problems.push([q, msg])
-      if (!ID.test(a.id ?? '')) bad(p, 'ungültige id')
+      if (typeof a.id !== 'string' || !ID.test(a.id)) bad(p, 'ungültige id')
       if (!Number.isInteger(a.lengthMs) || a.lengthMs < ACTION_LIMITS.minMs || a.lengthMs > ACTION_LIMITS.maxMs) bad(p, `lengthMs ${ACTION_LIMITS.minMs}…${ACTION_LIMITS.maxMs}`)
       if (a.loop !== undefined && a.loop !== false) bad(p, 'loop nur false')
       if (a.offsetMs !== undefined) bad(p, 'kein offsetMs')
