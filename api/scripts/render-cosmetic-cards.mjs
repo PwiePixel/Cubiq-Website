@@ -44,9 +44,9 @@ const MODULES = {
   'skinview-utils': join(dirname(SKINVIEW), 'skinview-utils'),
 }
 
-function transpile(file) {
+function transpile(file, dir = join(ROOT, 'app', 'utils', 'cosmetic-v2')) {
   const ts = require('typescript')
-  const src = readFileSync(join(ROOT, 'app', 'utils', 'cosmetic-v2', file), 'utf8')
+  const src = readFileSync(join(dir, file), 'utf8')
   const out = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
   return out.replace(/from '\.\/format'/g, "from './format.js'")
 }
@@ -75,6 +75,7 @@ function serve() {
       if (url === '/harness.js') return send(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'cosmetics-v2', 'harness.js')), 'text/javascript')
       if (url === '/app/format.js') return send(transpile('format.ts'), 'text/javascript')
       if (url === '/app/view.js') return send(transpile('view.ts'), 'text/javascript')
+      if (url === '/app/cubi-skin.js') return send(transpile('cubi-skin.ts', join(ROOT, 'app', 'utils')), 'text/javascript')
       if (url.startsWith('/v2/')) return send(readFileSync(join(V2, normalize(url.slice(4)).replace(/^(\.\.[/\\])+/, ''))), url.endsWith('.json') ? 'application/json' : 'image/png')
       if (url.startsWith('/nm/')) {
         const [, , name, ...rest] = url.split('/')
