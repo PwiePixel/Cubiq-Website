@@ -147,5 +147,14 @@
     "glowFrames": 12,
     "glowFrameTimeMs": 140,
     "petScale": 1
+  },
+  {
+    "id": "aurora_wings",
+    "name": "Polarlichtflügel",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 160
   }
 ]
