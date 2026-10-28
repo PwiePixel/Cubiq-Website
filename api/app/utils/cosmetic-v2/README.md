@@ -39,8 +39,8 @@ mounted.dispose()                                                          // ab
 |---|---|
 | `loadCosmetic({ model, texture, glow? }, deps?)` | Lädt `model.json` + Bilder, prüft Modell **und Bildmaße** (`parseModel`), wirft bei Fehlern. `deps.fetchJson` / `deps.loadImg` ersetzbar (z. B. Tauri-Kern, Data-URLs). |
 | `createCosmetic(THREE, model, images)` | Baut die Szene (Knochen-Gruppen, Meshes je Knochen mit Material-Gruppen cutout/emissive/translucent, Glow-Overlay additiv, Höfe als Sprites). Gibt `{ root, model, update(t, opts), setLight(f), highlight(id), dispose() }`. `root` an den Kopf hängen (Ursprung = Nacken). |
-| `update(timeMs, { animate, glow, camera, drivers })` | Vor jedem Bild: Pose zur **Wanduhr**, Glow-/Textur-Frame, Höfe (zur Kamera schieben, Puls, Blickrichtung). |
-| `mountOnSkinViewer(THREE, viewer, loaded, opts)` | Hängt an `viewer.playerObject.skin.head`, eigene rAF-Schleife wie die Werkbank. `set({ animate, glow, night, fixedTime })`, `dispose()`. Animation aus = Ruhepose, Leuchten steht. |
+| `update(timeMs, { animate, glow, camera, drivers, poseMs, action, fadeClock })` | Vor jedem Bild: Pose zur **Wanduhr**, Glow-/Textur-Frame, Höfe (zur Kamera schieben, Puls, Blickrichtung). `poseMs` = eigene Zeit der Zustands-Animationen (z. B. `grab` seit Zustandsbeginn); `action: { driver, localMs }` spielt eine Aktion (Streicheln/Füttern) allein und auch ohne Animation; mit `fadeClock` (monotone ms) blenden Wechsel 250 ms über – ohne bleibt alles wie bisher. Bilder und Höfe bleiben immer auf `timeMs`. |
+| `mountOnSkinViewer(THREE, viewer, loaded, opts)` | Hängt an `viewer.playerObject.skin.head`, eigene rAF-Schleife wie die Werkbank. `set({ animate, glow, night, fixedTime, options, drivers, action })`, `dispose()`. Animation aus = Ruhepose, Leuchten steht. Zustandswechsel blenden über; `grab` läuft einmal ab dem Wechsel; `action: { driver, startedAt }` (`Date.now()`, neues Objekt = neu starten) läuft einmal und endet von selbst. |
 | `applyDayNight(viewer, cos, night)` | Werkbank-Licht: Nacht = Umgebungslicht 3 × 0,18, Kameralicht 0,6 × 0,2, Modell-Licht 0,2 (emissive + Leuchten bleiben voll). |
 | `frameHead(THREE, viewer, model, view = 'three', zoom = 1)` | Kamera auf den Kopf (Ziel Nacken + 8 + Anhebung nach Modellhöhe, Abstand 34 · (1 + Anhebung/9)); `VIEWS` = front/three/side/back/top. |
 | `attachAnchor(THREE, viewer, attach)` | Anker je Anhängepunkt wie die Werkbank: `head` = `skin.head`; `body` = Gruppe in `skin.body` bei y + 6 (Nacken); `ground` = Gruppe in `playerObject` bei (13, −16, 7) = Höhe der Füße wie im Spiel und im Launcher, Drehung y 0,35 (neben dem Fuß). `mountOnSkinViewer` nutzt ihn automatisch nach `model.attach`. |
@@ -49,7 +49,9 @@ mounted.dispose()                                                          // ab
 
 `format.ts` exportiert u. a. `validateModel`, `parseModel`, `samplePoses`, `boneLocal`, `boneMatrices`, `faceCorners`,
 `faceUvCorners`, `frameAt`, `haloIntensity`, `haloFacing`, `haloFalloff`, `rotationZYX`, `LIMITS` und alle Modell-Typen
-(`CosmeticModel`, `Bone`, `Cube`, `Face`, `Animation`, `Halo`, …).
+(`CosmeticModel`, `Bone`, `Cube`, `Face`, `Animation`, `Halo`, …), für Aktionen (API.md §11.9, Liste `actions` neben
+`animations`) `ACTION_DRIVERS` (`pet`, `eat`), `actionOf`, `actionLength`, `sampleAction` (exklusiv, eigene Zeit, begrenzt)
+und `blendPoses`. Probleme in `actions` sind nur Warnungen – der Eintrag fällt weg, das Modell bleibt gültig.
 
 ## Regeln, die gleich bleiben müssen
 
@@ -57,5 +59,6 @@ mounted.dispose()                                                          // ab
   transparent ohne Tiefe schreiben. Texturen `NearestFilter`, **keine Mipmaps**, `SRGBColorSpace`.
 - Glow: `AdditiveBlending`, `depthWrite: false`, `polygonOffset -1/-2`, `toneMapped: false`, `renderOrder 2`.
 - Höfe: Sprite 64×64-Verlauf `(1 − r)^2.5`, additiv, `renderOrder 3`, um `size/2` zur Kamera geschoben.
-- Zeit = `Date.now()` (Wanduhr), damit Website, Launcher und Spiel dieselbe Phase zeigen.
+- Zeit = `Date.now()` (Wanduhr), damit Website, Launcher und Spiel dieselbe Phase zeigen. Ausnahmen: einmalige Zustände
+  (`grab`) und Aktionen laufen ab ihrem eigenen Beginn; Bilder und Höfe bleiben trotzdem auf der Wanduhr.
 - CSP: alles same-origin (Bilder/JSON von der eigenen API), keine Blob-/Daten-URLs nötig.
