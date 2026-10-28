@@ -5,48 +5,23 @@
 import * as THREE from 'three'
 import { SkinViewer } from 'skinview3d'
 import { applyDayNight, createCosmetic } from '/app/view.js'
+import { CUBI_SKIN_COLORS, cubiSkinPixels } from '/app/cubi-skin.js'
 
 const SIZE = 1024
 const canvas = document.createElement('canvas')
 document.body.appendChild(canvas)
 
-/** Eigene, schlichte Figur für die Karten: braune Haare, Kapuzenpulli in Cubiq-Navy mit grünem Saum. */
+/** Cubi als Figur für die Karten – derselbe Skin wie in den 3D-Vorschauen der Website (app/utils/cubi-skin.ts). */
 function skinCanvas() {
   const c = document.createElement('canvas')
   c.width = 64
   c.height = 64
   const g = c.getContext('2d')
-  const box = (x, y, w, h, color) => {
-    g.fillStyle = color
-    g.fillRect(x, y, w, h)
-  }
-  box(0, 0, 64, 64, 'rgba(0,0,0,0)')
-  // Kopf: Haut, Haare oben/hinten/seitlich, Augen
-  box(0, 8, 32, 8, '#d9a27c')
-  box(8, 0, 16, 8, '#4a2f1d')
-  box(0, 8, 8, 3, '#4a2f1d')
-  box(16, 8, 8, 3, '#4a2f1d')
-  box(24, 8, 8, 8, '#4a2f1d')
-  box(8, 8, 8, 2, '#4a2f1d')
-  box(9, 12, 2, 2, '#ffffff')
-  box(10, 12, 1, 2, '#2b4a7a')
-  box(13, 12, 2, 2, '#ffffff')
-  box(13, 12, 1, 2, '#2b4a7a')
-  box(11, 14, 2, 1, '#b5775a')
-  // Rumpf und Arme: Pulli
-  box(16, 16, 24, 16, '#26314d')
-  box(20, 30, 8, 2, '#71a330')
-  box(32, 30, 8, 2, '#71a330')
-  box(40, 16, 16, 16, '#26314d')
-  box(44, 30, 4, 2, '#d9a27c')
-  box(32, 48, 16, 16, '#26314d')
-  box(36, 62, 4, 2, '#d9a27c')
-  box(23, 21, 2, 3, '#71a330')
-  // Beine: Hose, Schuhe
-  box(0, 16, 16, 16, '#2c2c38')
-  box(0, 29, 16, 3, '#1a1a20')
-  box(16, 48, 16, 16, '#2c2c38')
-  box(16, 61, 16, 3, '#1a1a20')
+  cubiSkinPixels().forEach((row, y) => row.forEach((color, x) => {
+    if (!color) return
+    g.fillStyle = CUBI_SKIN_COLORS[color]
+    g.fillRect(x, y, 1, 1)
+  }))
   return c
 }
 

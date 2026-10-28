@@ -70,7 +70,7 @@ async function start() {
     const url = props.skin?.url && SKIN_URL.test(props.skin.url) ? props.skin.url : null
     const model = props.skin?.model === 'slim' ? 'slim' : 'default'
     if (url) await v.loadSkin(await loadImage(url), { model })
-    else v.loadSkin(mannequinSkin(), { model: 'default' })
+    else v.loadSkin(cubiSkin(), { model: 'default' })
     if (props.cape?.url && props.cape.url.startsWith('/v1/capes/')) {
       try {
         v.loadCape(firstFrame(await loadImage(props.cape.url), props.cape.frames))

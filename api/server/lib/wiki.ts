@@ -1,12 +1,12 @@
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs'
 import { extname, join, relative, sep } from 'node:path'
+import { pipeline } from 'node:stream/promises'
 import {
   defineEventHandler,
   getCookie,
   getHeader,
   getRequestHost,
   send,
-  sendStream,
   setResponseHeader,
   setResponseHeaders,
   setResponseStatus,
@@ -325,7 +325,7 @@ export function createWikiHandler(load: () => Promise<WikiSite> | WikiSite): Eve
   })
 }
 
-function serveFile(event: H3Event, pathname: string, file: WikiFile, status: number, cacheControl?: string) {
+async function serveFile(event: H3Event, pathname: string, file: WikiFile, status: number, cacheControl?: string) {
   setResponseHeaders(event, { ...wikiCacheHeaders(pathname, file), 'Content-Type': file.type, 'ETag': file.etag })
   if (cacheControl) setResponseHeader(event, 'Cache-Control', cacheControl)
   if (status === 200 && getHeader(event, 'if-none-match') === file.etag) {
@@ -335,7 +335,14 @@ function serveFile(event: H3Event, pathname: string, file: WikiFile, status: num
   setResponseStatus(event, status)
   setResponseHeaders(event, { 'Content-Length': String(file.size) })
   if (event.method === 'HEAD') return send(event, '')
-  return sendStream(event, createReadStream(file.file))
+  // Nicht h3s sendStream: damit blieben unter Last einzelne Antworten für immer offen (Datei gelesen, Antwort nie
+  // beendet – der Browser wartet auf den Rest). pipeline beendet die Antwort zuverlässig.
+  try {
+    await pipeline(createReadStream(file.file), event.node.res)
+  } catch {
+    // Abgebrochener Download oder fehlende Datei: Kopfzeilen sind schon gesendet – Verbindung schließen.
+    event.node.res.destroy()
+  }
 }
 
 function plain(event: H3Event, status: number, text: string) {

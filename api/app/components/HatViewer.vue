@@ -3,7 +3,7 @@ import type { SkinViewer } from 'skinview3d'
 import type { Driver } from '~/utils/cosmetic-v2/format'
 import type { LoadedCosmetic, MountedCosmetic, Three } from '~/utils/cosmetic-v2/view'
 
-// 3D-Vorschau einer Kosmetik (Format v2) an der Schaufensterpuppe – derselbe Renderer wie die Studio-Werkbank
+// 3D-Vorschau einer Kosmetik (Format v2) an Cubi – derselbe Renderer wie die Studio-Werkbank
 // und der Launcher (utils/cosmetic-v2). skinview3d + three.js sind mitgebündelt, Modell und Bilder kommen von der
 // eigenen API (gleiche Herkunft, strenge CSP bleibt). Kamera wie die Werkbank („three“, fov 32), Ziehen dreht.
 // Anhängepunkt aus dem Modell: Kopf, Rumpf (Flügel, ganzer Spieler) oder Boden (Begleiter neben dem Spieler).
@@ -94,7 +94,7 @@ onMounted(async () => {
     })
     viewer.controls.enablePan = false
     viewer.controls.enableZoom = false
-    await viewer.loadSkin(mannequinSkin(), { model: 'default' })
+    await viewer.loadSkin(cubiSkin(), { model: 'default' })
     view.frameHead(three, viewer, null, 'three', zoom())
     await apply()
     observer = new ResizeObserver(() => {
