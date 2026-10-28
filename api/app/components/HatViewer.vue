@@ -16,6 +16,8 @@ const props = withDefaults(defineProps<{
   options?: Record<string, boolean> | null
   /** Begleiter am Boden: gespielter Zustand (`walk`, `grab`, …), `null` = idle. */
   state?: Driver | null
+  /** Zähler der Zustands-Klicks: ein neuer Wert startet den Zustand von vorn (zweiter Klick auf `grab` = noch einmal). */
+  stateTick?: number
   /**
    * Begleiter am Boden: Aktion Streicheln/Füttern ab `startedAt` (`Date.now()`) – ein neues Objekt spielt sie neu ab,
    * auch bei ausgeschalteter Animation. Ohne passende Aktion im Modell passiert nichts.
@@ -27,6 +29,7 @@ const props = withDefaults(defineProps<{
   height: 400,
   options: null,
   state: null,
+  stateTick: 0,
   action: null,
 })
 const emit = defineEmits<{ loading: [boolean] }>()
@@ -77,7 +80,14 @@ async function apply() {
     const loaded = await load(hat)
     if (mine !== token || !viewer) return
     mounted?.dispose()
-    mounted = view.mountOnSkinViewer(three, viewer, loaded, { animate: props.animate, night: props.night, options: props.options, drivers: props.state ? [props.state] : null, action: props.action })
+    mounted = view.mountOnSkinViewer(three, viewer, loaded, {
+      animate: props.animate,
+      night: props.night,
+      options: props.options,
+      drivers: props.state ? [props.state] : null,
+      stateTick: props.stateTick,
+      action: props.action,
+    })
     view.frameModel(three, viewer, loaded.model, 'three', zoom())
   } catch (e) {
     console.error('cosmetic preview failed', e)
@@ -129,7 +139,7 @@ watch(() => props.night, (night) => {
 })
 watch(() => props.animate, (animate) => mounted?.set({ animate }))
 watch(() => props.options, (options) => mounted?.set({ options }), { deep: true })
-watch(() => props.state, (state) => mounted?.set({ drivers: state ? [state] : null }))
+watch(() => [props.state, props.stateTick] as const, ([state, stateTick]) => mounted?.set({ drivers: state ? [state] : null, stateTick }))
 watch(() => props.action, (action) => mounted?.set({ action }))
 </script>
 

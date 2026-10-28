@@ -62,9 +62,9 @@ export interface CosmeticUpdateOptions {
   action?: { driver: ActionDriver, localMs: number } | null
   /**
    * Uhr für Überblendungen (ms, monoton, z. B. `Date.now()`). Mit ihr blenden Wechsel von Zustand oder Aktion – und
-   * eine neu gestartete Aktion – über 250 ms vom zuletzt gezeigten Bild aus über ({@link blendPoses}: Drehungen auf dem
-   * kürzesten Weg, Effekt-Knochen `fx_*` sofort in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder,
-   * Karten, Werkbank-Vergleich).
+   * eine neu gestartete Aktion oder ein neu gestarteter einmaliger Zustand (`poseMs` springt zurück) – über 250 ms vom
+   * zuletzt gezeigten Bild aus über ({@link blendPoses}: Drehungen auf dem kürzesten Weg, Effekt-Knochen `fx_*` sofort
+   * in der Zielpose). Ohne sie springt die Pose wie bisher (Standbilder, Karten, Werkbank-Vergleich).
    */
   fadeClock?: number
 }
@@ -290,7 +290,7 @@ export function createCosmetic(THREE: Three, model: CosmeticModel, images: Cosme
   let mixLast = new Map<string, Pose>()
   let mixLocal = -Infinity
   const mix = (key: string, target: Map<string, Pose>, clock: number, local: number): Map<string, Pose> => {
-    // neuer Zustand, andere Aktion oder dieselbe Aktion neu gestartet (Zeit springt zurück)
+    // neuer Zustand, andere Aktion oder dieselbe Aktion bzw. derselbe einmalige Zustand neu gestartet (Zeit springt zurück)
     if (mixKey !== null && (key !== mixKey || local < mixLocal)) {
       mixSnap = mixLast
       mixSince = clock
@@ -315,7 +315,7 @@ export function createCosmetic(THREE: Three, model: CosmeticModel, images: Cosme
       let poses = act ? sampleAction(model, act.driver, act.localMs) : animate ? samplePoses(model, poseMs ?? timeMs, drivers) : null
       if (fadeClock != null) {
         const key = act ? `a:${act.driver}` : animate ? `s:${(drivers ?? ['idle']).join(',')}` : 'rest'
-        poses = mix(key, poses ?? new Map(), fadeClock, act ? act.localMs : -Infinity)
+        poses = mix(key, poses ?? new Map(), fadeClock, act ? act.localMs : animate ? (poseMs ?? -Infinity) : -Infinity)
       }
       for (const b of model.bones) bones.get(b.id)!.matrix.fromArray(boneLocal(b, poses?.get(b.id)))
       root.updateMatrixWorld(true)
@@ -476,6 +476,12 @@ export interface MountOptions {
   /** Aktive Treiber (Standard nur `idle`; Begleiter am Boden z. B. `['walk']`). */
   drivers?: readonly Driver[] | null
   /**
+   * Zähler der Zustands-Klicks (wie `petStateTick` im Launcher): ändert er sich, beginnt der Zustand von vorn, auch
+   * derselbe – ein zweiter Klick auf `grab` spielt den Clip noch einmal (mit Überblendung), statt im letzten Bild zu
+   * stehen.
+   */
+  stateTick?: number
+  /**
    * Aktion eines Begleiters am Boden: Treiber + Beginn (`Date.now()`); ein neues Objekt startet sie neu. Läuft einmal
    * (auch ohne Animation, z. B. bei reduzierter Bewegung) und endet nach ihrer Länge von selbst – mit Überblendung.
    */
@@ -547,13 +553,14 @@ export interface MountedCosmetic {
  * Hängt ein Modell an seinen Anhängepunkt (`head`, `body`, `ground`, siehe {@link attachAnchor}) eines
  * skinview3d-Spielers und hält es mit einer eigenen Bild-Schleife aktuell (Wanduhr wie im Spiel: alle Clients zeigen
  * dieselbe Phase). Animation aus = Ruhepose, Leuchten steht – wie die Werkbank. Wechsel von Zustand und Aktion blenden
- * über 250 ms; `grab` läuft einmal ab dem Wechsel, eine Aktion ab ihrem `startedAt`.
+ * über 250 ms; `grab` läuft einmal ab dem Wechsel (oder ab dem letzten neuen `stateTick`), eine Aktion ab ihrem
+ * `startedAt`.
  */
 export function mountOnSkinViewer(THREE: Three, viewer: SkinViewer, loaded: LoadedCosmetic, opts: MountOptions = {}): MountedCosmetic {
   const cos = createCosmetic(THREE, loaded.model, loaded.images)
   const anchor = attachAnchor(THREE, viewer, loaded.model.attach)
   anchor.group.add(cos.root)
-  const state: Required<MountOptions> = { animate: true, glow: true, night: false, fixedTime: null, options: null, drivers: null, action: null, ...opts }
+  const state: Required<MountOptions> = { animate: true, glow: true, night: false, fixedTime: null, options: null, drivers: null, stateTick: 0, action: null, ...opts }
   applyDayNight(viewer, cos, state.night)
   cos.setOptions(state.options)
   let frozenAt = state.fixedTime ?? Date.now()
@@ -588,7 +595,8 @@ export function mountOnSkinViewer(THREE: Three, viewer: SkinViewer, loaded: Load
   return {
     cosmetic: cos,
     set(next) {
-      if (next.drivers !== undefined && !sameDrivers(next.drivers, state.drivers)) stateSince = Date.now()
+      const changed = next.drivers !== undefined && !sameDrivers(next.drivers, state.drivers)
+      if (changed || (next.stateTick !== undefined && next.stateTick !== state.stateTick)) stateSince = Date.now()
       Object.assign(state, next)
       if (next.night !== undefined) applyDayNight(viewer, cos, state.night)
       if (next.options !== undefined) cos.setOptions(state.options)

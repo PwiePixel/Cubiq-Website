@@ -64,6 +64,8 @@ const shownStates = computed(() => shown.value?.states ?? [])
 const viewerState = computed(() => (shownStates.value.includes(petState.value) && petState.value !== 'idle' ? petState.value as Driver : null))
 /** `grab` läuft im Spiel einmal 2,4 s ab Zustandsbeginn (Cubiq Client: 48 Ticks) – die Vorschau danach zurück zu idle. */
 const GRAB_MS = 2400
+/** Zählt jeden Zustands-Klick: derselbe Zustand beginnt so von vorn (ein zweiter Klick auf `grab` spielt ihn noch einmal). */
+const stateTick = ref(0)
 let grabTimer: ReturnType<typeof setTimeout> | null = null
 function stopGrab() {
   if (grabTimer) clearTimeout(grabTimer)
@@ -73,6 +75,7 @@ function chooseState(st: string) {
   stopGrab()
   petAction.value = null
   petState.value = st
+  stateTick.value++
   if (st === 'grab') {
     grabTimer = setTimeout(() => {
       grabTimer = null
@@ -159,7 +162,17 @@ function pick(h: SiteHat) {
         <div class="card overflow-hidden">
           <div class="stage relative" :class="{ 'stage-night': night }">
             <ClientOnly>
-              <HatViewer :hat="shown" :night="night" :animate="animate" :options="shownChoices" :state="viewerState" :action="petAction" :height="400" @loading="loading = $event" />
+              <HatViewer
+                :hat="shown"
+                :night="night"
+                :animate="animate"
+                :options="shownChoices"
+                :state="viewerState"
+                :state-tick="stateTick"
+                :action="petAction"
+                :height="400"
+                @loading="loading = $event"
+              />
             </ClientOnly>
             <p class="absolute top-3 left-4 text-xs tracking-[0.18em] text-base-400 uppercase">{{ m.capes.preview }}</p>
             <p class="absolute right-4 bottom-3 text-xs text-base-600">{{ m.capes.dragHint }}</p>

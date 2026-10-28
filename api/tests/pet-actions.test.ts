@@ -302,6 +302,47 @@ describe('actions: renderer (three.js in node)', () => {
     expect(head.matrix.elements[13]).toBeCloseTo(1, 1)
     mounted.dispose()
   })
+
+  it('mount: a second click on the same state (new stateTick) plays grab again with a fade instead of freezing on its last frame', () => {
+    const frames: (() => void)[] = []
+    vi.stubGlobal('requestAnimationFrame', (f: () => void) => frames.push(f))
+    vi.stubGlobal('cancelAnimationFrame', () => {})
+    vi.useFakeTimers()
+    vi.setSystemTime(20_000)
+    const playerObject = Object.assign(new THREE.Group(), { skin: { head: new THREE.Group(), body: new THREE.Group() } })
+    const viewer = { globalLight: { intensity: 3 }, cameraLight: { intensity: 0.6 }, camera: new THREE.PerspectiveCamera(), playerObject }
+    // grab hebt den Kopf in 2,6 s gleichmäßig um 2,6 an (y = Zeit seit Zustandsbeginn in s)
+    const grab = { id: 'grab', driver: 'grab', lengthMs: 2600, loop: false, tracks: [{ bone: 'head', channel: 'position', keys: [{ t: 0, v: [0, 0, 0] }, { t: 2600, v: [0, 2.6, 0] }] }] }
+    const model = { ...m, animations: [...m.animations!, grab] } as CosmeticModel
+    const mounted = mountOnSkinViewer(THREE, viewer as never, { model, images: { texture: img } }, { drivers: ['grab'], stateTick: 1 })
+    const head = mounted.cosmetic.root.getObjectByName('head')!
+    const y = () => head.matrix.elements[13]!
+    const tick = (ms: number) => {
+      vi.setSystemTime(Date.now() + ms)
+      frames.shift()!()
+    }
+    for (let i = 0; i < 75; i++) tick(40) // 3 s: Clip zu Ende, letztes Bild steht
+    expect(y()).toBeCloseTo(2.6, 6)
+    // dieselben Treiber ohne neuen Zähler beginnen nichts neu (wie bisher)
+    mounted.set({ drivers: ['grab'], stateTick: 1 })
+    tick(16)
+    expect(y()).toBeCloseTo(2.6, 6)
+    // zweiter Klick auf „Schnappen“: von vorn, weich vom letzten Bild aus
+    mounted.set({ drivers: ['grab'], stateTick: 2 })
+    tick(16)
+    expect(Math.abs(y() - 2.6)).toBeLessThan(0.1)
+    let prev = y()
+    for (let i = 0; i < 18; i++) {
+      tick(16)
+      expect(Math.abs(y() - prev)).toBeLessThan(0.4)
+      prev = y()
+    }
+    // nach der Überblendung läuft der Clip wieder ab dem Klick
+    expect(y()).toBeCloseTo(0.304, 6)
+    for (let i = 0; i < 50; i++) tick(40)
+    expect(y()).toBeCloseTo(2.304, 6)
+    mounted.dispose()
+  })
 })
 
 describe('fades with the real companions (three.js in node)', () => {
