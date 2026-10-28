@@ -503,7 +503,9 @@ export const isFxBone = (id: string): boolean => id.startsWith('fx_')
  * Skalierung je Komponente linear, a + (b − a) · w – genau wie die veröffentlichten Launcher und Clients Zustände
  * überblenden, Hüte und Flügel blenden also unverändert. Drehungen werden bewusst nicht auf den kürzesten Weg
  * umgerechnet: gegen ein bewegtes Ziel (Cubis Rolle beim Rutschen, Drehungen bei „Hände hoch“) spränge die Überblendung
- * sonst bis zu 164° in einem Bild; nach mehreren Umdrehungen dreht der Begleiter dafür kurz schnell zurück (bekannt).
+ * sonst, sobald der Unterschied 180° überschreitet. Bekannt wie bei den veröffentlichten Clients: nach mehreren
+ * Umdrehungen dreht der Begleiter kurz schnell zurück, und beginnt die Schleife des Ziels während der Überblendung neu,
+ * springt das Bild einmal um bis zu etwa 180°.
  * Effekt-Knochen (`fx_*`) werden nie übergeblendet: sie stehen sofort in b (Ruhe, wenn b sie nicht bewegt) – ein
  * unterbrochenes Herz verschwindet im Versteck, statt in voller Größe zurückzugleiten.
  */

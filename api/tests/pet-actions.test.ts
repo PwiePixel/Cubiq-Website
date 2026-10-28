@@ -495,7 +495,7 @@ describe('fades with the real companions (three.js in node)', () => {
     cos.dispose()
   })
 
-  it('cubi: from Pet into rolling (slide) the fade follows the moving roll without a jump', () => {
+  it('cubi: from Pet into rolling (slide) the fade follows the moving roll without a jump while its loop does not restart', () => {
     stubCanvas()
     const m = model('cubi')
     const cos = createCosmetic(THREE, m, { texture: img })

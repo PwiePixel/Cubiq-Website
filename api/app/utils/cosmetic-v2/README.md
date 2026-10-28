@@ -67,7 +67,9 @@ nicht).
   (`grab`) und Aktionen laufen ab ihrem eigenen Beginn; Bilder und Höfe bleiben trotzdem auf der Wanduhr.
 - Überblendungen (250 ms, smoothstep, wie Launcher und Cubiq Client): Drehung (Euler-Grad), Position und Skalierung je
   Komponente linear, `a + (b − a) · w` – wie die veröffentlichten Launcher und Clients, Hüte und Flügel blenden also
-  unverändert. Drehungen bewusst nicht auf den kürzesten Weg (gegen ein bewegtes Ziel wie Cubis Rolle spränge das Bild
-  bis zu 164°); nach mehreren Umdrehungen dreht der Begleiter dafür kurz schnell zurück. Effekt-Knochen `fx_*` werden
+  unverändert. Drehungen bewusst nicht auf den kürzesten Weg (gegen ein bewegtes Ziel wie Cubis Rolle spränge das Bild,
+  sobald der Unterschied 180° überschreitet). Bekannt wie bei den veröffentlichten Clients: nach mehreren Umdrehungen
+  dreht der Begleiter kurz schnell zurück, und beim Wechsel in eine Bewegung mit mehreren Umdrehungen (`slide`,
+  `handsup`) kann das Bild einmal um bis zu etwa 180° springen, wenn deren Schleife während der 250 ms neu beginnt. Effekt-Knochen `fx_*` werden
   nie übergeblendet, sie stehen sofort in der Zielpose (unterbrochene Herzen/Krümel verschwinden im Versteck).
 - CSP: alles same-origin (Bilder/JSON von der eigenen API), keine Blob-/Daten-URLs nötig.
