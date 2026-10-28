@@ -3,7 +3,7 @@ import type { SkinViewer } from 'skinview3d'
 import type { MagnificationTextureFilter, MinificationTextureFilter } from 'three'
 
 // 3D-Vorschau eines Umhangs (skinview3d, mitgebündelt – kein CDN): an einem Spieler-Skin (`skin`, nur Mojang-Texturen,
-// z. B. per Spielername geladen) oder an der Schaufensterpuppe. `frame` gesetzt = fester Frame (z. B. in der
+// z. B. per Spielername geladen) oder an Cubi (Standard-Skin). `frame` gesetzt = fester Frame (z. B. in der
 // Admin-Prüfung), sonst läuft die Animation nach der Uhr. HD-Umhänge (Logos, gemalte Bilder) werden weich gefiltert,
 // Pixel-Art bleibt scharf – wie im Cubiq Client.
 const props = withDefaults(defineProps<{
@@ -110,7 +110,7 @@ async function applyCape() {
   if (props.frame === null) capeTimer = setInterval(draw, Math.max(20, Math.min(cape.frameTimeMs / 2, 250)))
 }
 
-/** Spieler-Skin (nur textures.minecraft.net) oder – ohne bzw. bei Fehlern – die Schaufensterpuppe. */
+/** Spieler-Skin (nur textures.minecraft.net) oder – ohne bzw. bei Fehlern – Cubi. */
 async function applySkin() {
   if (!viewer) return
   const mine = ++skinToken
@@ -125,7 +125,7 @@ async function applySkin() {
       // Textur nicht ladbar – Puppe statt leerer Figur.
     }
   }
-  if (mine === skinToken && viewer) await viewer.loadSkin(mannequinSkin(), { model: 'default' })
+  if (mine === skinToken && viewer) await viewer.loadSkin(cubiSkin(), { model: 'default' })
 }
 
 onMounted(async () => {

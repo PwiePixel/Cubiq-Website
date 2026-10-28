@@ -1,6 +1,6 @@
 // Umhang an deinem eigenen Skin (Kosmetik-Seite, Startseite): Spielername → Skin über den Mojang-Proxy der API
 // (`GET /v1/skins/by-name/{name}`, API.md §14 – zwischengespeichert, begrenzt, nur textures.minecraft.net). Ohne Namen,
-// bei Standard-Skins und bei Fehlern zeigt die 3D-Vorschau die Schaufensterpuppe. Der zuletzt gewählte Name bleibt je
+// bei Standard-Skins und bei Fehlern zeigt die 3D-Vorschau Cubi. Der zuletzt gewählte Name bleibt je
 // Browser gespeichert (localStorage, abgesichert: privates Fenster, gesperrter Speicher); wer angemeldet ist und noch
 // nichts gewählt hat, sieht seinen eigenen Skin.
 

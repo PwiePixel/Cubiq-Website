@@ -1,4 +1,5 @@
 // Umhang-Hilfen der Website (wie im Launcher, app/utils/cubiq.ts).
+import { CUBI_SKIN_COLORS, cubiSkinPixels } from './cubi-skin'
 
 export interface SiteCape {
   id: string
@@ -59,32 +60,19 @@ export function cubiqFrameIndex(now: number, frames: number, frameTimeMs: number
 }
 
 /**
- * Schlichte Schaufensterpuppe als Skin (64×64): grau mit Cubiq-grünem Hemd und hellen Augen – damit der
- * Umhang im Mittelpunkt steht und kein fremder Skin gezeigt wird.
+ * Cubi als Skin (64×64, siehe cubi-skin.ts): der grüne Würfel aus dem Cubiq-Logo – ihn zeigen alle 3D-Vorschauen,
+ * solange kein Spielername eingegeben ist, damit kein fremder Skin zu sehen ist.
  */
-export function mannequinSkin(): HTMLCanvasElement {
+export function cubiSkin(): HTMLCanvasElement {
   const c = document.createElement('canvas')
   c.width = 64
   c.height = 64
   const g = c.getContext('2d')!
-  const box = (x: number, y: number, w: number, h: number, color: string) => {
-    g.fillStyle = color
-    g.fillRect(x, y, w, h)
-  }
-  // Kopf (Grundschicht) mit etwas dunklerer Ober- und Unterseite.
-  box(0, 8, 32, 8, '#869489')
-  box(8, 0, 16, 8, '#5f6d63')
-  // Gesicht: zwei helle Augen.
-  box(9, 12, 2, 1, '#d0f29b')
-  box(13, 12, 2, 1, '#d0f29b')
-  // Rechtes Bein, Körper, rechter Arm (Zeile 16–32).
-  box(0, 16, 16, 16, '#3d4a41')
-  box(16, 16, 24, 16, '#71a330')
-  box(20, 16, 16, 4, '#5c8726')
-  box(40, 16, 16, 16, '#869489')
-  // Linkes Bein und linker Arm (Zeile 48–64).
-  box(16, 48, 16, 16, '#3d4a41')
-  box(32, 48, 16, 16, '#869489')
+  cubiSkinPixels().forEach((row, y) => row.forEach((color, x) => {
+    if (!color) return
+    g.fillStyle = CUBI_SKIN_COLORS[color]
+    g.fillRect(x, y, 1, 1)
+  }))
   return c
 }
 
