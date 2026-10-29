@@ -44,7 +44,7 @@ const RETIRED_HATS = [
 ]
 /** Ausgemusterte Hüte ohne Event (Event aus → nicht in der Website-Liste). */
 const V2_IDS = ['cubiq_cap', 'lamp_helmet', 'top_hat']
-/** Öffentliche Format-2-Teile im Katalog, in Katalogreihenfolge (keine Hüte mehr). */
+/** Öffentliche Format-2-Teile im Katalog, in Katalogreihenfolge (Hüte nur noch die per Code gebauten, seit Winter 2026). */
 const V2_PUBLIC = ['bat_buddy', 'bat_wings', 'demon_wings', 'raven_wings', 'ghost_wings', ...GENERATED]
 /** Alle Format-2-Teile mit Dateien im Repository (Archiv-Katalog: ausgemusterte Hüte + öffentliche Teile). */
 const V2_ALL = [...V2_IDS, 'witch_hat', 'pumpkin_head', ...V2_PUBLIC]
@@ -102,13 +102,13 @@ function syntheticV2(id: string, unlock: 'free' | 'code' | 'admin'): AnyBuiltinC
 }
 
 describe('format v2: bundled models', () => {
-  it('the public catalog has no head cosmetics any more (retired October 2026)', async () => {
+  it('the public catalog keeps only the generated hats (Studio hats retired October 2026)', async () => {
     const list = await loadBuiltinCosmetics(readCatalog, readAsset)
     expect(list.filter((c) => c.format === 2).map((c) => c.id)).toEqual(V2_PUBLIC)
     for (const id of [...RETIRED_HATS.map((h) => h.id), 'redstone_aura']) expect(list.some((c) => c.id === id)).toBe(false)
     const env = makeEnv()
     seedBuiltinCosmetics(env.ctx, list)
-    expect(publicHats(env.ctx)).toEqual([])
+    expect(publicHats(env.ctx).map((h) => h.id)).toEqual(['christmas_hat', 'earmuffs'])
   })
 
   it('every format-2 item with files (public and retired) is valid against its images and matches its entry', async () => {
@@ -271,7 +271,7 @@ describe('format v2: catalog, equip, lookup', () => {
     const env = makeEnv()
     await seeded(env)
     const hats = publicHats(env.ctx)
-    expect(hats.map((h) => h.id)).toEqual(V2_IDS)
+    expect(hats.map((h) => h.id)).toEqual([...V2_IDS, 'christmas_hat', 'earmuffs'])
     const cap = hats.find((h) => h.id === 'cubiq_cap')!
     expect(cap).toMatchObject({ unlock: 'free', achievement: null, format: 2, glowFrames: 12 })
     for (const k of ['model', 'texture', 'glow', 'card', 'cardNight'] as const) expect(cap[k]).toMatch(/^\/v1\/cosmetics\//)

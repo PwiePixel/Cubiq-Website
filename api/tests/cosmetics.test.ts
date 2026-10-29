@@ -124,12 +124,13 @@ describe('bundled cosmetics', () => {
       expect(c.png.readUInt32BE(16)).toBe(t.textureWidth * c.scale)
       expect(c.png.readUInt32BE(20)).toBe(t.textureHeight * c.scale * c.frames)
     }
-    // Format v2 nur noch Begleiter, Flügel und (per Code gebaute) Haustiere; Code- und Team-Teile liegen nicht im Repository.
+    // Format v2: Begleiter, Flügel und die per Code gebauten Teile (Haustiere, Winter-Hüte); Code- und Team-Teile liegen
+    // nicht im Repository.
     expect(list.filter((c) => c.format === 2).map((c) => c.id).sort()).toEqual(['bat_buddy', 'bat_wings', 'demon_wings', 'ghost_wings', 'raven_wings', ...ITEMS.map((i) => i.id)].sort())
     const u = await login(env, 'Steve')
     const cat = cosmeticCatalog(env.ctx, u.user.uuid)
     expect(cat.find((c) => c.id === 'dragon_wings')).toMatchObject({ owned: true, slot: 'wings', unlock: 'free' })
-    expect(cat.some((c) => c.slot === 'hat')).toBe(false)
+    expect(cat.filter((c) => c.slot === 'hat').map((c) => c.id)).toEqual(['christmas_hat', 'earmuffs'])
   })
 
   it('rejects wrong sizes, unknown templates and id clashes with emotes', () => {

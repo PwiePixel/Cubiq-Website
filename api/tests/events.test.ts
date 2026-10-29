@@ -372,7 +372,7 @@ describe('event cosmetics: catalog, claim, companion', () => {
     setEventEnabled(env.ctx, ADMIN, 'halloween', true)
     expect(cosmeticCatalog(env.ctx, u).filter((c) => c.event).map((c) => [c.id, c.slot])).toEqual([['bat_buddy', 'companion']])
     expect(catalog(env.ctx, u).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])
-    expect(publicHats(env.ctx)).toEqual([])
+    expect(publicHats(env.ctx).map((h) => h.id)).toEqual(['christmas_hat', 'earmuffs'])
     // Event-Begleiter; die freien Begleiter (scripts/generate-cosmetics-v2.mjs) stehen immer in der Liste
     expect(publicCompanions(env.ctx).filter((h) => h.event).map((h) => h.id)).toEqual(['bat_buddy'])
     expect(publicCapes(env.ctx).map((c) => c.id)).toEqual(['cubiq_black', 'cubiq_white', 'kirschbluete'])

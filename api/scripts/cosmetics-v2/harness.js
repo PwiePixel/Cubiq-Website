@@ -136,8 +136,8 @@ function camera(target, dir, dist) {
   viewer.camera.updateMatrixWorld(true)
 }
 
-/** Kamera je Anhängepunkt; `view` = Richtung vom Ziel zur Kamera. */
-function frame(cur, view, zoom = 1) {
+/** Kamera je Anhängepunkt; `view` = Richtung vom Ziel zur Kamera, `aim` = Ziel am Kopf so viel höher/tiefer. */
+function frame(cur, view, zoom = 1, aim = 0) {
   const m = cur.model
   viewer.playerObject.updateMatrixWorld(true)
   if (m.attach === 'ground' && !cur.context) {
@@ -151,14 +151,14 @@ function frame(cur, view, zoom = 1) {
   } else {
     const neck = viewer.playerObject.skin.head.getWorldPosition(new THREE.Vector3())
     const lift = Math.max(0, (cur.hi[1] - 12.5) / 2)
-    camera(new THREE.Vector3(0, neck.y + 8 + lift, 0), view, 36 * (1 + lift / 9) * zoom)
+    camera(new THREE.Vector3(0, neck.y + 8 + lift + aim, 0), view, 36 * (1 + lift / 9) * zoom)
   }
 }
 
-function shot(cur, { t = 0, drivers = ['idle'], night = false, view = [0.6, 0.38, 0.9], zoom = 1, animate = true, action = null }) {
+function shot(cur, { t = 0, drivers = ['idle'], night = false, view = [0.6, 0.38, 0.9], zoom = 1, aim = 0, animate = true, action = null }) {
   viewer.background = night ? BG.night : BG.day
   applyDayNight(viewer, cur.cos, night)
-  frame(cur, view, zoom)
+  frame(cur, view, zoom, aim)
   cur.cos.update(t, { drivers, camera: viewer.camera, animate, action })
   viewer.render()
   return canvas
@@ -183,7 +183,7 @@ window.card = async (id, night, opts = {}) => {
   viewer.setSize(SIZE, SIZE)
   const cur = await load(id)
   const view = opts.view ?? (cur.model.attach === 'body' ? [0.85, 0.42, -0.95] : cur.model.attach === 'head' ? [0.78, 0.5, 0.95] : [0.62, 0.36, 0.88])
-  shot(cur, { t: opts.t ?? 0, drivers: [opts.state ?? 'idle'], night, view, zoom: opts.zoom ?? 1 })
+  shot(cur, { t: opts.t ?? 0, drivers: [opts.state ?? 'idle'], night, view, zoom: opts.zoom ?? 1, aim: opts.aim ?? 0 })
   return canvas.toDataURL('image/png')
 }
 
@@ -218,7 +218,7 @@ window.review = async (id) => {
   const CELL = 256
   viewer.setSize(512, 512)
   let cur = await load(id)
-  const states = cur.model.attach === 'ground' ? STATES.filter((s) => cur.drivers.includes(s)) : ['idle', 'air', 'sneak'].filter((s) => cur.drivers.includes(s))
+  const states = cur.model.attach === 'ground' ? STATES.filter((s) => cur.drivers.includes(s)) : ['idle', 'walk', 'jump', 'air', 'sneak'].filter((s) => cur.drivers.includes(s))
   const out = {}
   out.states = sheetOf(states.length, 8, CELL, (r, c) => {
     const st = states[r]
