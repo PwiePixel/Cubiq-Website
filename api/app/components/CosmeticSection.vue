@@ -51,14 +51,20 @@ function toggleOption(h: SiteHat, id: string) {
 const shownChoices = computed(() => (shown.value ? (choices[shown.value.id] ?? null) : null))
 const optionName = (o: { id: string, name: Record<string, string> | null }) => o.name?.[lang.value] ?? o.name?.en ?? o.id
 
-// Begleiter am Boden: Zustände, für die das Modell eine Animation hat (nur Vorschau; im Spiel wählt der Client selbst).
+// Zustände, für die das Modell eine Animation hat – Begleiter am Boden und getragene Teile (Hut, Begleiter am Kopf,
+// Flügel). Nur Vorschau: im Spiel wählt der Client den Zustand selbst aus der Bewegung.
 const STATE_NAMES: Record<string, Record<string, string>> = {
-  en: { idle: 'Idle', walk: 'Walk', slide: 'Slide', swim: 'Swim', air: 'Jump', sneak: 'Sneak', grab: 'Grab', flee: 'Flee', handsup: 'Hands up' },
-  de: { idle: 'Stehen', walk: 'Laufen', slide: 'Rutschen', swim: 'Schwimmen', air: 'Springen', sneak: 'Schleichen', grab: 'Schnappen', flee: 'Flüchten', handsup: 'Hände hoch' },
-  es: { idle: 'Quieto', walk: 'Andar', slide: 'Deslizar', swim: 'Nadar', air: 'Saltar', sneak: 'Sigilo', grab: 'Agarrar', flee: 'Huir', handsup: 'Manos arriba' },
+  en: { idle: 'Idle', walk: 'Walk', slide: 'Slide', swim: 'Swim', air: 'Jump', jump: 'Jump', sneak: 'Sneak', grab: 'Grab', flee: 'Flee', handsup: 'Hands up' },
+  de: { idle: 'Stehen', walk: 'Laufen', slide: 'Rutschen', swim: 'Schwimmen', air: 'Springen', jump: 'Springen', sneak: 'Schleichen', grab: 'Schnappen', flee: 'Flüchten', handsup: 'Hände hoch' },
+  es: { idle: 'Quieto', walk: 'Andar', slide: 'Deslizar', swim: 'Nadar', air: 'Saltar', jump: 'Saltar', sneak: 'Sigilo', grab: 'Agarrar', flee: 'Huir', handsup: 'Manos arriba' },
 }
+/** Getragene Teile: `jump` ist der Absprung, `air` die Zeit in der Luft (Fallen, Fliegen) – Begleiter am Boden kennen nur `air`. */
+const WORN_AIR: Record<string, string> = { en: 'In the air', de: 'In der Luft', es: 'En el aire' }
 const STATE_GROUP: Record<string, string> = { en: 'Animation state', de: 'Zustand', es: 'Estado' }
-const stateName = (s: string) => STATE_NAMES[lang.value]?.[s] ?? STATE_NAMES.en![s] ?? s
+const stateName = (s: string) =>
+  s === 'air' && shown.value?.slot !== 'pet'
+    ? (WORN_AIR[lang.value] ?? WORN_AIR.en!)
+    : (STATE_NAMES[lang.value]?.[s] ?? STATE_NAMES.en![s] ?? s)
 const petState = ref<string>('idle')
 const shownStates = computed(() => shown.value?.states ?? [])
 const viewerState = computed(() => (shownStates.value.includes(petState.value) && petState.value !== 'idle' ? petState.value as Driver : null))

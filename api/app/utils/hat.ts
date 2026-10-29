@@ -31,7 +31,11 @@ export interface SiteHat {
   animated: boolean
   /** Nur Begleiter am Boden: Größe relativ zu anderen Begleitern (1 = normal). */
   petScale?: number
-  /** Nur Begleiter am Boden: Zustände mit eigener Animation (Reihenfolge wie PET_STATES, `idle` immer zuerst). */
+  /**
+   * Zustände mit eigener Animation, `idle` immer zuerst: Begleiter am Boden in der Reihenfolge von PET_STATES, getragene
+   * Teile (Hut, Begleiter am Kopf, Flügel) aus idle, walk, jump, air, sneak – im Spiel wählt der Client sie aus der
+   * Bewegung des Spielers, die Vorschau per Knopf.
+   */
   states?: string[]
   /** Nur Begleiter am Boden: Aktionen des Modells (`pet` = Streicheln, `eat` = Füttern, Reihenfolge wie ACTION_DRIVERS). */
   actions?: string[]

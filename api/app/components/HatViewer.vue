@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<{
   height?: number
   /** Wahl der Optionen (z. B. `{ beard: false }`), `null` = Standardwerte. */
   options?: Record<string, boolean> | null
-  /** Begleiter am Boden: gespielter Zustand (`walk`, `grab`, …), `null` = idle. */
+  /** Gespielter Zustand (Begleiter am Boden: `walk`, `grab`, …; getragene Teile: `walk`, `jump`, `air`, `sneak`), `null` = idle. */
   state?: Driver | null
   /** Zähler der Zustands-Klicks: ein neuer Wert startet den Zustand von vorn (zweiter Klick auf `grab` = noch einmal). */
   stateTick?: number

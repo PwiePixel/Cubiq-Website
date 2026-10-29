@@ -251,7 +251,10 @@ export interface PublicHat extends CosmeticV2Fields {
   texture: string
   /** Hat das Modell Knochen-Animationen (Treiber idle)? */
   animated: boolean
-  /** Nur Platz `pet`: Zustände mit eigener Animation (Reihenfolge wie `PET_STATES`, `idle` immer zuerst) – Vorschau-Knöpfe. */
+  /**
+   * Zustände mit eigener Animation, `idle` immer zuerst – Vorschau-Knöpfe. Platz `pet`: Reihenfolge wie `PET_STATES`;
+   * getragene Teile (`hat`, `companion`, `wings`): aus `idle`, `walk`, `jump`, `air`, `sneak` (in dieser Reihenfolge).
+   */
   states?: string[]
   /** Nur Platz `pet`: gültige Aktionen des Modells (`pet`, `eat`; Reihenfolge wie `ACTION_DRIVERS`) – Knöpfe Streicheln/Füttern. */
   actions?: string[]
@@ -286,6 +289,16 @@ function petStatesOf(anims: readonly { driver?: string }[]): string[] {
   return PET_STATES.filter((s) => s === 'idle' || has.has(s))
 }
 
+/**
+ * Bewegungszustände getragener Teile (Hut, Begleiter am Kopf, Flügel; API.md §11.9): die Clients wählen sie aus der
+ * Bewegung des Spielers. Vorschau-Knöpfe nur für die, die das Modell animiert (`idle` immer zuerst).
+ */
+const WEAR_STATES = ['idle', 'walk', 'jump', 'air', 'sneak'] as const
+function wearStatesOf(anims: readonly { driver?: string }[]): string[] {
+  const has = new Set(anims.map((x) => x.driver ?? 'idle'))
+  return WEAR_STATES.filter((s) => s === 'idle' || has.has(s))
+}
+
 function publicV2(ctx: AppContext, slot: PublicV2Slot): PublicHat[] {
   const live = new Set(globalEvents(ctx))
   const rows = all<{ id: string, name: string, unlock: 'free' | 'code' | 'admin', event: string | null, reward: string | null, format: number }>(
@@ -313,7 +326,9 @@ function publicV2(ctx: AppContext, slot: PublicV2Slot): PublicHat[] {
       achievement: byReward.get(r.id) ?? null,
       texture: `/v1/cosmetics/${r.id}.png?v=${f.hash}`,
       animated: (a.model.animations ?? []).some((x) => (x.driver ?? 'idle') === 'idle'),
-      ...(slot === 'pet' ? { states: petStatesOf(a.model.animations ?? []), actions: ACTION_DRIVERS.filter((d) => actionOf(a.model, d)) } : {}),
+      ...(slot === 'pet'
+        ? { states: petStatesOf(a.model.animations ?? []), actions: ACTION_DRIVERS.filter((d) => actionOf(a.model, d)) }
+        : { states: wearStatesOf(a.model.animations ?? []) }),
       ...f,
     })
   }
