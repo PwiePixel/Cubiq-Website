@@ -261,6 +261,9 @@ CF_IMAGE="cloudflare/cloudflared:latest"
 # Im Container läuft cloudflared als Benutzer „nonroot“ (UID 65532).
 CF_UID=65532
 OVERRIDE="$API/docker-compose.override.yml"
+# Weitere Websites auf diesem Server im selben Tunnel („hostname service“ je Zeile), z. B. die Studio-Seite
+# (deploy/studio-server.sh aus PwiePixel/cubiq-main-website trägt sich hier ein).
+HOSTS_FILE="$BASE/tunnel-hosts"
 
 cfd() { docker run --rm -v "$CF_DIR:/home/nonroot/.cloudflared" "$CF_IMAGE" "$@"; }
 
@@ -331,8 +334,17 @@ cf_tunnel() {
     say "DNS: $host → Tunnel"
   done
 
+  # Hostnamen weiterer Websites bleiben beim Neuschreiben erhalten.
+  local extra='' h svc
+  if [ -f "$HOSTS_FILE" ]; then
+    while read -r h svc _; do
+      case "$h" in '' | '#'*) continue ;; esac
+      [ -n "$svc" ] && extra+="  - hostname: $h"$'\n'"    service: $svc"$'\n'
+    done <"$HOSTS_FILE"
+  fi
+
   cat >"$CF_DIR/config.yml" <<YAML
-# Von deploy/cubiq-server.sh angelegt – beim nächsten Start des Skripts neu geschrieben.
+# Von deploy/cubiq-server.sh angelegt – beim nächsten Start des Skripts neu geschrieben (weitere Websites: $HOSTS_FILE).
 tunnel: $id
 credentials-file: /etc/cloudflared/$id.json
 ingress:
@@ -340,7 +352,7 @@ ingress:
     service: http://api:3000
   - hostname: $docs
     service: http://api:3000
-  - service: http_status:404
+${extra}  - service: http_status:404
 YAML
   cat >"$OVERRIDE" <<YAML
 # Von deploy/cubiq-server.sh angelegt: cloudflared mit Konfigurationsdatei statt Tunnel-Token.
