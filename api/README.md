@@ -253,18 +253,22 @@ Mitgeliefert:
 | Drachenflügel | frei |
 | Rucksack | frei |
 | Fußspuren | frei |
+| Per Code gebaut (`scripts/generate-cosmetics-v2.mjs`, API.md §11.8): Cubi, Watschelpinguin, Füchschen, Axolotl, Schneemännchen, Glühwürmchen (Begleiter am Boden), Polarlichtflügel, Sternschnuppe, Mini-Cubi | frei |
+| Winter 2026, ebenfalls per Code gebaut: Schneefuchs (Begleiter am Boden), Zipfelmütze und Ohrenschützer (Hüte), Schneeflocke (Begleiter am Kopf) | frei |
 | Fledermaus-Begleiter | Event `halloween` |
 | Halloween-Flügel (Fledermaus, Dämon, Rabe, Geist) | Belohnung Kürbis-Suche |
 | Redstone-Krone, Heiligenschein, Redstone-Flügel | Code (privat, `PRIVATE_ASSETS_DIR`) |
 | Team-Krone | **nur Admin** (privat) |
 
-Ausgemustert (Oktober 2026): alle öffentliche Kopf-Kosmetik (Cubiq-Cap, Redstone-Lampen-Helm, Zylinder, Hexenhut, Kürbiskopf) und die Redstone-Partikel-Aura. Ihre Dateien bleiben in `assets/cosmetics/`; Migration 39 hat sie einmalig bei allen abgelegt.
+Ausgemustert (Oktober 2026): die öffentliche Kopf-Kosmetik aus Cubiq Studio (Cubiq-Cap, Redstone-Lampen-Helm, Zylinder, Hexenhut, Kürbiskopf) und die Redstone-Partikel-Aura. Ihre Dateien bleiben in `assets/cosmetics/`; Migration 39 hat sie einmalig bei allen abgelegt. Seit Winter 2026 gibt es wieder freie Hüte, per Code gebaut (Zipfelmütze, Ohrenschützer). Hüte, Begleiter am Kopf und Flügel bewegen sich mit dem Spieler (Laufen, Springen, in der Luft, Schleichen – API.md §11.9); die Kosmetik-Seite zeigt dafür Zustands-Knöpfe in der 3D-Vorschau.
 
-Emotes:
+Emotes (im Spiel öffnet **R** – gedrückt halten – das Emote-Rad):
 
 - Frei: winken, klatschen, jubeln, verbeugen, facepalm, schulterzucken, daumen_hoch
+- Frei seit Winter 2026: snowball_throw (Schneeballwurf), shiver (Bibbern), warm_hands (Hände wärmen), happy_jump (Freudensprung), mitten_wave (Fäustlings-Winken)
 - Per Code: tanzen, salutieren, luftgitarre
-- Nur Admin: redstone_tanz
+- Nur Admin: redstone_tanz; party (Belohnung für den Erfolg „10 Freunde“)
+- Belohnung Halloween („Süßes oder Saures“): count_bow, ghost_float, zombie_walk, moon_howl
 
 Uploads von Nutzern:
 
