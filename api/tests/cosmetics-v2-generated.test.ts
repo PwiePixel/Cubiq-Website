@@ -45,7 +45,7 @@ const readAsset = async (name: string) => {
  */
 const SHIPPED_DRIVERS = ['idle', 'walk', 'sneak', 'jump', 'air', 'slide', 'swim', 'grab', 'flee', 'handsup']
 /** Die kostenlosen Begleiter am Boden: alle lassen sich streicheln und füttern. */
-const ACTION_PETS = ['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly']
+const ACTION_PETS = ['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly', 'snow_fox']
 
 const corners = (c: Pick<Cube, 'from' | 'to'>): Vec3[] =>
   [0, 1, 2, 3, 4, 5, 6, 7].map((i) => [(i & 1 ? c.to : c.from)[0], (i & 2 ? c.to : c.from)[1], (i & 4 ? c.to : c.from)[2]])

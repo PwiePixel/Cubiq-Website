@@ -174,5 +174,14 @@
     "frames": 1,
     "glowFrames": 12,
     "glowFrameTimeMs": 150
+  },
+  {
+    "id": "snow_fox",
+    "name": "Schneefuchs",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 0,
+    "petScale": 1
   }
 ]

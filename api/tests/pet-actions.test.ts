@@ -420,7 +420,7 @@ describe('fades with the real companions (three.js in node)', () => {
     ['the end of the action', () => ({})],
   ]
 
-  it.each(['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly'])('%s: interrupting Pet mid heart-flight hides the hearts from the first faded frame on', (id) => {
+  it.each(['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly', 'snow_fox'])('%s: interrupting Pet mid heart-flight hides the hearts from the first faded frame on', (id) => {
     stubCanvas()
     const m = model(id)
     const hosts = hostsOf(m)

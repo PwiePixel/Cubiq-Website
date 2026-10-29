@@ -321,7 +321,7 @@ describe('pet states sneak/grab/flee/handsup (format, website)', () => {
       files: { modelJson: Buffer.from(JSON.stringify(model([anim('w', 'walk')]))), texture: solidPng(16, 16), glow: null, card, cardNight: card },
     })
     const assets = join(__dirname, '..', 'assets', 'cosmetics')
-    const free = ['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly']
+    const free = ['cubi', 'waddle_penguin', 'fox_kit', 'axolotl', 'snowman', 'firefly', 'snow_fox']
     const builtin = await loadBuiltinCosmetics(async () => JSON.parse(readFileSync(join(assets, 'catalog.json'), 'utf8')), async (name) => readFileSync(join(assets, name)))
     seedBuiltinCosmetics(env.ctx, [heist, ...builtin.filter((c) => free.includes(c.id) || c.id === 'mini_cubi').map((c, i) => ({ ...c, sort: i + 1 }))])
     const list = publicPets(env.ctx)
