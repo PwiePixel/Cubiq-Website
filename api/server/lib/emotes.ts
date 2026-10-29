@@ -33,6 +33,12 @@ export const EMOTES: readonly EmoteDef[] = [
   { id: 'ghost_float', name: 'Spuk-Schweben', unlock: 'admin', reward: 'halloween2026', durationMs: 4000, loop: true },
   { id: 'zombie_walk', name: 'Zombie-Gang', unlock: 'admin', reward: 'halloween2026', durationMs: 5000, loop: true },
   { id: 'moon_howl', name: 'Mondheulen', unlock: 'admin', reward: 'halloween2026', durationMs: 3000, loop: false },
+  // Winter 2026 (0.3.5): für alle frei. Animationen im Cubiq Client (core/emote/Emotes.java).
+  { id: 'snowball_throw', name: 'Schneeballwurf', unlock: 'free', durationMs: 2400, loop: false },
+  { id: 'shiver', name: 'Bibbern', unlock: 'free', durationMs: 4800, loop: true },
+  { id: 'warm_hands', name: 'Hände wärmen', unlock: 'free', durationMs: 5000, loop: true },
+  { id: 'happy_jump', name: 'Freudensprung', unlock: 'free', durationMs: 2000, loop: false },
+  { id: 'mitten_wave', name: 'Fäustlings-Winken', unlock: 'free', durationMs: 2500, loop: false },
 ]
 
 export const EMOTE_BY_ID: ReadonlyMap<string, EmoteDef> = new Map(EMOTES.map((e) => [e.id, e]))
