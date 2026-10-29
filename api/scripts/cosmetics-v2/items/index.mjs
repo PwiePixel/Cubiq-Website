@@ -11,5 +11,6 @@ import { item as miniCubi } from './mini_cubi.mjs'
 import { item as snowFox } from './snow_fox.mjs'
 import { item as christmasHat } from './christmas_hat.mjs'
 import { item as earmuffs } from './earmuffs.mjs'
+import { item as snowflake } from './snowflake.mjs'
 
-export const ITEMS = [cubi, waddlePenguin, foxKit, axolotl, snowman, firefly, auroraWings, shootingStar, miniCubi, snowFox, christmasHat, earmuffs]
+export const ITEMS = [cubi, waddlePenguin, foxKit, axolotl, snowman, firefly, auroraWings, shootingStar, miniCubi, snowFox, christmasHat, earmuffs, snowflake]

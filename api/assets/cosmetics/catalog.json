@@ -199,5 +199,14 @@
     "unlock": "free",
     "frames": 1,
     "glowFrames": 0
+  },
+  {
+    "id": "snowflake",
+    "name": "Schneeflocke",
+    "format": 2,
+    "unlock": "free",
+    "frames": 1,
+    "glowFrames": 12,
+    "glowFrameTimeMs": 150
   }
 ]
