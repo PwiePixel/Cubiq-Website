@@ -1,4 +1,4 @@
-// Website-Anmeldung (Microsoft §24.1 oder Cubiq Launcher §29): Sitzung im httpOnly-Cookie `cubiq_session`, ändernde Anfragen schicken das
+// Website-Anmeldung (Cubiq Launcher §29 oder Einmal-Link §41): Sitzung im httpOnly-Cookie `cubiq_session`, ändernde Anfragen schicken das
 // CSRF-Token im Header X-CSRF-Token. Wird nur im Browser geladen (keine persönlichen Daten im SSR-HTML).
 
 export interface TeamRoleRef {
@@ -68,7 +68,7 @@ export function useAccount() {
     }
   }
 
-  /** Link zur Anmeldeseite (Cubiq Launcher oder Microsoft, §29) mit Rücksprung (Standard: aktuelle Seite). */
+  /** Link zur Anmeldeseite (Cubiq Launcher, §29) mit Rücksprung (Standard: aktuelle Seite). */
   function loginUrl(returnTo?: string): string {
     return `/login?return=${encodeURIComponent(returnTo ?? route.fullPath)}`
   }

@@ -14,7 +14,7 @@ const body = z.strictObject({ token: z.string().max(64) })
 
 /**
  * Einmal-Link einlösen (§41): nur per POST von der eigenen Website (Link-Vorschauen rufen nur die Seite ab). Danach eine
- * normale Website-Sitzung wie nach der Microsoft-Anmeldung (Sperre geprüft, altes Sitzungs-Cookie verworfen = Rotation).
+ * normale Website-Sitzung wie nach der Anmeldung per Cubiq Launcher (Sperre geprüft, altes Sitzungs-Cookie verworfen = Rotation).
  */
 export default defineEventHandler(async (event) => {
   assertSameOrigin(event)
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   const { token } = await readJson(event, body)
   const ctx = useCtx()
   setResponseHeader(event, 'Cache-Control', 'no-store')
-  // Grenze je Konto wie bei Microsoft – vor dem Einlösen, damit sie den Link nicht verbraucht.
+  // Grenze je Konto wie bei jeder Anmeldung – vor dem Einlösen, damit sie den Link nicht verbraucht.
   const target = peekLoginLink(ctx, token)
   const r = ctx.limiter.take(`login:${target.uuid}`, RULES.loginUuid)
   if (!r.ok) throw tooMany(r.retryAfter)

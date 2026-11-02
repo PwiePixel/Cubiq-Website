@@ -39,7 +39,7 @@ export function operatorLines(o: Operator, lang: Lang): string {
 export const WEBSITE_PRIVACY: Record<Lang, { title: string, updated: string, intro: string, body: (o: Operator) => string, launcher: string }> = {
   en: {
     title: 'Privacy policy',
-    updated: 'Last updated: 26 October 2026',
+    updated: 'Last updated: 29 October 2026',
     intro:
       'This policy covers this website, the Cubiq Launcher, the Cubiq Client mod and the Cubiq services. In short: no tracking, no analytics, no advertising – only what is needed for what you use.',
     body: (c) => `## Controller
@@ -54,20 +54,19 @@ All details are in the [imprint](/imprint).
 
 **Server logs.** Our logs contain only technical data (method, path without query, status, duration, request id) – **no IP addresses**. Rate limits count requests per IP address **in memory only**; the counters are never written to disk and disappear after a few minutes.
 
-**Cookies.** The website sets no tracking or advertising cookies and uses no analytics. There are only four technically necessary cookies (§ 25(2) TDDDG):
+**Cookies.** The website sets no tracking or advertising cookies and uses no analytics. There are only three technically necessary cookies (§ 25(2) TDDDG):
 
 | Cookie | Purpose | Duration |
 |---|---|---|
 | \`cubiq_lang\` | Remembers the language you picked | 1 year |
-| \`cubiq_oauth\` | Protects the sign-in with Microsoft against forgery (random value, only on /auth/microsoft, httpOnly) | max. 10 minutes |
 | \`cubiq_llogin\` | Ties a sign-in with the Cubiq Launcher to this browser (random value, only on /v1/web/launcher-login, httpOnly) | max. 3 minutes |
-| \`cubiq_session\` | Keeps you signed in after the sign-in with Microsoft or the Cubiq Launcher (httpOnly, Secure, SameSite=Strict) | 8 hours |
+| \`cubiq_session\` | Keeps you signed in after the sign-in with the Cubiq Launcher (httpOnly, Secure, SameSite=Strict) | 8 hours |
 
 **Fonts and scripts** are served from this server – no external CDNs, no Google Fonts.
 
 **GitHub.** Downloads link to GitHub Releases, and pictures in update posts are loaded from \`raw.githubusercontent.com\`. When you download a file or open a post with pictures, your browser connects to GitHub, Inc. (USA), which receives your IP address; see GitHub's privacy statement. Our server asks the GitHub API for the newest version and reads the changelog – without any data about you.
 
-**Team area.** Team members sign in with Microsoft like everyone else (see “Website sign-in with Microsoft” below). What they see in the team area depends on the permissions of their role – for example, only roles with the right permission see the content of reports or player files. Team members review **chat reports** – they only see the content that was reported and its context (see “Reports and moderation” below); reported pictures are loaded from this server only. They also manage sanctions, appeals and internal notes (see “Sanctions and appeals” below); every action is written to an audit log (kept 2 years).
+**Team area.** Team members sign in like everyone else (see “Website sign-in with the Cubiq Launcher” below). What they see in the team area depends on the permissions of their role – for example, only roles with the right permission see the content of reports or player files. Team members review **chat reports** – they only see the content that was reported and its context (see “Reports and moderation” below); reported pictures are loaded from this server only. They also manage sanctions, appeals and internal notes (see “Sanctions and appeals” below); every action is written to an audit log (kept 2 years).
 
 **Shared modpacks (\`/p/…\` pages).** A player can share a modpack with a code; its page shows the pack's name, description, the mods, resource packs and shaders inside and **the name and head of the player who shared it**, and is never indexed by search engines. Names, versions and icons of the files come from Modrinth: our server asks Modrinth's public API only for the project and version IDs in the pack and passes the icons on itself – your browser does not connect to Modrinth and no data about you is sent there. Downloading the pack is only possible in the Cubiq Launcher with a Cubiq account. Signed in, you can report a pack; the report is handled like other reports. Legal basis: Art. 6(1)(f) GDPR (showing a pack the player chose to share, a safe service). Details: “Sharing modpacks” below.
 
@@ -89,21 +88,11 @@ All details are in the [imprint](/imprint).
 
 **Legal basis.** Newsletter: your consent, Art. 6(1)(a) GDPR, which you can withdraw at any time with effect for the future. Proof of consent and team notifications: Art. 6(1)(f) GDPR.
 
-## Website sign-in with Microsoft
-
-You can sign in to this website with the Microsoft account that owns Minecraft: Java Edition – for example to apply for the team or, as a team member, to open the team area. The sign-in uses Microsoft's standard OAuth procedure: you enter your password only at Microsoft; we never see it.
-
-**What we receive.** Microsoft, Xbox Live and Minecraft confirm your Minecraft **UUID** and **name**. For this our server exchanges short-lived tokens with Microsoft (login.microsoftonline.com), Xbox Live (user.auth.xboxlive.com, xsts.auth.xboxlive.com) and Minecraft (api.minecraftservices.com). The tokens exist **only in memory for the few seconds of the sign-in and are discarded right after** – we store no Microsoft, Xbox or Minecraft tokens, no e-mail address and no password.
-
-**What we store.** Your Cubiq account (UUID, name, first and last sign-in – created now if you have not used Cubiq before) and a website session: a hash of the session token, a CSRF token and the expiry (8 hours, at most 5 sessions per account). Signing out deletes the session at once. Sign-ins of team members are recorded in the audit log (2 years).
-
-**Legal basis.** Art. 6(1)(b) GDPR (you want to use the sign-in); for security measures such as rate limits and the audit log Art. 6(1)(f). Microsoft processes the sign-in under its own privacy statement (Microsoft Corporation, USA; EU-US Data Privacy Framework).
-
 ## Website sign-in with the Cubiq Launcher
 
-Instead of Microsoft you can confirm the sign-in in your **Cubiq Launcher**. The website shows a short code and opens the launcher (link \`cubiq-launcher://web-login/…\`); the launcher shows the code, the website, a rough browser description and your account and asks you to confirm. Nothing is confirmed without your click.
+You sign in to this website – for example to apply for the team or, as a team member, to open the team area – by confirming the sign-in in your **Cubiq Launcher**. There is no sign-in with Microsoft on this website. The website shows a short code and opens the launcher (link \`cubiq-launcher://web-login/…\`); the launcher shows the code, the website, a rough browser description and your account and asks you to confirm. Nothing is confirmed without your click.
 
-**What we store.** For the up to two minutes of the request: a hash of the link value and of a random browser value (cookie \`cubiq_llogin\`), the code, a rough browser description such as “Firefox · Windows” (never the full browser identification, never your IP address), the return page and – after you confirm – your Minecraft UUID. The request is deleted when you are signed in, when it is declined, or shortly after it expires. The session afterwards is the same as after the sign-in with Microsoft (see above). Sign-ins of team members are recorded in the audit log (2 years).
+**What we store.** For the up to two minutes of the request: a hash of the link value and of a random browser value (cookie \`cubiq_llogin\`), the code, a rough browser description such as “Firefox · Windows” (never the full browser identification, never your IP address), the return page and – after you confirm – your Minecraft UUID. The request is deleted when you are signed in, when it is declined, or shortly after it expires. After you confirm, we store your Cubiq account (UUID, name, first and last sign-in – created now if you have not used Cubiq before) and a website session: a hash of the session token, a CSRF token and the expiry (8 hours, at most 5 sessions per account). Signing out deletes the session at once. Sign-ins of team members are recorded in the audit log (2 years).
 
 **Legal basis.** Art. 6(1)(b) GDPR (you want to use the sign-in); rate limits and the audit log Art. 6(1)(f).
 
@@ -143,7 +132,7 @@ The team page (/team) shows team members that the team **added by hand** – nob
 
 **Public pages.** The issue list (/issues), every issue page (/issues/<number>) and the roadmap (/roadmap) can be read by anyone without an account. They show the issues, comments and screenshots together with **the Minecraft name and head of the player who wrote them**, votes (as totals), the status and the team's triage (assignee, priority, tags, “fixed in”).
 
-**Writing, voting, following.** To open an issue, comment, vote or follow you sign in (Microsoft sign-in on this website, or your Cubiq account in the Cubiq Client). We store the issue or comment (title, text, type, area), your Minecraft UUID, the time, edits, your vote per issue (up or down) and which issues you follow. Following means you get a notification in the Cubiq Launcher (over the Cubiq connection you already use) when the status changes, the team answers, a fix ships or the issue is merged – you can unfollow at any time. Your votes are never shown individually, only as a total.
+**Writing, voting, following.** To open an issue, comment, vote or follow you sign in (sign-in on this website, or your Cubiq account in the Cubiq Client). We store the issue or comment (title, text, type, area), your Minecraft UUID, the time, edits, your vote per issue (up or down) and which issues you follow. Following means you get a notification in the Cubiq Launcher (over the Cubiq connection you already use) when the status changes, the team answers, a fix ships or the issue is merged – you can unfollow at any time. Your votes are never shown individually, only as a total.
 
 **Screenshots.** Pictures you attach are re-encoded on our server (no metadata such as location or camera data stays) and are public together with the issue or comment. Pictures you upload but don't attach are deleted after one hour. Please don't put personal data in texts or screenshots.
 
@@ -160,7 +149,7 @@ The team page (/team) shows team members that the team **added by hand** – nob
   },
   de: {
     title: 'Datenschutzerklärung',
-    updated: 'Stand: 26. Oktober 2026',
+    updated: 'Stand: 29. Oktober 2026',
     intro:
       'Diese Erklärung gilt für diese Website, den Cubiq Launcher, die Cubiq-Client-Mod und die Cubiq-Dienste. Kurz gesagt: kein Tracking, keine Analyse, keine Werbung – nur, was für das nötig ist, was du nutzt.',
     body: (c) => `## Verantwortlicher
@@ -175,20 +164,19 @@ Alle Angaben stehen im [Impressum](/imprint).
 
 **Server-Logs.** Unsere Logs enthalten nur technische Daten (Methode, Pfad ohne Query, Status, Dauer, Request-ID) – **keine IP-Adressen**. Ratenbegrenzungen zählen Anfragen pro IP-Adresse **nur im Arbeitsspeicher**; die Zähler werden nie auf die Festplatte geschrieben und verfallen nach wenigen Minuten.
 
-**Cookies.** Die Website setzt keine Tracking- oder Werbe-Cookies und nutzt keine Analyse-Dienste. Es gibt nur vier technisch notwendige Cookies (§ 25 Abs. 2 TDDDG):
+**Cookies.** Die Website setzt keine Tracking- oder Werbe-Cookies und nutzt keine Analyse-Dienste. Es gibt nur drei technisch notwendige Cookies (§ 25 Abs. 2 TDDDG):
 
 | Cookie | Zweck | Dauer |
 |---|---|---|
 | \`cubiq_lang\` | Merkt sich die gewählte Sprache | 1 Jahr |
-| \`cubiq_oauth\` | Schützt die Anmeldung mit Microsoft vor Fälschung (Zufallswert, nur auf /auth/microsoft, httpOnly) | höchstens 10 Minuten |
 | \`cubiq_llogin\` | Bindet eine Anmeldung mit dem Cubiq Launcher an diesen Browser (Zufallswert, nur auf /v1/web/launcher-login, httpOnly) | höchstens 3 Minuten |
-| \`cubiq_session\` | Hält dich nach der Anmeldung mit Microsoft oder dem Cubiq Launcher angemeldet (httpOnly, Secure, SameSite=Strict) | 8 Stunden |
+| \`cubiq_session\` | Hält dich nach der Anmeldung mit dem Cubiq Launcher angemeldet (httpOnly, Secure, SameSite=Strict) | 8 Stunden |
 
 **Schriften und Skripte** kommen von diesem Server – keine externen CDNs, keine Google Fonts.
 
 **GitHub.** Downloads verweisen auf GitHub Releases, und Bilder in Update-Beiträgen werden von \`raw.githubusercontent.com\` geladen. Lädst du eine Datei herunter oder öffnest einen Beitrag mit Bildern, verbindet sich dein Browser mit GitHub, Inc. (USA), das dabei deine IP-Adresse erhält; siehe die Datenschutzerklärung von GitHub. Unser Server fragt die GitHub-API nach der neuesten Version und liest den Changelog – ohne Daten über dich.
 
-**Team-Bereich.** Team-Mitglieder melden sich wie alle anderen mit Microsoft an (siehe „Anmeldung mit Microsoft“ unten). Was sie im Team-Bereich sehen, hängt von den Rechten ihrer Rolle ab – zum Beispiel sehen nur Rollen mit dem passenden Recht die Inhalte von Meldungen oder Spieler-Akten. Team-Mitglieder prüfen **Chat-Meldungen** – sie sehen nur den gemeldeten Inhalt samt Kontext (siehe „Meldungen und Moderation“ unten); gemeldete Bilder werden nur von diesem Server geladen. Außerdem verwalten sie Strafen, Einsprüche und interne Notizen (siehe „Strafen und Einsprüche“ unten); jede Aktion steht in einem Audit-Log (2 Jahre).
+**Team-Bereich.** Team-Mitglieder melden sich wie alle anderen an (siehe „Anmeldung mit dem Cubiq Launcher“ unten). Was sie im Team-Bereich sehen, hängt von den Rechten ihrer Rolle ab – zum Beispiel sehen nur Rollen mit dem passenden Recht die Inhalte von Meldungen oder Spieler-Akten. Team-Mitglieder prüfen **Chat-Meldungen** – sie sehen nur den gemeldeten Inhalt samt Kontext (siehe „Meldungen und Moderation“ unten); gemeldete Bilder werden nur von diesem Server geladen. Außerdem verwalten sie Strafen, Einsprüche und interne Notizen (siehe „Strafen und Einsprüche“ unten); jede Aktion steht in einem Audit-Log (2 Jahre).
 
 **Geteilte Modpacks (Seiten \`/p/…\`).** Ein Spieler kann ein Modpack per Code teilen; dessen Seite zeigt Name, Beschreibung, die enthaltenen Mods, Resource Packs und Shader und **Namen und Kopf des Spielers, der es geteilt hat**, und wird von Suchmaschinen nie indexiert. Namen, Versionen und Symbole der Dateien kommen von Modrinth: Unser Server fragt Modrinths öffentliche API nur nach den Projekt- und Versions-IDs im Pack und reicht die Symbole selbst weiter – dein Browser verbindet sich nicht mit Modrinth, und es gehen keine Daten über dich dorthin. Herunterladen geht nur im Cubiq Launcher mit Cubiq-Account. Angemeldet kannst du ein Pack melden; die Meldung wird wie andere Meldungen behandelt. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (ein Pack zeigen, das der Spieler teilen wollte; ein sicherer Dienst). Einzelheiten: „Modpacks teilen“ unten.
 
@@ -210,21 +198,11 @@ Alle Angaben stehen im [Impressum](/imprint).
 
 **Rechtsgrundlage.** Newsletter: deine Einwilligung, Art. 6 Abs. 1 lit. a DSGVO, die du jederzeit mit Wirkung für die Zukunft widerrufen kannst. Nachweis der Einwilligung und Team-Benachrichtigungen: Art. 6 Abs. 1 lit. f DSGVO.
 
-## Anmeldung mit Microsoft
-
-Du kannst dich auf dieser Website mit dem Microsoft-Konto anmelden, dem Minecraft: Java Edition gehört – zum Beispiel, um dich für das Team zu bewerben oder als Team-Mitglied den Team-Bereich zu öffnen. Die Anmeldung nutzt das übliche OAuth-Verfahren von Microsoft: Dein Passwort gibst du nur bei Microsoft ein; wir sehen es nie.
-
-**Was wir erhalten.** Microsoft, Xbox Live und Minecraft bestätigen deine Minecraft-**UUID** und deinen **Namen**. Dafür tauscht unser Server kurzlebige Tokens mit Microsoft (login.microsoftonline.com), Xbox Live (user.auth.xboxlive.com, xsts.auth.xboxlive.com) und Minecraft (api.minecraftservices.com). Die Tokens liegen **nur für die wenigen Sekunden der Anmeldung im Arbeitsspeicher und werden danach verworfen** – wir speichern keine Microsoft-, Xbox- oder Minecraft-Tokens, keine E-Mail-Adresse und kein Passwort.
-
-**Was wir speichern.** Dein Cubiq-Konto (UUID, Name, erste und letzte Anmeldung – wird jetzt angelegt, falls du Cubiq noch nicht genutzt hast) und eine Website-Sitzung: einen Hash des Sitzungs-Tokens, ein CSRF-Token und die Ablaufzeit (8 Stunden, höchstens 5 Sitzungen je Konto). Beim Abmelden wird die Sitzung sofort gelöscht. Anmeldungen von Team-Mitgliedern stehen im Audit-Log (2 Jahre).
-
-**Rechtsgrundlage.** Art. 6 Abs. 1 lit. b DSGVO (du möchtest die Anmeldung nutzen); für Sicherheitsmaßnahmen wie Ratenbegrenzung und Audit-Log Art. 6 Abs. 1 lit. f. Microsoft verarbeitet die Anmeldung nach seiner eigenen Datenschutzerklärung (Microsoft Corporation, USA; EU-US Data Privacy Framework).
-
 ## Anmeldung mit dem Cubiq Launcher
 
-Statt mit Microsoft kannst du die Anmeldung in deinem **Cubiq Launcher** bestätigen. Die Website zeigt einen kurzen Code und öffnet den Launcher (Link \`cubiq-launcher://web-login/…\`); der Launcher zeigt Code, Website, eine grobe Browser-Angabe und dein Konto und fragt nach. Ohne deinen Klick wird nichts bestätigt.
+Auf dieser Website meldest du dich an – zum Beispiel, um dich für das Team zu bewerben oder als Team-Mitglied den Team-Bereich zu öffnen –, indem du die Anmeldung in deinem **Cubiq Launcher** bestätigst. Eine Anmeldung mit Microsoft gibt es auf dieser Website nicht. Die Website zeigt einen kurzen Code und öffnet den Launcher (Link \`cubiq-launcher://web-login/…\`); der Launcher zeigt Code, Website, eine grobe Browser-Angabe und dein Konto und fragt nach. Ohne deinen Klick wird nichts bestätigt.
 
-**Was wir speichern.** Für die höchstens zwei Minuten der Anfrage: einen Hash des Link-Werts und eines zufälligen Browser-Werts (Cookie \`cubiq_llogin\`), den Code, eine grobe Browser-Angabe wie „Firefox · Windows“ (nie die vollständige Browser-Kennung, nie deine IP-Adresse), die Rücksprung-Seite und – nach deiner Bestätigung – deine Minecraft-UUID. Die Anfrage wird gelöscht, sobald du angemeldet bist, sie abgelehnt wurde oder kurz nach ihrem Ablauf. Die Sitzung danach ist dieselbe wie nach der Anmeldung mit Microsoft (siehe oben). Anmeldungen von Team-Mitgliedern stehen im Audit-Log (2 Jahre).
+**Was wir speichern.** Für die höchstens zwei Minuten der Anfrage: einen Hash des Link-Werts und eines zufälligen Browser-Werts (Cookie \`cubiq_llogin\`), den Code, eine grobe Browser-Angabe wie „Firefox · Windows“ (nie die vollständige Browser-Kennung, nie deine IP-Adresse), die Rücksprung-Seite und – nach deiner Bestätigung – deine Minecraft-UUID. Die Anfrage wird gelöscht, sobald du angemeldet bist, sie abgelehnt wurde oder kurz nach ihrem Ablauf. Nach deiner Bestätigung speichern wir dein Cubiq-Konto (UUID, Name, erste und letzte Anmeldung – wird jetzt angelegt, falls du Cubiq noch nicht genutzt hast) und eine Website-Sitzung: einen Hash des Sitzungs-Tokens, ein CSRF-Token und die Ablaufzeit (8 Stunden, höchstens 5 Sitzungen je Konto). Beim Abmelden wird die Sitzung sofort gelöscht. Anmeldungen von Team-Mitgliedern stehen im Audit-Log (2 Jahre).
 
 **Rechtsgrundlage.** Art. 6 Abs. 1 lit. b DSGVO (du möchtest die Anmeldung nutzen); Ratenbegrenzung und Audit-Log Art. 6 Abs. 1 lit. f.
 
@@ -264,7 +242,7 @@ Die Team-Seite (/team) zeigt Team-Mitglieder, die das Team **von Hand eingetrage
 
 **Öffentliche Seiten.** Die Issue-Liste (/issues), jede Issue-Seite (/issues/<Nummer>) und die Roadmap (/roadmap) kann jeder ohne Account lesen. Sie zeigen die Issues, Kommentare und Screenshots zusammen mit **Minecraft-Namen und Kopf des Spielers, der sie geschrieben hat**, die Stimmen (als Summe), den Status und die Einordnung durch das Team (zuständig, Priorität, Tags, „Erledigt in“).
 
-**Schreiben, Abstimmen, Folgen.** Um ein Issue zu erstellen, zu kommentieren, abzustimmen oder zu folgen, meldest du dich an (Microsoft-Anmeldung auf dieser Website oder dein Cubiq-Account im Cubiq Client). Wir speichern das Issue bzw. den Kommentar (Titel, Text, Art, Bereich), deine Minecraft-UUID, den Zeitpunkt, Bearbeitungen, deine Stimme je Issue (hoch oder runter) und welchen Issues du folgst. Folgen heißt: Du bekommst im Cubiq Launcher eine Benachrichtigung (über die Cubiq-Verbindung, die du ohnehin nutzt), wenn sich der Status ändert, das Team antwortet, eine Lösung erscheint oder das Issue zusammengeführt wird – du kannst jederzeit aufhören zu folgen. Deine Stimmen werden nie einzeln gezeigt, nur als Summe.
+**Schreiben, Abstimmen, Folgen.** Um ein Issue zu erstellen, zu kommentieren, abzustimmen oder zu folgen, meldest du dich an (Anmeldung auf dieser Website oder dein Cubiq-Account im Cubiq Client). Wir speichern das Issue bzw. den Kommentar (Titel, Text, Art, Bereich), deine Minecraft-UUID, den Zeitpunkt, Bearbeitungen, deine Stimme je Issue (hoch oder runter) und welchen Issues du folgst. Folgen heißt: Du bekommst im Cubiq Launcher eine Benachrichtigung (über die Cubiq-Verbindung, die du ohnehin nutzt), wenn sich der Status ändert, das Team antwortet, eine Lösung erscheint oder das Issue zusammengeführt wird – du kannst jederzeit aufhören zu folgen. Deine Stimmen werden nie einzeln gezeigt, nur als Summe.
 
 **Screenshots.** Bilder, die du anhängst, werden auf unserem Server neu kodiert (Metadaten wie Standort oder Kameradaten bleiben nicht erhalten) und sind zusammen mit dem Issue bzw. Kommentar öffentlich. Hochgeladene, aber nicht angehängte Bilder werden nach einer Stunde gelöscht. Bitte schreib keine persönlichen Daten in Texte oder Screenshots.
 
@@ -281,7 +259,7 @@ Die Team-Seite (/team) zeigt Team-Mitglieder, die das Team **von Hand eingetrage
   },
   es: {
     title: 'Política de privacidad',
-    updated: 'Última actualización: 26 de octubre de 2026',
+    updated: 'Última actualización: 29 de octubre de 2026',
     intro:
       'Esta política cubre este sitio web, el Cubiq Launcher, el mod Cubiq Client y los servicios Cubiq. En resumen: sin rastreo, sin analíticas, sin publicidad – solo lo necesario para lo que usas. La versión alemana es la vinculante.',
     body: (c) => `## Responsable
@@ -296,20 +274,19 @@ Todos los datos están en el [aviso legal](/imprint).
 
 **Registros del servidor.** Solo datos técnicos (método, ruta sin query, estado, duración, id de solicitud) – **sin direcciones IP**. Los límites de frecuencia cuentan solicitudes por IP **solo en memoria**.
 
-**Cookies.** Sin cookies de rastreo ni publicidad y sin analíticas. Solo cuatro cookies técnicamente necesarias:
+**Cookies.** Sin cookies de rastreo ni publicidad y sin analíticas. Solo tres cookies técnicamente necesarias:
 
 | Cookie | Finalidad | Duración |
 |---|---|---|
 | \`cubiq_lang\` | Recuerda el idioma elegido | 1 año |
-| \`cubiq_oauth\` | Protege el inicio de sesión con Microsoft contra falsificaciones (valor aleatorio, solo en /auth/microsoft, httpOnly) | máx. 10 minutos |
 | \`cubiq_llogin\` | Vincula un inicio de sesión con el Cubiq Launcher a este navegador (valor aleatorio, solo en /v1/web/launcher-login, httpOnly) | máx. 3 minutos |
-| \`cubiq_session\` | Mantiene tu sesión tras iniciar sesión con Microsoft o el Cubiq Launcher (httpOnly, Secure, SameSite=Strict) | 8 horas |
+| \`cubiq_session\` | Mantiene tu sesión tras iniciar sesión con el Cubiq Launcher (httpOnly, Secure, SameSite=Strict) | 8 horas |
 
 **Fuentes y scripts** se sirven desde este servidor – sin CDN externos ni Google Fonts.
 
 **GitHub.** Las descargas enlazan a GitHub Releases y las imágenes de las entradas se cargan desde \`raw.githubusercontent.com\`; tu navegador se conecta entonces a GitHub, Inc. (EE. UU.), que recibe tu dirección IP.
 
-**Área del equipo.** Los miembros del equipo inician sesión con Microsoft como todos (ver «Inicio de sesión con Microsoft» más abajo). Lo que ven en el área del equipo depende de los permisos de su rol; por ejemplo, solo los roles con el permiso adecuado ven el contenido de las denuncias o las fichas de jugador. Los miembros del equipo revisan las **denuncias del chat**: solo ven el contenido denunciado y su contexto (ver «Denuncias y moderación» más abajo); las imágenes denunciadas se cargan solo desde este servidor. También gestionan sanciones, apelaciones y notas internas (ver «Sanciones y apelaciones» más abajo); cada acción queda en un registro de auditoría (2 años).
+**Área del equipo.** Los miembros del equipo inician sesión como todos (ver «Inicio de sesión con el Cubiq Launcher» más abajo). Lo que ven en el área del equipo depende de los permisos de su rol; por ejemplo, solo los roles con el permiso adecuado ven el contenido de las denuncias o las fichas de jugador. Los miembros del equipo revisan las **denuncias del chat**: solo ven el contenido denunciado y su contexto (ver «Denuncias y moderación» más abajo); las imágenes denunciadas se cargan solo desde este servidor. También gestionan sanciones, apelaciones y notas internas (ver «Sanciones y apelaciones» más abajo); cada acción queda en un registro de auditoría (2 años).
 
 **Modpacks compartidos (páginas \`/p/…\`).** Un jugador puede compartir un modpack con un código; su página muestra el nombre, la descripción, los mods, resource packs y shaders que contiene y **el nombre y la cabeza del jugador que lo compartió**, y los buscadores nunca la indexan. Los nombres, versiones e iconos de los archivos vienen de Modrinth: nuestro servidor solo consulta a la API pública de Modrinth los ID de proyecto y versión del pack y entrega él mismo los iconos – tu navegador no se conecta a Modrinth y no se envían datos sobre ti. Descargar el pack solo es posible en Cubiq Launcher con una cuenta Cubiq. Con sesión iniciada puedes denunciar un pack; la denuncia se trata como las demás. Base jurídica: art. 6.1.f RGPD (mostrar un pack que el jugador quiso compartir, un servicio seguro). Detalles: «Compartir modpacks» más abajo.
 
@@ -327,21 +304,11 @@ Todos los datos están en el [aviso legal](/imprint).
 
 **Base jurídica.** Boletín: tu consentimiento, art. 6.1.a RGPD, que puedes retirar en cualquier momento con efecto para el futuro. Prueba del consentimiento y notificaciones del equipo: art. 6.1.f RGPD.
 
-## Inicio de sesión con Microsoft
-
-Puedes iniciar sesión en este sitio con la cuenta de Microsoft que tiene Minecraft: Java Edition, por ejemplo para postularte al equipo o, como miembro del equipo, para abrir el área del equipo. Se usa el procedimiento OAuth habitual de Microsoft: introduces tu contraseña solo en Microsoft; nosotros nunca la vemos.
-
-**Qué recibimos.** Microsoft, Xbox Live y Minecraft confirman tu **UUID** y tu **nombre** de Minecraft. Para ello nuestro servidor intercambia tokens de corta duración con Microsoft (login.microsoftonline.com), Xbox Live (user.auth.xboxlive.com, xsts.auth.xboxlive.com) y Minecraft (api.minecraftservices.com). Los tokens existen **solo en memoria durante los segundos del inicio de sesión y se descartan justo después**: no guardamos tokens de Microsoft, Xbox ni Minecraft, ni correo electrónico ni contraseña.
-
-**Qué guardamos.** Tu cuenta Cubiq (UUID, nombre, primer y último inicio de sesión; se crea ahora si aún no usabas Cubiq) y una sesión web: un hash del token de sesión, un token CSRF y la caducidad (8 horas, como máximo 5 sesiones por cuenta). Al cerrar sesión se borra al instante. Los inicios de sesión de miembros del equipo quedan en el registro de auditoría (2 años).
-
-**Base jurídica.** Art. 6.1.b RGPD (quieres usar el inicio de sesión); para medidas de seguridad como límites de frecuencia y el registro de auditoría, art. 6.1.f. Microsoft trata el inicio de sesión según su propia política de privacidad (Microsoft Corporation, EE. UU.; EU-US Data Privacy Framework).
-
 ## Inicio de sesión con el Cubiq Launcher
 
-En lugar de Microsoft puedes confirmar el inicio de sesión en tu **Cubiq Launcher**. La web muestra un código corto y abre el launcher (enlace \`cubiq-launcher://web-login/…\`); el launcher muestra el código, la web, una descripción aproximada del navegador y tu cuenta, y te pide confirmar. Sin tu clic no se confirma nada.
+Inicias sesión en este sitio –por ejemplo, para postularte al equipo o, como miembro del equipo, para abrir el área del equipo– confirmando el inicio de sesión en tu **Cubiq Launcher**. Este sitio no ofrece inicio de sesión con Microsoft. La web muestra un código corto y abre el launcher (enlace \`cubiq-launcher://web-login/…\`); el launcher muestra el código, la web, una descripción aproximada del navegador y tu cuenta, y te pide confirmar. Sin tu clic no se confirma nada.
 
-**Qué guardamos.** Durante los dos minutos como máximo de la solicitud: un hash del valor del enlace y de un valor aleatorio del navegador (cookie \`cubiq_llogin\`), el código, una descripción aproximada del navegador como «Firefox · Windows» (nunca la identificación completa del navegador ni tu dirección IP), la página de retorno y, tras tu confirmación, tu UUID de Minecraft. La solicitud se borra al iniciar sesión, al rechazarla o poco después de caducar. La sesión posterior es la misma que tras iniciar sesión con Microsoft (ver arriba). Los inicios de sesión de miembros del equipo quedan en el registro de auditoría (2 años).
+**Qué guardamos.** Durante los dos minutos como máximo de la solicitud: un hash del valor del enlace y de un valor aleatorio del navegador (cookie \`cubiq_llogin\`), el código, una descripción aproximada del navegador como «Firefox · Windows» (nunca la identificación completa del navegador ni tu dirección IP), la página de retorno y, tras tu confirmación, tu UUID de Minecraft. La solicitud se borra al iniciar sesión, al rechazarla o poco después de caducar. Tras tu confirmación guardamos tu cuenta Cubiq (UUID, nombre, primer y último inicio de sesión; se crea ahora si aún no usabas Cubiq) y una sesión web: un hash del token de sesión, un token CSRF y la caducidad (8 horas, como máximo 5 sesiones por cuenta). Al cerrar sesión se borra al instante. Los inicios de sesión de miembros del equipo quedan en el registro de auditoría (2 años).
 
 **Entradas de noticias (\`/blog\`).** Además de las entradas automáticas de actualización, el equipo escribe noticias. Una noticia muestra **el nombre y la cabeza del miembro del equipo** que la escribió (o «Equipo Cubiq»); sus imágenes se sirven desde este servidor.
 
@@ -383,7 +350,7 @@ La página del equipo (/team) muestra a los miembros que el equipo **añadió a 
 
 **Páginas públicas.** La lista de incidencias (/issues), cada página de incidencia (/issues/<número>) y la hoja de ruta (/roadmap) las puede leer cualquiera sin cuenta. Muestran las incidencias, comentarios y capturas junto con **el nombre y la cabeza de Minecraft del jugador que los escribió**, los votos (como total), el estado y la clasificación del equipo (responsable, prioridad, etiquetas, «corregido en»).
 
-**Escribir, votar, seguir.** Para abrir una incidencia, comentar, votar o seguirla inicias sesión (con Microsoft en esta web o con tu cuenta Cubiq en Cubiq Client). Guardamos la incidencia o el comentario (título, texto, tipo, área), tu UUID de Minecraft, la hora, las ediciones, tu voto por incidencia (a favor o en contra) y qué incidencias sigues. Seguir significa que recibes un aviso en Cubiq Launcher (por la conexión Cubiq que ya usas) cuando cambia el estado, responde el equipo, sale una corrección o se fusiona la incidencia – puedes dejar de seguirla cuando quieras. Tus votos nunca se muestran de forma individual, solo como total.
+**Escribir, votar, seguir.** Para abrir una incidencia, comentar, votar o seguirla inicias sesión (en esta web o con tu cuenta Cubiq en Cubiq Client). Guardamos la incidencia o el comentario (título, texto, tipo, área), tu UUID de Minecraft, la hora, las ediciones, tu voto por incidencia (a favor o en contra) y qué incidencias sigues. Seguir significa que recibes un aviso en Cubiq Launcher (por la conexión Cubiq que ya usas) cuando cambia el estado, responde el equipo, sale una corrección o se fusiona la incidencia – puedes dejar de seguirla cuando quieras. Tus votos nunca se muestran de forma individual, solo como total.
 
 **Capturas.** Las imágenes que adjuntas se vuelven a codificar en nuestro servidor (no quedan metadatos como ubicación o datos de la cámara) y son públicas junto con la incidencia o el comentario. Las imágenes subidas pero no adjuntadas se eliminan al cabo de una hora. No pongas datos personales en textos ni capturas.
 

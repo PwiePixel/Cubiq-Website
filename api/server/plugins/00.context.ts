@@ -61,7 +61,6 @@ export default defineNitroPlugin((nitroApp) => {
   const ctx = createContext({ config, db, mojang, capeDir, cosmeticDir })
   mkdirSync(join(ctx.chatDir, 'evidence'), { recursive: true })
   setContext(ctx)
-  if (!config.microsoft) console.warn('[cubiq-api] MS_CLIENT_ID/MS_CLIENT_SECRET not set – website sign-in with Microsoft is disabled')
   if (!config.hosting) console.warn('[cubiq-api] RELAY_SECRET/RELAY_HOST not set – world hosting is disabled (503 hosting_unavailable)')
   if (!config.mail) console.warn('[cubiq-api] SMTP_HOST not set – e-mail (newsletter, confirmations, team notifications) is disabled (503 mail_unavailable)')
   else {

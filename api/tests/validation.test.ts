@@ -135,7 +135,7 @@ describe('config', () => {
   })
 
   it('derives every address from SITE_URL; empty optional addresses count as unset', () => {
-    const c = loadConfig({ ...base, SITE_URL: 'https://cubiq.example.test/', PUBLIC_BASE_URL: '', WIKI_URL: '', MS_REDIRECT_URI: '' })
+    const c = loadConfig({ ...base, SITE_URL: 'https://cubiq.example.test/', PUBLIC_BASE_URL: '', WIKI_URL: '' })
     expect(c.siteUrl).toBe('https://cubiq.example.test')
     expect(c.publicBaseUrl).toBe('https://cubiq.example.test')
     expect(c.wikiUrl).toBe('https://docs.cubiq.example.test')

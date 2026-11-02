@@ -1,14 +1,14 @@
-// Texte der Anmeldeseite mit zwei Wegen (§29): „Cubiq Launcher“ (Code-Abgleich) und „Microsoft“ – Englisch, Deutsch,
-// Spanisch. Die bisherigen Microsoft-Texte (Fehler, Datenschutz-Anker) stehen weiter in team-i18n.ts (`t.login`).
+// Texte der Anmeldeseite (§29): Anmeldung mit dem Cubiq Launcher (Code-Abgleich) und der Einmal-Link des Betreibers (§41)
+// – Englisch, Deutsch, Spanisch. Eine Anmeldung mit Microsoft gibt es auf der Website nicht (Mojang hat die App nicht
+// freigegeben); Anker zum Datenschutz und der Hinweis für alte `?error=`-Links stehen in team-i18n.ts (`t.login`).
 
 import type { Lang } from './messages'
 
 const en = {
   title: 'Sign in',
-  lead: 'Choose how you want to sign in. We only learn your Minecraft name and UUID – no e-mail, no password.',
+  lead: 'Sign in with your Cubiq Launcher account: this page shows a code that you confirm in the launcher. We only learn your Minecraft name and UUID – no e-mail, no password.',
   choose: 'Sign-in method',
   launcher: { title: 'Cubiq Launcher', sub: 'With your launcher account' },
-  microsoft: { title: 'Microsoft', sub: 'With your Microsoft account' },
   starting: 'Starting…',
   wait: {
     kicker: 'Sign in with the Cubiq Launcher',
@@ -24,7 +24,7 @@ const en = {
     manual: 'Open the Cubiq Launcher there, choose “Sign in on the website” (Settings → Privacy, or Ctrl+K) and type in this code.',
     noLauncher: 'No Cubiq Launcher yet?',
     download: 'Download it for free',
-    back: 'Other sign-in method',
+    back: 'Back',
     signedIn: 'Confirmed – signing you in…',
   },
   expired: { title: 'The request expired', text: 'Nothing was confirmed within two minutes. Start again to get a new code.' },
@@ -59,10 +59,9 @@ export type LoginTexts = typeof en
 
 const de: LoginTexts = {
   title: 'Anmelden',
-  lead: 'Wähle, wie du dich anmelden möchtest. Wir erfahren nur deinen Minecraft-Namen und deine UUID – keine E-Mail, kein Passwort.',
+  lead: 'Melde dich mit deinem Konto im Cubiq Launcher an: Diese Seite zeigt einen Code, den du im Launcher bestätigst. Wir erfahren nur deinen Minecraft-Namen und deine UUID – keine E-Mail, kein Passwort.',
   choose: 'Anmeldemethode',
   launcher: { title: 'Cubiq Launcher', sub: 'Mit deinem Launcher-Konto' },
-  microsoft: { title: 'Microsoft', sub: 'Mit deinem Microsoft-Konto' },
   starting: 'Wird gestartet …',
   wait: {
     kicker: 'Anmelden mit dem Cubiq Launcher',
@@ -78,7 +77,7 @@ const de: LoginTexts = {
     manual: 'Öffne dort den Cubiq Launcher, wähle „Auf der Website anmelden“ (Einstellungen → Datenschutz oder Strg+K) und gib diesen Code ein.',
     noLauncher: 'Noch keinen Cubiq Launcher?',
     download: 'Kostenlos herunterladen',
-    back: 'Andere Anmeldemethode',
+    back: 'Zurück',
     signedIn: 'Bestätigt – du wirst angemeldet …',
   },
   expired: { title: 'Die Anfrage ist abgelaufen', text: 'In zwei Minuten wurde nichts bestätigt. Starte neu, um einen neuen Code zu bekommen.' },
@@ -110,10 +109,9 @@ const de: LoginTexts = {
 
 const es: LoginTexts = {
   title: 'Iniciar sesión',
-  lead: 'Elige cómo quieres iniciar sesión. Solo conocemos tu nombre de Minecraft y tu UUID: ni correo ni contraseña.',
+  lead: 'Inicia sesión con tu cuenta del Cubiq Launcher: esta página muestra un código que confirmas en el launcher. Solo conocemos tu nombre de Minecraft y tu UUID: ni correo ni contraseña.',
   choose: 'Método de inicio de sesión',
   launcher: { title: 'Cubiq Launcher', sub: 'Con tu cuenta del launcher' },
-  microsoft: { title: 'Microsoft', sub: 'Con tu cuenta de Microsoft' },
   starting: 'Iniciando…',
   wait: {
     kicker: 'Iniciar sesión con el Cubiq Launcher',
@@ -129,7 +127,7 @@ const es: LoginTexts = {
     manual: 'Abre allí el Cubiq Launcher, elige «Iniciar sesión en la web» (Ajustes → Privacidad o Ctrl+K) e introduce este código.',
     noLauncher: '¿Aún no tienes el Cubiq Launcher?',
     download: 'Descárgalo gratis',
-    back: 'Otro método de inicio de sesión',
+    back: 'Volver',
     signedIn: 'Confirmado: iniciando sesión…',
   },
   expired: { title: 'La solicitud ha caducado', text: 'No se confirmó nada en dos minutos. Vuelve a empezar para obtener un código nuevo.' },

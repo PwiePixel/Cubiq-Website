@@ -6,10 +6,18 @@ import { safeEqual, sha256Hex } from './ids'
 import { sweepLauncherLogins } from './launcherlogin'
 import { getUser, isBanned } from './users'
 
-// Website-Sitzungen (§24.1): nach der Anmeldung mit Microsoft bekommt der Browser ein httpOnly-Cookie
+// Website-Sitzungen (§24.1): nach der Anmeldung (Cubiq Launcher §29 oder Einmal-Link §41) bekommt der Browser ein httpOnly-Cookie
 // (SameSite=Strict) mit einem zufälligen Token; gespeichert wird nur dessen SHA-256. Ändernde Anfragen
 // schicken zusätzlich das CSRF-Token im Header `X-CSRF-Token` (Double-Submit gegen die Sitzung).
 // Team-Rechte hängen NICHT an der Sitzung – jede Anfrage liest sie neu (Entzug wirkt sofort).
+
+/** Nur eigene, relative Pfade als Rücksprung nach der Anmeldung (kein offener Redirect). */
+export function safeReturnTo(raw: unknown): string {
+  if (typeof raw !== 'string' || raw.length > 200) return '/applications'
+  if (!/^\/(?![/\\])[A-Za-z0-9/_\-.~%?=&]*$/.test(raw)) return '/applications'
+  if (raw.startsWith('/auth/') || raw.startsWith('/v1/')) return '/applications'
+  return raw
+}
 
 /** Gültigkeit einer Website-Sitzung. */
 export const WEB_SESSION_TTL_MS = 8 * 60 * 60 * 1000

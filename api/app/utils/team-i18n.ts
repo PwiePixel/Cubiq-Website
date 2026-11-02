@@ -1,4 +1,4 @@
-// Texte für Anmeldung (Microsoft), Team-Seite, Bewerbungen und Rollen – Englisch, Deutsch, Spanisch.
+// Texte für Anmeldung, Team-Seite, Bewerbungen und Rollen – Englisch, Deutsch, Spanisch.
 // Öffentliche Seiten: `t.login`, `t.team`, `t.job`, `t.myApps`, `t.account`; Team-Bereich: `t.adm`.
 
 import type { Lang } from './messages'
@@ -7,7 +7,7 @@ const en = {
   seo: {
     team: {
       title: 'Join the Cubiq Team – Moderators, Support & Content',
-      description: 'Meet the team behind the Cubiq Launcher and apply for open positions: moderation, support, content and more. Sign in with Microsoft and apply online.',
+      description: 'Meet the team behind the Cubiq Launcher and apply for open positions: moderation, support, content and more. Sign in and apply online.',
     },
     job: { title: '{title} – Join the Cubiq Team', description: '{summary}' },
     applications: { title: 'My applications – Cubiq Launcher' },
@@ -22,28 +22,13 @@ const en = {
   },
   login: {
     title: 'Sign in',
-    lead: 'Sign in with the Microsoft account that owns Minecraft: Java Edition. We only learn your Minecraft name and UUID – no e-mail, no password, no tokens are stored.',
-    button: 'Sign in with Microsoft',
-    disabled: 'Sign-in is not set up on this server yet.',
     signedIn: 'You are signed in as {name}.',
     privacy: 'What we store',
     continue: 'Continue',
-    anchor: 'website-sign-in-with-microsoft',
+    anchor: 'website-sign-in-with-the-cubiq-launcher',
+    /** Nur noch für alte Links mit `?error=` aus der früheren Microsoft-Anmeldung. */
     errors: {
-      ms_disabled: 'Sign-in is not set up on this server yet.',
-      ms_cancelled: 'Sign-in was cancelled.',
-      ms_state: 'The sign-in link expired or was opened in another browser. Please try again.',
-      ms_failed: 'Microsoft or Xbox Live could not be reached. Please try again in a moment.',
-      ms_not_approved: 'Sign-in with Microsoft is not enabled yet: Microsoft still has to approve this website for Minecraft. Please try again later.',
-      ms_config: 'Sign-in with Microsoft is not set up correctly on this server. Please let the team know.',
-      no_xbox: 'This Microsoft account has no Xbox profile yet. Sign in once at minecraft.net or xbox.com, then try again.',
-      child_account: 'This is a child account. An adult has to add it to a Microsoft family and allow Xbox Live first.',
-      xbox_region: 'Xbox Live is not available in the country of this account.',
-      xbox_verification: 'This account needs an age verification at xbox.com first.',
-      xbox_banned: 'This Xbox account is suspended.',
-      no_minecraft: 'This Microsoft account does not own Minecraft: Java Edition (or has no profile name yet).',
-      banned: 'This Minecraft account is banned from the Cubiq online features.',
-      rate_limited: 'Too many attempts. Please wait a few minutes.',
+      ms_not_approved: 'Sign-in with Microsoft is not available on this website: Mojang has not approved Cubiq for Minecraft sign-in.',
     } as Record<string, string>,
   },
   team: {
@@ -420,7 +405,7 @@ const de: TeamTexts = {
   seo: {
     team: {
       title: 'Das Cubiq-Team – Moderation, Support & Content',
-      description: 'Lerne das Team hinter dem Cubiq Launcher kennen und bewirb dich auf offene Stellen: Moderation, Support, Content und mehr – online mit Microsoft-Anmeldung.',
+      description: 'Lerne das Team hinter dem Cubiq Launcher kennen und bewirb dich online auf offene Stellen: Moderation, Support, Content und mehr.',
     },
     job: { title: '{title} – Bewirb dich beim Cubiq-Team', description: '{summary}' },
     applications: { title: 'Meine Bewerbungen – Cubiq Launcher' },
@@ -435,28 +420,12 @@ const de: TeamTexts = {
   },
   login: {
     title: 'Anmelden',
-    lead: 'Melde dich mit dem Microsoft-Konto an, dem Minecraft: Java Edition gehört. Wir erfahren nur deinen Minecraft-Namen und deine UUID – keine E-Mail, kein Passwort, es werden keine Tokens gespeichert.',
-    button: 'Mit Microsoft anmelden',
-    disabled: 'Die Anmeldung ist auf diesem Server noch nicht eingerichtet.',
     signedIn: 'Du bist als {name} angemeldet.',
     privacy: 'Was wir speichern',
     continue: 'Weiter',
-    anchor: 'anmeldung-mit-microsoft',
+    anchor: 'anmeldung-mit-dem-cubiq-launcher',
     errors: {
-      ms_disabled: 'Die Anmeldung ist auf diesem Server noch nicht eingerichtet.',
-      ms_cancelled: 'Die Anmeldung wurde abgebrochen.',
-      ms_state: 'Der Anmelde-Link ist abgelaufen oder wurde in einem anderen Browser geöffnet. Bitte noch einmal versuchen.',
-      ms_failed: 'Microsoft oder Xbox Live sind gerade nicht erreichbar. Bitte gleich noch einmal versuchen.',
-      ms_not_approved: 'Die Anmeldung mit Microsoft ist noch nicht freigeschaltet: Microsoft muss diese Website erst für Minecraft freigeben. Bitte später noch einmal versuchen.',
-      ms_config: 'Die Anmeldung mit Microsoft ist auf diesem Server nicht richtig eingerichtet. Bitte gib dem Team Bescheid.',
-      no_xbox: 'Dieses Microsoft-Konto hat noch kein Xbox-Profil. Einmal auf minecraft.net oder xbox.com anmelden, dann erneut versuchen.',
-      child_account: 'Das ist ein Kinderkonto. Ein Erwachsener muss es zuerst zu einer Microsoft-Familie hinzufügen und Xbox Live erlauben.',
-      xbox_region: 'Xbox Live ist im Land dieses Kontos nicht verfügbar.',
-      xbox_verification: 'Für dieses Konto ist zuerst eine Altersprüfung auf xbox.com nötig.',
-      xbox_banned: 'Dieses Xbox-Konto ist gesperrt.',
-      no_minecraft: 'Diesem Microsoft-Konto gehört kein Minecraft: Java Edition (oder es hat noch keinen Profilnamen).',
-      banned: 'Dieses Minecraft-Konto ist für die Cubiq-Online-Funktionen gesperrt.',
-      rate_limited: 'Zu viele Versuche. Bitte ein paar Minuten warten.',
+      ms_not_approved: 'Eine Anmeldung mit Microsoft gibt es auf dieser Website nicht: Mojang hat Cubiq nicht für die Minecraft-Anmeldung freigegeben.',
     },
   },
   team: {
@@ -831,7 +800,7 @@ const es: TeamTexts = {
   seo: {
     team: {
       title: 'Únete al equipo Cubiq – Moderación, soporte y contenido',
-      description: 'Conoce al equipo detrás del Cubiq Launcher y postúlate a los puestos abiertos: moderación, soporte, contenido y más. Inicia sesión con Microsoft y postúlate.',
+      description: 'Conoce al equipo detrás del Cubiq Launcher y postúlate a los puestos abiertos: moderación, soporte, contenido y más. Inicia sesión y postúlate en línea.',
     },
     job: { title: '{title} – Únete al equipo Cubiq', description: '{summary}' },
     applications: { title: 'Mis solicitudes – Cubiq Launcher' },
@@ -846,28 +815,12 @@ const es: TeamTexts = {
   },
   login: {
     title: 'Iniciar sesión',
-    lead: 'Inicia sesión con la cuenta de Microsoft que tiene Minecraft: Java Edition. Solo conocemos tu nombre de Minecraft y tu UUID: sin correo, sin contraseña y sin guardar tokens.',
-    button: 'Iniciar sesión con Microsoft',
-    disabled: 'El inicio de sesión aún no está configurado en este servidor.',
     signedIn: 'Has iniciado sesión como {name}.',
     privacy: 'Qué guardamos',
     continue: 'Continuar',
-    anchor: 'inicio-de-sesión-con-microsoft',
+    anchor: 'inicio-de-sesión-con-el-cubiq-launcher',
     errors: {
-      ms_disabled: 'El inicio de sesión aún no está configurado en este servidor.',
-      ms_cancelled: 'Se canceló el inicio de sesión.',
-      ms_state: 'El enlace de inicio de sesión caducó o se abrió en otro navegador. Inténtalo de nuevo.',
-      ms_failed: 'No se pudo contactar con Microsoft o Xbox Live. Inténtalo de nuevo en un momento.',
-      ms_not_approved: 'El inicio de sesión con Microsoft aún no está activado: Microsoft todavía tiene que aprobar este sitio para Minecraft. Inténtalo más tarde.',
-      ms_config: 'El inicio de sesión con Microsoft no está bien configurado en este servidor. Avisa al equipo.',
-      no_xbox: 'Esta cuenta de Microsoft aún no tiene perfil de Xbox. Inicia sesión una vez en minecraft.net o xbox.com e inténtalo de nuevo.',
-      child_account: 'Es una cuenta infantil. Un adulto debe añadirla a una familia de Microsoft y permitir Xbox Live primero.',
-      xbox_region: 'Xbox Live no está disponible en el país de esta cuenta.',
-      xbox_verification: 'Esta cuenta necesita primero una verificación de edad en xbox.com.',
-      xbox_banned: 'Esta cuenta de Xbox está suspendida.',
-      no_minecraft: 'Esta cuenta de Microsoft no tiene Minecraft: Java Edition (o aún no tiene nombre de perfil).',
-      banned: 'Esta cuenta de Minecraft está bloqueada para las funciones en línea de Cubiq.',
-      rate_limited: 'Demasiados intentos. Espera unos minutos.',
+      ms_not_approved: 'El inicio de sesión con Microsoft no está disponible en este sitio: Mojang no ha aprobado Cubiq para iniciar sesión en Minecraft.',
     },
   },
   team: {

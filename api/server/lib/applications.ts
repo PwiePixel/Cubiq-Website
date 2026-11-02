@@ -10,8 +10,8 @@ import { addMemberRole, assertCan, can, getRole, rankOf, type Staff } from './te
 import { notifyTeam, stamp } from './mail/team-notify'
 
 /**
- * Team-Bewerbungen (API.md §24.3): öffentliche Stellen mit Formular-Baukasten, Bewerben nur angemeldet (Website mit
- * Microsoft oder Launcher-Token), eine offene Bewerbung je Stelle, Wartezeit nach Absage, Prüfen im Team mit Notizen,
+ * Team-Bewerbungen (API.md §24.3): öffentliche Stellen mit Formular-Baukasten, Bewerben nur angemeldet (Website-Sitzung
+ * oder Launcher-Token), eine offene Bewerbung je Stelle, Wartezeit nach Absage, Prüfen im Team mit Notizen,
  * Stimmen und Verlauf, Rückmeldung an Bewerber (Website + Ereignis `application_updated`), optional Rolle bei Annahme.
  */
 

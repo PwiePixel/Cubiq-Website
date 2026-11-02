@@ -3,7 +3,7 @@ import { createSanction } from '../server/lib/sanctions'
 import { all } from '../server/lib/db'
 import { platformOf, pickLatest } from '../server/lib/site'
 import { ownerStaff } from '../server/lib/team'
-import { MAX_WEB_SESSIONS, WEB_SESSION_TTL_MS, createWebSession, endWebSession, sweepWebLogins, webSession } from '../server/lib/weblogin'
+import { MAX_WEB_SESSIONS, WEB_SESSION_TTL_MS, createWebSession, endWebSession, safeReturnTo, sweepWebLogins, webSession } from '../server/lib/weblogin'
 import { ADMIN, login, makeEnv } from './helpers'
 
 function code(fn: () => unknown): string {
@@ -15,7 +15,14 @@ function code(fn: () => unknown): string {
   return 'ok'
 }
 
-describe('website sessions (Microsoft sign-in)', () => {
+describe('website sessions', () => {
+  it('return paths after the sign-in stay on the site', () => {
+    expect(safeReturnTo('/team/moderator?lang=de')).toBe('/team/moderator?lang=de')
+    for (const bad of ['//evil.example', '/\\evil.example', 'https://evil.example', '/auth/microsoft/login', '/v1/web/me', 'javascript:alert(1)', 42, undefined, '/a b']) {
+      expect(safeReturnTo(bad)).toBe('/applications')
+    }
+  })
+
   it('stores only hashes, needs CSRF for changes, rotates and ends', async () => {
     const env = makeEnv()
     const u = (await login(env, 'Steve')).user.uuid

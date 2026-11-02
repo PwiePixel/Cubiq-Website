@@ -12,8 +12,8 @@ import { rememberSkin, storedSkins, type SkinView } from './skins'
 import { getUser, getUserByName, upsertOnLogin } from './users'
 
 /**
- * Einmal-Anmeldelink für den Betreiber (API.md §41) – solange die Anmeldung mit Microsoft nicht geht (App noch nicht
- * freigegeben), kommt der Owner so auf die Website:
+ * Einmal-Anmeldelink für den Betreiber (API.md §41) – so kommt der Owner (oder ein Team-Mitglied, dem er den Link gibt)
+ * auf die Website, auch ohne angemeldeten Cubiq Launcher:
  *
  * 1. Auf dem Server: `cubiq-server.sh login [Name]` ruft im Container `POST /v1/internal/login-link` auf. Die Route gibt es
  *    nur über die Loopback-Verbindung des Containers selbst (Socket-Adresse, nie Header) und nur mit dem Geheimnis aus
@@ -22,7 +22,7 @@ import { getUser, getUserByName, upsertOnLogin } from './users'
  *    Gespeichert wird nur dessen SHA-256; 10 Minuten gültig, genau einmal, je Konto nur der neueste.
  * 3. Die Seite zeigt erst, als wer man sich anmeldet; nur ein POST von der eigenen Website (Same-Origin-Prüfung wie bei
  *    der Launcher-Anmeldung) löst den Link ein – Link-Vorschauen (GET) verbrauchen ihn nicht. Danach gibt es eine normale
- *    Website-Sitzung wie nach der Microsoft-Anmeldung (Sperren gelten, Session-Rotation). Erzeugen und Einlösen stehen im
+ *    Website-Sitzung wie nach der Anmeldung per Cubiq Launcher (Sperren gelten, Session-Rotation). Erzeugen und Einlösen stehen im
  *    Audit-Log.
  */
 

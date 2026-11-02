@@ -14,7 +14,7 @@ import { activeSanction } from './sanctions'
  * 2. Der Launcher schlägt die Anfrage mit seinem Konto-Token nach (per Link-Token oder – anderer PC – per Code,
  *    streng begrenzt) und zeigt Code, Browser und Zeit. Erst ein Klick auf „Bestätigen“ gibt sie frei.
  * 3. Die Website fragt alle 2 s nach (`pollLauncherLogin`) und bekommt nach der Freigabe genau einmal die normale
- *    Website-Sitzung (wie nach der Microsoft-Anmeldung, mit Session-Rotation).
+ *    Website-Sitzung (mit Session-Rotation).
  *
  * Gespeichert werden nur SHA-256 von Link-Token und Browser-Wert, der Code (zum Nachschlagen), eine grobe
  * Browser-Angabe („Firefox · Windows“) und nach der Freigabe die UUID. Keine IP-Adresse, kein User-Agent.

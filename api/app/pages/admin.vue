@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import '~/assets/css/admin.css'
 
-// Team-Bereich: Anmeldung mit Microsoft oder dem Cubiq Launcher (dieselbe Website-Sitzung wie überall), danach Seitenleiste + Suche und
+// Team-Bereich: Anmeldung mit dem Cubiq Launcher oder dem Einmal-Link (dieselbe Website-Sitzung wie überall), danach Seitenleiste + Suche und
 // die Unterseiten unter /admin/*. Alles über /v1/admin; Rechte prüft der Server, die Oberfläche zeigt nur, was die
 // Rechte der eigenen Rollen erlauben (§24.2).
 definePageMeta({ layout: false })
@@ -191,7 +191,7 @@ useAdminKeys({
       <div class="skeleton h-24 w-72 rounded-xl" />
     </div>
 
-    <!-- Anmeldung (Microsoft) bzw. kein Team-Mitglied -->
+    <!-- Anmeldung bzw. kein Team-Mitglied -->
     <main v-else-if="!session" class="surface grid min-h-dvh place-items-center px-4 py-10">
       <section class="w-full max-w-lg">
         <NuxtLink to="/" class="mb-8 flex items-center gap-2.5 text-base-50">

@@ -153,7 +153,7 @@ function cookieSession(event: H3Event): WebSession | null {
   return webSession(useCtx(), cookie, getHeader(event, 'x-csrf-token'), mutating)
 }
 
-/** Angemeldet auf der Website (Microsoft, §24.1): Sitzung oder 401. Grund-Limit je Konto wie bei `requireUser`. */
+/** Angemeldet auf der Website (§24.1, Cubiq Launcher §29 oder Einmal-Link §41): Sitzung oder 401. Grund-Limit je Konto wie bei `requireUser`. */
 export function requireWeb(event: H3Event, kind: 'read' | 'write' = 'read'): WebSession {
   const session = cookieSession(event)
   if (!session) throw unauthorized()

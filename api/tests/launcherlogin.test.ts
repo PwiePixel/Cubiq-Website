@@ -256,7 +256,7 @@ describe('launcher sign-in: full flow', () => {
     expect(cookies(p.res).has('cubiq_session')).toBe(false)
   })
 
-  it('team members get their rights like after a Microsoft sign-in (audit entry “launcher”)', async () => {
+  it('team members get their rights like after any website sign-in (audit entry “launcher”)', async () => {
     const h = await harness()
     const mod = await login(h.env, 'Moddy')
     setMemberRoles(h.env.ctx, ownerStaff(ADMIN), mod.user.uuid, ['moderator'])

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Schaltung einreichen (§25.5): Datei hochladen → Server wandelt um (Vorschau + Hinweise) → Name, Kategorie,
-// Beschreibung, Sprache → Einreichung. Nur angemeldet (Microsoft), nur im Browser.
+// Beschreibung, Sprache → Einreichung. Nur angemeldet (Website-Sitzung), nur im Browser.
 import { CIRCUIT_CATEGORIES, CIRCUIT_LANGS, MAX_DESC, MAX_NAME } from '#shared/circuits'
 import type { ImportResult } from '~/utils/circuits/types'
 import { circuitErrorDetail, uploadCircuitFile } from '~/utils/circuits/types'

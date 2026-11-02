@@ -131,9 +131,6 @@ export const RULES = {
   loginLinkCreate: { limit: 10, windowMs: 10 * MIN },
   loginLinkPeekIp: { limit: 30, windowMs: 10 * MIN },
   loginLinkUseIp: { limit: 10, windowMs: 10 * MIN },
-  /** Website-Login mit Microsoft (§24.1): Weiterleitung starten bzw. Rücksprung, je IP. */
-  msLoginIp: { limit: 20, windowMs: 10 * MIN },
-  msCallbackIp: { limit: 30, windowMs: 10 * MIN },
   /** Bewerbungen (§24.3): abschicken je Konto und je IP, zurückziehen je Konto. */
   applyUser: { limit: 5, windowMs: HOUR },
   applyIp: { limit: 20, windowMs: HOUR },

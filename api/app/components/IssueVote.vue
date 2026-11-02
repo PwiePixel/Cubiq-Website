@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Hoch-/Runter-Stimme (§28): je Konto eine Stimme, erneutes Klicken nimmt sie zurück. Ohne Anmeldung führen die
-// Pfeile zur Microsoft-Anmeldung. Die Zahl ist der Score (hoch − runter).
+// Pfeile zur Anmeldeseite. Die Zahl ist der Score (hoch − runter).
 const props = withDefaults(defineProps<{
   number: number
   score: number

@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { z } from 'zod'
 import { normalizeUuid } from './ids'
 import { parseVapidKeys, type VapidKeys } from './push-crypto'
-import type { MicrosoftConfig } from './microsoft'
 
 /** Laufzeit-Konfiguration – ausschließlich aus Umgebungsvariablen (.env). */
 export interface Config {
@@ -52,8 +51,6 @@ export interface Config {
   serverPing: boolean
   /** Welt-Hosting (§21): Relay-Adresse + gemeinsames Geheimnis. `null` = Hosting aus (503 hosting_unavailable). */
   hosting: HostingConfig | null
-  /** Website-Anmeldung mit Microsoft (§24.1). `null` = aus (MS_CLIENT_ID/MS_CLIENT_SECRET fehlen). */
-  microsoft: MicrosoftConfig | null
   /** Push für die Apps (§33): VAPID-Schlüssel. `null` = UnifiedPush aus (Abruf-Geräte gehen trotzdem). */
   vapid: VapidKeys | null
   /** CurseForge-API-Schlüssel (empfohlene Modpacks, §37). `null` = CurseForge-Links → 503 curseforge_unavailable. */
@@ -352,17 +349,7 @@ const envSchema = z.object({
   RELAY_UDP_PORT: z.coerce.number().int().min(1).max(65535).default(25504),
   // STUN-Server (host:port, kommagetrennt). Leer = nur das Relay selbst (RELAY_HOST:RELAY_UDP_PORT).
   HOSTING_STUN: z.string().default(''),
-  // Website-Anmeldung mit Microsoft (vertraulicher Client). Ohne ID + Secret ist sie aus.
-  MS_CLIENT_ID: z.string().trim().default('').refine((s) => s === '' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s), 'must be a GUID'),
-  MS_CLIENT_SECRET: z.string().trim().default(''),
-  // Leer = SITE_URL + /auth/microsoft/callback.
-  MS_REDIRECT_URI: z.preprocess(emptyToUndefined, z.url({ protocol: /^https?$/ }).optional()),
-  // Nur für lokale Tests mit Attrappen (http://…). Nie in Produktion ändern.
-  MS_AUTHORITY_URL: z.url({ protocol: /^https?$/ }).default('https://login.microsoftonline.com/consumers/oauth2/v2.0').transform((s) => s.replace(/\/+$/, '')),
-  XBOX_USER_AUTH_URL: z.url({ protocol: /^https?$/ }).default('https://user.auth.xboxlive.com/user/authenticate'),
-  XBOX_XSTS_URL: z.url({ protocol: /^https?$/ }).default('https://xsts.auth.xboxlive.com/xsts/authorize'),
-  MINECRAFT_SERVICES_URL: z.url({ protocol: /^https?$/ }).default('https://api.minecraftservices.com').transform((s) => s.replace(/\/+$/, '')),
-  ALLOW_INSECURE_MS_URLS: bool.default(false),
+  // Eine Anmeldung mit Microsoft gibt es auf der Website nicht (mehr): MS_CLIENT_ID/MS_CLIENT_SECRET & Co. werden ignoriert.
   // Push für die Apps (§33): VAPID-Schlüsselpaar (base64url, `node scripts/vapid-keys.mjs`) + Kontakt. Alle drei oder keiner.
   VAPID_PUBLIC_KEY: z.string().trim().default(''),
   VAPID_PRIVATE_KEY: z.string().trim().default(''),
@@ -405,37 +392,6 @@ function parseHosting(e: z.output<typeof envSchema>): HostingConfig | null {
     relayUdpPort: e.RELAY_UDP_PORT,
     relaySecrets: secrets,
     stun: stun.length > 0 ? stun.slice(0, 8) : [`${e.RELAY_HOST}:${e.RELAY_UDP_PORT}`],
-  }
-}
-
-/** Microsoft-Anmeldung lesen; ohne Client-ID oder Secret → `null` (aus). */
-function parseMicrosoft(e: z.output<typeof envSchema>): MicrosoftConfig | null {
-  if (e.MS_CLIENT_ID === '' || e.MS_CLIENT_SECRET === '') return null
-  const redirectUri = e.MS_REDIRECT_URI ?? `${e.SITE_URL}/auth/microsoft/callback`
-  const urls = {
-    MS_REDIRECT_URI: redirectUri,
-    MS_AUTHORITY_URL: e.MS_AUTHORITY_URL,
-    XBOX_USER_AUTH_URL: e.XBOX_USER_AUTH_URL,
-    XBOX_XSTS_URL: e.XBOX_XSTS_URL,
-    MINECRAFT_SERVICES_URL: e.MINECRAFT_SERVICES_URL,
-  }
-  for (const [key, url] of Object.entries(urls)) {
-    const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)
-    if (url.startsWith('http:') && !(e.ALLOW_INSECURE_MS_URLS || (key === 'MS_REDIRECT_URI' && local))) {
-      throw new ConfigError(`Invalid configuration: ${key} (must be https)`)
-    }
-  }
-  if (!new URL(redirectUri).pathname.endsWith('/auth/microsoft/callback')) {
-    throw new ConfigError('Invalid configuration: MS_REDIRECT_URI (path must be /auth/microsoft/callback)')
-  }
-  return {
-    clientId: e.MS_CLIENT_ID,
-    clientSecret: e.MS_CLIENT_SECRET,
-    redirectUri,
-    authorityUrl: e.MS_AUTHORITY_URL,
-    xboxUserAuthUrl: e.XBOX_USER_AUTH_URL,
-    xboxXstsUrl: e.XBOX_XSTS_URL,
-    minecraftServicesUrl: e.MINECRAFT_SERVICES_URL,
   }
 }
 
@@ -560,7 +516,6 @@ export function loadConfig(env: Record<string, string | undefined>, limits: Part
     packChunkBytes: e.PACK_CHUNK_BYTES,
     serverPing: e.SERVER_PING,
     hosting: parseHosting(e),
-    microsoft: parseMicrosoft(e),
     vapid: parseVapid(e),
     curseforgeApiKey: e.CURSEFORGE_API_KEY === '' ? null : e.CURSEFORGE_API_KEY,
     mail: parseMail(e),

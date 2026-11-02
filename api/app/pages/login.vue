@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Anmeldung (§24.1 + §29): zwei gleichwertige Wege als Karten – „Cubiq Launcher“ (Code-Abgleich: die Website zeigt einen
-// Code, der Launcher bestätigt ihn mit seinem Konto) und „Microsoft“ (Weiterleitung, kein Skript von Microsoft).
-// Fehler kommen als ?error=<code> zurück; ?return=/pfad = Rücksprung nach der Anmeldung (prüft der Server).
+// Anmeldung (§24.1 + §29) mit dem Cubiq Launcher: Die Website zeigt einen Code, der Launcher bestätigt ihn mit seinem
+// Konto. Eine Anmeldung mit Microsoft gibt es nicht (Mojang hat die App nicht freigegeben) – alte Links mit ?error=<code>
+// aus dieser Zeit bekommen den Hinweis dazu. ?return=/pfad = Rücksprung nach der Anmeldung (prüft der Server).
 const { t, fill } = useTeamText()
 const { l } = useLoginText()
 const lp = useLocalePath()
@@ -15,17 +15,8 @@ const returnTo = computed(() => {
   return typeof r === 'string' && /^\/(?![/\\])/.test(r) && r.length <= 200 ? r : '/applications'
 })
 const errorCode = computed(() => (typeof route.query.error === 'string' ? route.query.error : ''))
-const errorText = computed(() => (errorCode.value ? t.value.login.errors[errorCode.value] ?? t.value.login.errors.ms_failed : ''))
-const msEnabled = ref(true)
-onMounted(async () => {
-  void load()
-  try {
-    msEnabled.value = (await apiFetch<{ microsoft: boolean }>('/v1/web/login')).microsoft
-  } catch {
-    // Karte bleibt aktiv; der Server leitet notfalls mit ms_disabled zurück.
-  }
-})
-const msHref = computed(() => `/auth/microsoft/login?return=${encodeURIComponent(returnTo.value)}`)
+const errorText = computed(() => (errorCode.value ? t.value.login.errors[errorCode.value] ?? t.value.login.errors.ms_not_approved : ''))
+onMounted(() => void load())
 
 // --- Anmeldung per Cubiq Launcher --------------------------------------------------------------------------
 type Step = 'choose' | 'wait' | 'expired' | 'denied' | 'done'
@@ -161,10 +152,10 @@ const { look: hwOn } = useHalloween()
       <NuxtLink :to="returnTo" class="btn btn-primary">{{ t.login.continue }}<SiteIcon name="arrow" class="size-4" /></NuxtLink>
     </div>
 
-    <!-- Zwei gleichwertige Wege -->
+    <!-- Anmelden mit dem Cubiq Launcher -->
     <section v-else-if="step === 'choose'" class="mt-8" :aria-label="l.choose">
       <p v-if="startError" role="alert" class="alert mb-4"><SiteIcon name="warn" class="mt-0.5 size-4 shrink-0" />{{ startError }}</p>
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid max-w-md gap-4">
         <button type="button" class="method" data-testid="login-launcher" :disabled="starting" @click="startLauncher">
           <span class="tile">
             <img src="/icon.png" alt="" width="40" height="40" class="size-10" />
@@ -175,21 +166,6 @@ const { look: hwOn } = useHalloween()
           </span>
           <SiteIcon name="arrow" class="go size-5 shrink-0" />
         </button>
-        <a v-if="msEnabled" :href="msHref" class="method" data-testid="login-microsoft">
-          <span class="tile"><MsLogo class="size-9" /></span>
-          <span class="min-w-0 flex-1 text-left">
-            <span class="block text-lg font-semibold text-base-50">{{ l.microsoft.title }}</span>
-            <span class="mt-0.5 block text-sm text-base-400">{{ l.microsoft.sub }}</span>
-          </span>
-          <SiteIcon name="arrow" class="go size-5 shrink-0" />
-        </a>
-        <div v-else class="method" aria-disabled="true">
-          <span class="tile opacity-50"><MsLogo class="size-9" /></span>
-          <span class="min-w-0 flex-1 text-left">
-            <span class="block text-lg font-semibold text-base-400">{{ l.microsoft.title }}</span>
-            <span class="mt-0.5 block text-sm text-caution-300">{{ t.login.disabled }}</span>
-          </span>
-        </div>
       </div>
     </section>
 
@@ -277,7 +253,7 @@ const { look: hwOn } = useHalloween()
   font-size: 0.875rem;
   color: var(--color-base-200);
 }
-/* Anmelde-Karte: groß, dunkel, Symbol-Kachel links – beide Wege gleich betont. */
+/* Anmelde-Karte: groß, dunkel, Symbol-Kachel links. */
 .method {
   display: flex;
   align-items: center;
@@ -292,7 +268,7 @@ const { look: hwOn } = useHalloween()
   text-align: left;
   transition: border-color 0.15s, background-color 0.15s, translate 0.15s;
 }
-.method:not([aria-disabled='true'], :disabled):hover {
+.method:not(:disabled):hover {
   border-color: color-mix(in srgb, var(--color-primary-500) 70%, var(--color-base-700));
   background-color: var(--color-base-850);
   translate: 0 -1px;

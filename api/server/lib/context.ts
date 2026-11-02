@@ -4,7 +4,6 @@ import type { CosmeticV2Assets } from './cosmetics-v2'
 import { ChatCipher } from './crypto'
 import type { Db } from './db'
 import { EventHub } from './events'
-import { OAuthStateStore } from './microsoft'
 import type { MojangClient } from './mojang'
 import { PresenceStore } from './presence'
 import { MailService } from './mail/transport'
@@ -53,14 +52,10 @@ export interface AppContext {
   spam: SpamGuard
   /** Tippt gerade: `<conversationId>:<uuid>` → Ablaufzeit (nur RAM). */
   typing: Map<string, number>
-  /** Offene Microsoft-Anmeldungen (state + PKCE-Verifier, nur RAM, 10 min). */
-  oauth: OAuthStateStore
   /** Push-Benachrichtigungen für die Apps (§33): Geräte, Versand (UnifiedPush) und Abruf-Liste (iOS). */
   push: PushService
   /** Mail über SMTP (§40): Versand der Ausgangs-Warteschlange. Ohne SMTP_HOST nicht verfügbar (503 mail_unavailable). */
   mail: MailService
-  /** Für Tests: eigenes fetch für die Microsoft-/Xbox-/Minecraft-Kette. */
-  msFetch?: typeof fetch
   /** Für Tests: eigenes fetch für Modrinth (Namen/Symbole der Pack-Inhalte, §27.6). */
   modrinthFetch?: typeof fetch
   /** Für Tests: eigenes fetch für CurseForge (empfohlene Modpacks, §37). */
@@ -110,7 +105,6 @@ export function createContext(opts: {
     servers: new ServerStatusService(opts.config.serverPing, now, opts.pingDeps),
     spam: new SpamGuard(opts.config.secretKey, now),
     typing: new Map(),
-    oauth: new OAuthStateStore(now),
   }
   const ctx = base as AppContext
   ctx.push = new PushService(ctx)

@@ -13,8 +13,8 @@ const body = z.object({ token: z.string().max(64) }).strict()
 
 /**
  * Website: Stand der Anmeldung per Cubiq Launcher (§29.2), alle ~2 s. Nach der Freigabe genau einmal `approved` –
- * dabei entsteht die normale Website-Sitzung (neues Token, altes Sitzungs-Cookie verworfen = Rotation) wie nach der
- * Anmeldung mit Microsoft. Nur der Browser mit dem passenden Cookie kann die Anfrage einlösen.
+ * dabei entsteht die normale Website-Sitzung (neues Token, altes Sitzungs-Cookie verworfen = Rotation). Nur der Browser
+ * mit dem passenden Cookie kann die Anfrage einlösen.
  */
 export default defineEventHandler(async (event) => {
   assertSameOrigin(event)

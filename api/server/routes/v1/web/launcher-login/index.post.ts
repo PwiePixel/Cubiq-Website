@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { useCtx } from '../../../../lib/context'
 import { assertSameOrigin, clientIp, created, limit, readJson } from '../../../../lib/http'
 import { LAUNCHER_LOGIN_COOKIE, LAUNCHER_LOGIN_COOKIE_PATH, LAUNCHER_LOGIN_TTL_MS, createLauncherLogin } from '../../../../lib/launcherlogin'
-import { safeReturnTo } from '../../../../lib/microsoft'
 import { RULES } from '../../../../lib/ratelimit'
+import { safeReturnTo } from '../../../../lib/weblogin'
 
 const body = z.object({ return: z.string().max(200).optional() }).strict().optional()
 

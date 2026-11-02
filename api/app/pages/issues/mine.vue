@@ -49,7 +49,7 @@ useHead({ title: () => it.value.seo.mine, meta: [{ name: 'robots', content: 'noi
     <p class="mt-2 text-base-400">{{ it.mine.lead }}</p>
 
     <p v-if="!loaded" class="mt-10 text-base-400">{{ it.common.loading }}</p>
-    <a v-else-if="!account" :href="loginUrl()" class="btn btn-primary mt-8"><SiteIcon name="microsoft" class="size-4" />{{ it.common.signIn }}</a>
+    <a v-else-if="!account" :href="loginUrl()" class="btn btn-primary mt-8"><SiteIcon name="user" class="size-4" />{{ it.common.signIn }}</a>
     <template v-else>
       <div class="mt-6 flex gap-1 border-b border-base-800" role="tablist">
         <button type="button" role="tab" class="tab-btn" :aria-selected="tab === 'following'" @click="tab = 'following'">{{ it.mine.following }} <span class="text-base-400">{{ data?.following.length ?? 0 }}</span></button>

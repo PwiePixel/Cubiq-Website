@@ -64,7 +64,7 @@ useHead({ title: () => it.value.seo.new, meta: [{ name: 'robots', content: 'noin
     <p v-if="!loaded" class="mt-10 text-base-400">{{ it.common.loading }}</p>
     <section v-else-if="!account" class="card mt-8 max-w-xl p-6">
       <p class="text-base-200">{{ it.new.signInLead }}</p>
-      <a :href="loginUrl()" class="btn btn-primary mt-4"><SiteIcon name="microsoft" class="size-4" />{{ it.common.signIn }}</a>
+      <a :href="loginUrl()" class="btn btn-primary mt-4"><SiteIcon name="user" class="size-4" />{{ it.common.signIn }}</a>
     </section>
 
     <div v-else class="layout mt-8">

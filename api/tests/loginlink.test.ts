@@ -126,7 +126,7 @@ describe('using a link (website)', () => {
     expect(one(env.ctx.db, 'SELECT used_at FROM login_links')).toEqual({ used_at: null })
   })
 
-  it('signs in once like the Microsoft callback (session cookie, rotation, audit) – a second use fails', async () => {
+  it('signs in once like the launcher sign-in (session cookie, rotation, audit) – a second use fails', async () => {
     const env = setup()
     const l = await newLink(env)
     const r = await use(env, l.token, { cookie: 'cubiq_session=old' })
