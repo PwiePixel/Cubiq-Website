@@ -181,6 +181,25 @@ Normale Markdown-Tabellen:
 | F6 | Redstone-Overlay |
 ```
 
+### Aufklappen
+
+Für lange Nachschlage-Listen (z. B. Fehlermeldungen), die nicht jeder lesen muss. Startet zugeklappt:
+
+```md
+::collapsible{name="general messages"}
+
+| Code | Message |
+|---|---|
+| `network` | Network error |
+
+::
+```
+
+Der Knopf zeigt „Show general messages“ bzw. „Hide general messages“ (Spanisch „Mostrar …“/„Ocultar …“) – `name`
+also so schreiben, dass er hinter das Verb passt. Im Deutschen stünde dort „Anzeigen allgemeine Meldungen“, deshalb in
+`de/` immer `open-text` und `close-text` mitgeben:
+`::collapsible{name="allgemeine Meldungen" open-text="Zeige" close-text="Verstecke"}` → „Zeige allgemeine Meldungen“.
+
 ## Icons
 
 Nur **Lucide** (`i-lucide-<name>`, https://lucide.dev/icons) und **Simple Icons** für Marken (`i-simple-icons-github`,

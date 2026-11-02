@@ -28,7 +28,7 @@
     "state": "open the dialog with Ctrl+N; mock the version manifest (a few releases) and list presets with the built-in Cubiq presets"
   },
   {
-    "file": "getting-started/play-starting.png",
+    "file": "getting-started/play-starting.webp",
     "page": "1.getting-started/03.first-instance",
     "what": "Home page while an instance starts: the Play button fills up, stage text (e.g. 'Game files') and percent",
     "route": "/",
@@ -196,11 +196,18 @@
     "state": "click Settings in the sidebar (tauri-mock default settings)"
   },
   {
-    "file": "launcher/update-news.png",
+    "file": "launcher/update-news.webp",
     "page": "2.launcher/12.updates",
-    "what": "Update post dialog: update banner, screenshot gallery, release notes and 'View on website'",
+    "what": "'What's new in 0.3.3' after skipping updates: banner with the animated pixel scene of 0.3.3 ('Classic maps'), screenshot gallery (image 1 of 3) with caption and thumbnails, version buttons v0.3.3/v0.3.2/v0.3.1/v0.3.0, 'View release on GitHub' and 'Got it'. Also update-news.de.webp and update-news.es.webp",
     "route": "/",
-    "state": "version 0.1.0, locale en; click 'Read the post' on the update card of the home page (uses public/news/0.1.0/*)"
+    "state": "launcher repo at v0.3.3 (nuxt dev + scripts/release-shots/tauri-mock.js), cfg {version: '0.3.3', seen: '0.2.51', locale en/de/es}, extra mock: instance 'Survival with Friends' / 'Survival mit Freunden' / 'Supervivencia con amigos' (1.21.1 Fabric), account 'Alex_Builds'; the dialog opens by itself. 1280×800 at scale 1.25, saved as lossless WebP"
+  },
+  {
+    "file": "launcher/update-card.webp",
+    "page": "2.launcher/12.updates",
+    "what": "Home page scrolled to the update card of 0.3.3: banner with the animated pixel scene, update name, headline chips, three screenshot previews, 'Read the post' and the × (Hide until the next update); News and Servers below. Also update-card.de.webp and update-card.es.webp",
+    "route": "/",
+    "state": "same mock as update-news.webp but seen '0.3.3' (no dialog); the card scrolled to the middle of the window. 1280×800 at scale 1.25, saved as lossless WebP"
   },
   {
     "file": "launcher/servers.png",
@@ -208,5 +215,61 @@
     "what": "Servers page with 4–5 server cards (icon, MOTD, players, ping), 'Join with' instance picker, 'Ping test' and 'Sort by ping'",
     "route": "/servers",
     "state": "mock list_servers + server status with made-up servers (e.g. example.net addresses), one unreachable"
+  },
+  {
+    "file": "launcher/world-backups-worlds.png",
+    "page": "2.launcher/14.world-backups",
+    "what": "Worlds tab of an instance: 'Auto backup' menu set to 'Default (on)', three world cards each with the clock line ('5 backups · last 3 hours ago', 'No backup yet'), the hint below and 'Deleted worlds with backups' with one world and 'Restore'",
+    "route": "/instances/survival?tab=worlds",
+    "state": "release screenshot of 0.3.0, copied unchanged from the launcher repo (public/news/0.3.0/world-backups-worlds.png): mocked instance 'Survival with friends' (1.21.1 Fabric) with the made-up worlds 'Survival Island', 'Castle on the hill', 'One life' and the deleted world 'Skyblock challenge', locale en, dark theme"
+  },
+  {
+    "file": "launcher/world-backups-list.png",
+    "page": "2.launcher/14.world-backups",
+    "what": "'Backups of Survival Island' dialog: auto-backup text, 'Open folder', 'Back up now' and six backups with date, relative time, size, version and the kinds Automatic, Before restoring, Manual and Older backup",
+    "route": "/instances/survival?tab=worlds",
+    "state": "same data as world-backups-worlds.png (launcher repo public/news/0.3.0/world-backups-list.png); click the clock line of 'Survival Island'"
+  },
+  {
+    "file": "launcher/world-backups-restore.png",
+    "page": "2.launcher/14.world-backups",
+    "what": "Restore step of the backups dialog: 'Restore the backup from …' with 'As a copy' selected (name 'Survival Island (restored 2026-10-27 21.39)') and 'Replace the current world', 'Cancel' and 'Restore'",
+    "route": "/instances/survival?tab=worlds",
+    "state": "same data as world-backups-worlds.png (launcher repo public/news/0.3.0/world-backups-restore.png); open the backups of 'Survival Island' and click 'Restore' on the newest backup"
+  },
+  {
+    "file": "launcher/play-statistics.png",
+    "page": "2.launcher/15.statistics",
+    "what": "Statistics page, top: filter 'All instances', six key-number tiles (Total play time incl. time from before, This week, This month, Sessions, Longest session, Current streak) and the 'Play time' bar chart for 30 days",
+    "route": "/stats",
+    "state": "release screenshot of 0.3.0, copied unchanged from the launcher repo (public/news/0.3.0/play-statistics.png): mocked play_stats with made-up sessions of four instances over several months plus carried time, locale en, dark theme"
+  },
+  {
+    "file": "launcher/play-statistics-calendar.png",
+    "page": "2.launcher/15.statistics",
+    "what": "Statistics page scrolled down: end of the bar chart, the calendar ('82 days played', one day selected with its play time) and the start of 'Most played instances' and 'Minecraft versions' with the loader line",
+    "route": "/stats",
+    "state": "same data as play-statistics.png (launcher repo public/news/0.3.0/play-statistics-calendar.png), scrolled down, one calendar day selected"
+  },
+  {
+    "file": "launcher/cosmetics-companions.png",
+    "page": "2.launcher/10.wardrobe",
+    "what": "The six free ground companions as 3D cards: Cubi, penguin, fox kit, axolotl, snowman and firefly (no launcher UI around them)",
+    "route": "/skins (tab Cosmetics)",
+    "state": "release picture of 0.3.0, copied unchanged from the launcher repo (public/news/0.3.0/new-cosmetics-companions.png): rendered cosmetic previews by day"
+  },
+  {
+    "file": "launcher/cosmetics-day-night.png",
+    "page": "2.launcher/10.wardrobe",
+    "what": "Aurora wings, shooting star and Mini-Cubi on a player – top row by day, bottom row at night with the glowing parts",
+    "route": "/skins (tab Cosmetics, Night button)",
+    "state": "release picture of 0.3.0, copied unchanged from the launcher repo (public/news/0.3.0/new-cosmetics-wings.png): rendered cosmetic previews by day and at night"
+  },
+  {
+    "file": "launcher/cosmetics-pet-buttons.png",
+    "page": "2.launcher/10.wardrobe",
+    "what": "Skins page on the Cosmetics tab, section 'Ground companions': the worn fox kit is petted in the preview (hearts), 'Pet' and 'Feed' buttons bottom left of the 3D stage, the 'Companion:' row (Stands … Hands up) and the companion cards with 'Free'/'Glows' badges",
+    "route": "/skins",
+    "state": "release screenshot of 0.3.2, copied unchanged from the launcher repo (public/news/0.3.2/launcher-pet-buttons.png): made-up account 'PixelPaws', Cubiq services on, locale en, dark theme; the item names on the cards come from the Cubiq server (German names)"
   }
 ]

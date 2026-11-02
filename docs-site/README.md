@@ -119,8 +119,9 @@ Launchers mit nachgebildetem Tauri-Backend (wie `scripts/release-shots/` im Laun
 Diese Bilder zeigten noch das ursprüngliche Projekt und wurden entfernt – die Seiten funktionieren ohne sie. Neue
 Aufnahme ablegen und die Bildzeile wieder in alle drei Sprachen (`content/en|de|es/…`) einfügen:
 
-- **Im Spiel (Cubiq Client)** – alle 26 Bilder aus `shots/client.json` (Bereich `client/`, Seiten unter
-  `3.client/`) und `getting-started/mobile-game-touch.png` (Touch-Steuerung im Spiel, Seite `1.getting-started/04.android`).
+- **Im Spiel (Cubiq Client)** – die 24 Bilder aus `shots/client.json`, die noch fehlen (Bereich `client/`, Seiten unter
+  `3.client/`; Einträge mit „Present – not part of the retake list“ sind schon da), und
+  `getting-started/mobile-game-touch.png` (Touch-Steuerung im Spiel, Seite `1.getting-started/04.android`).
   Aufnehmen mit den Autotests des Cubiq Clients (`./gradlew :fabric:<version>:runClient -PcubiqAutotest`, Szenario je Bild in
   `shots/client.json`), siehe `docs/release-screenshots.md` im Launcher-Repo.
 - **Cubiq-Dienste** – brauchen einen Launcher-Build mit eigenem Server (`CUBIQ_API_BASE`), sonst blendet der Launcher die

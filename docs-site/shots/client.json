@@ -56,18 +56,46 @@
     "scenario": "Full autotest (default run), shot cubiqclient-zoom."
   },
   {
-    "file": "client/minimap.png",
+    "file": "client/minimap-classic.png",
     "page": "3.client/06.minimap-and-world-map",
-    "what": "Round minimap in the HUD with compass ring, a waypoint box on the edge and coordinates/biome below",
-    "version": "1.21.11",
-    "scenario": "Existing autotest 'maps' (-PcubiqAutotestOnly=maps), shot minimap-round. Extension: create one waypoint ~300 blocks away first so it shows on the ring."
+    "what": "Classic look (default): square and round minimap side by side with compass letters on dark plates (north in red), waypoint squares with initials, red arrow, view cone and plain coordinates '37, 62, -21' with the biome below",
+    "version": "release picture 0.3.3",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.3 from the launcher repo (public/news/0.3.3/minimap-classic.png), copied unchanged."
   },
   {
-    "file": "client/world-map.png",
+    "file": "client/minimap-cubiq-look.png",
     "page": "3.client/06.minimap-and-world-map",
-    "what": "Fullscreen world map with the waypoint list open (2–3 waypoints) and the bottom bar with coordinates",
-    "version": "1.21.11",
-    "scenario": "Existing autotest 'maps' (shot worldmap-menu covers the map itself). New step needed: create 2–3 waypoints, open the world map with M and click the pin button (waypoint list) before the shot."
+    "what": "Cubiq look: round minimap with the chunk grid and square minimap, compass badges (north filled in the accent colour), view cone, rounded waypoint boxes on the edge, coordinates and biome below",
+    "version": "release picture 0.3.1",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.1 from the launcher repo (public/news/0.3.1/minimap-new-look.png), copied unchanged."
+  },
+  {
+    "file": "client/world-map-classic.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "World map in the classic look without bars: dimension and cursor coordinates top left, buttons top right, waypoint list with three waypoints, right-click menu of a marked spot ('Save as waypoint', 'Remove marker', 'Share with friends', 'Share in chat', 'Measure distance from here', 'Center here', 'Follow me')",
+    "version": "release picture 0.3.3",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.3 from the launcher repo (public/news/0.3.3/world-map-classic.png), copied unchanged."
+  },
+  {
+    "file": "client/world-map-measure.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "World map in the Cubiq look (dark): dashed measuring line with '149 m', scale bar '20 m' bottom left, measuring hint in the bottom bar, waypoint list open",
+    "version": "release picture 0.3.1",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.1 from the launcher repo (public/news/0.3.1/world-map-measure.png), copied unchanged."
+  },
+  {
+    "file": "client/world-map-go-to.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "World map in the Cubiq look (light colour scheme): '80 -60' typed into the waypoint search, row 'Go to 80 / -60', the map centred on the marked spot",
+    "version": "release picture 0.3.1",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.1 from the launcher repo (public/news/0.3.1/world-map-go-to.png), copied unchanged."
+  },
+  {
+    "file": "client/waypoint-from-chat.png",
+    "page": "3.client/06.minimap-and-world-map",
+    "what": "Window 'Add shared waypoint' opened from '[+ Waypoint]' in the chat: Nether coordinates, name 'Diamond shop', colour swatches, Cancel/Save; classic minimap top right",
+    "version": "release picture 0.3.3",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.3 from the launcher repo (public/news/0.3.3/waypoint-from-chat.png), copied unchanged."
   },
   {
     "file": "client/redstone-signal.png",
@@ -180,5 +208,19 @@
     "what": "Host world window: Players tab with one guest (Direct, ping), join code and Stop hosting",
     "version": "1.21.11",
     "scenario": "Existing autotest 'hosting' (-PcubiqAutotestOnly=hosting, HostingTest) shows the host dialog; a player row needs a guest – use the E2E script (scratchpad/hosting/e2e/run_e2e.py, flow code) and take the shot on the host side."
+  },
+  {
+    "file": "client/companion-petting.png",
+    "page": "3.client/16.companions",
+    "what": "The fox kit being petted: it sits, eyes closed, hearts rising above it",
+    "version": "none (3D render)",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.2 from the launcher repo (public/news/0.3.2/pet-fox-petting.png), a 3D render of the companion's pet reaction, re-saved losslessly (PNG optimize, same pixels) to stay under 500 KB. A real in-game shot could replace it later."
+  },
+  {
+    "file": "client/companion-feeding.png",
+    "page": "3.client/16.companions",
+    "what": "The penguin being fed: it looks up, crumbs flying",
+    "version": "none (3D render)",
+    "scenario": "Present – not part of the retake list. Release picture of 0.3.2 from the launcher repo (public/news/0.3.2/pet-penguin-feeding.png), a 3D render of the companion's feed reaction, re-saved losslessly (PNG optimize, same pixels) to stay under 500 KB. A real in-game shot could replace it later."
   }
 ]

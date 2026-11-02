@@ -28,7 +28,7 @@
     "state": "Mock vanilla 1.21.11 instance with Cubiq optimization on; instance settings opened and section 'Installation' selected."
   },
   {
-    "file": "tasks-panel.png",
+    "file": "tasks-panel.webp",
     "page": "4.help/02.common-problems",
     "what": "Tasks panel open with a running modpack install (stage 'Downloading mods', progress bar, time left, pause/cancel) and one finished task",
     "route": "/",
@@ -54,5 +54,19 @@
     "what": "'Log shared' dialog: link copied, QR code, hints that tokens and the user name were removed",
     "route": "/instances/demo-fabric?tab=logs",
     "state": "Share dialog after a mocked successful upload (mclo.gs link with a made-up id)."
+  },
+  {
+    "file": "cubiq-consent.webp",
+    "page": "4.help/07.privacy (also 2.launcher/08.social)",
+    "what": "Dialog 'Use Cubiq services?' over the home page: intro with the server host, the 'What's stored' list, footer with Settings → Privacy and 'Read the privacy policy', buttons 'No, thanks' and 'Use Cubiq services'. Also cubiq-consent.de.webp and cubiq-consent.es.webp",
+    "route": "/",
+    "state": "launcher repo at v0.3.3, nuxt dev with CUBIQ_API_BASE=https://launcher.cubiq.studio (host as in the privacy policy) + scripts/release-shots/tauri-mock.js; extra mock: Windows capabilities, account 'Alex_Builds', cubiq_status {available: true, consent: null}; the dialog opens by itself after sign-in. 1280×800 at scale 1.25, lossless WebP"
+  },
+  {
+    "file": "privacy-cubiq-services.webp",
+    "page": "4.help/07.privacy",
+    "what": "Settings → Privacy scrolled to 'Cubiq services': 'Use Cubiq services' and 'Sync with Cubiq account' on, My applications, My sanctions, per-account switches (badge, cape, online status 'Friends'). Also privacy-cubiq-services.de.webp and privacy-cubiq-services.es.webp",
+    "route": "/ (settings dialog, section privacy)",
+    "state": "same mock as cubiq-consent.webp but cubiq_status consent 'accepted' and a made-up cubiq_me profile 'Alex_Builds'; settings opened on the Privacy section, the 'Cubiq services' heading scrolled to the top. 1280×800 at scale 1.25, lossless WebP"
   }
 ]
